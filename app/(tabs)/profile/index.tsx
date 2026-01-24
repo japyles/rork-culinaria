@@ -32,7 +32,7 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { User } from '@/types/recipe';
 import Button from '@/components/Button';
 
-type ListType = 'followers' | 'following' | null;
+type ListType = 'followers' | 'following' | 'recipes' | null;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -210,12 +210,20 @@ export default function ProfileScreen() {
             user.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.username.toLowerCase().includes(searchQuery.toLowerCase())
         )
-      : getFollowingUsers.filter(
+      : showListModal === 'following'
+      ? getFollowingUsers.filter(
           (user) =>
             !searchQuery ||
             user.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
             user.username.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        )
+      : [];
+
+  const filteredRecipes = customRecipes.filter(
+    (recipe) =>
+      !searchQuery ||
+      recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
@@ -249,7 +257,7 @@ export default function ProfileScreen() {
             <View style={styles.statsRow}>
               <Pressable
                 style={styles.statItem}
-                onPress={() => {}}
+                onPress={() => setShowListModal('recipes')}
               >
                 <ChefHat size={18} color={Colors.primary} />
                 <Text style={styles.statValue}>{customRecipes.length}</Text>
@@ -327,7 +335,7 @@ export default function ProfileScreen() {
         </ScrollView>
 
         <Modal
-          visible={showListModal !== null}
+          visible={showListModal !== null && showListModal !== 'recipes'}
           animationType="slide"
           presentationStyle="pageSheet"
         >
@@ -375,6 +383,71 @@ export default function ProfileScreen() {
                     {showListModal === 'followers'
                       ? 'Share your recipes to gain followers!'
                       : 'Discover users to follow in the Discover tab'}
+                  </Text>
+                </View>
+              }
+            />
+          </SafeAreaView>
+        </Modal>
+
+        <Modal
+          visible={showListModal === 'recipes'}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>My Recipes</Text>
+              <Pressable
+                onPress={() => {
+                  setShowListModal(null);
+                  setSearchQuery('');
+                }}
+                style={styles.closeButton}
+              >
+                <X size={24} color={Colors.text} />
+              </Pressable>
+            </View>
+
+            <View style={styles.searchContainer}>
+              <Search size={18} color={Colors.textSecondary} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search recipes..."
+                placeholderTextColor={Colors.textSecondary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+            </View>
+
+            <FlatList
+              data={filteredRecipes}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={styles.recipeItem}
+                  onPress={() => {
+                    setShowListModal(null);
+                    setSearchQuery('');
+                    router.push(`/recipe/${item.id}`);
+                  }}
+                >
+                  <Image source={{ uri: item.imageUrl }} style={styles.recipeImage} />
+                  <View style={styles.recipeInfo}>
+                    <Text style={styles.recipeTitle} numberOfLines={1}>{item.title}</Text>
+                    <Text style={styles.recipeDetails}>
+                      {item.cookTime} min • {item.servings} servings
+                    </Text>
+                  </View>
+                </Pressable>
+              )}
+              contentContainerStyle={styles.listContent}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <ChefHat size={48} color={Colors.textSecondary} />
+                  <Text style={styles.emptyTitle}>No recipes yet</Text>
+                  <Text style={styles.emptySubtext}>
+                    Start creating recipes to see them here!
                   </Text>
                 </View>
               }
@@ -743,5 +816,31 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: Spacing.md,
+  },
+  recipeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  recipeImage: {
+    width: 60,
+    height: 60,
+    borderRadius: BorderRadius.md,
+    marginRight: Spacing.md,
+  },
+  recipeInfo: {
+    flex: 1,
+  },
+  recipeTitle: {
+    ...Typography.body,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  recipeDetails: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
   },
 });
