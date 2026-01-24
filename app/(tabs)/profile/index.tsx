@@ -10,7 +10,10 @@ import {
   FlatList,
   TextInput,
   Alert,
+  Platform,
+  ActionSheetIOS,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -50,16 +53,85 @@ export default function ProfileScreen() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(currentUser.displayName);
   const [editBio, setEditBio] = useState(currentUser.bio);
+  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser.avatarUrl);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSaveProfile = useCallback(() => {
     updateProfile({
       displayName: editName,
       bio: editBio,
+      avatarUrl: editAvatarUrl,
     });
     setShowEditModal(false);
     Alert.alert('Success', 'Profile updated successfully');
-  }, [editName, editBio, updateProfile]);
+  }, [editName, editBio, editAvatarUrl, updateProfile]);
+
+  const pickImage = useCallback(async (useCamera: boolean) => {
+    try {
+      if (useCamera) {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Camera permission is required to take photos.');
+          return;
+        }
+        const result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets[0]) {
+          setEditAvatarUrl(result.assets[0].uri);
+        }
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Photo library permission is required to select photos.');
+          return;
+        }
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+        if (!result.canceled && result.assets[0]) {
+          setEditAvatarUrl(result.assets[0].uri);
+        }
+      }
+    } catch (error) {
+      console.log('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  }, []);
+
+  const handleChangePhoto = useCallback(() => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Take Photo', 'Choose from Library'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            pickImage(true);
+          } else if (buttonIndex === 2) {
+            pickImage(false);
+          }
+        }
+      );
+    } else {
+      Alert.alert(
+        'Change Photo',
+        'Choose an option',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Take Photo', onPress: () => pickImage(true) },
+          { text: 'Choose from Library', onPress: () => pickImage(false) },
+        ]
+      );
+    }
+  }, [pickImage]);
 
   const renderUserItem = useCallback(
     ({ item }: { item: User }) => {
@@ -327,10 +399,10 @@ export default function ProfileScreen() {
             <ScrollView style={styles.editContent}>
               <View style={styles.editAvatarSection}>
                 <Image
-                  source={{ uri: currentUser.avatarUrl }}
+                  source={{ uri: editAvatarUrl }}
                   style={styles.editAvatar}
                 />
-                <Pressable style={styles.changePhotoButton}>
+                <Pressable style={styles.changePhotoButton} onPress={handleChangePhoto}>
                   <Text style={styles.changePhotoText}>Change Photo</Text>
                 </Pressable>
               </View>
