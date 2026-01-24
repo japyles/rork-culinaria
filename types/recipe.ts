@@ -89,3 +89,12 @@ export interface VideoExtractionResult {
   sourceUrl: string;
   thumbnailUrl?: string;
 }
+
+export interface Review {
+  id: string;
+  recipeId: string;
+  rating: number;
+  comment: string;
+  authorName: string;
+  createdAt: string;
+}

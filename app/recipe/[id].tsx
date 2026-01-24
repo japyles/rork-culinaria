@@ -12,6 +12,7 @@ import {
   Modal,
   Vibration,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { z } from 'zod';
@@ -38,6 +39,9 @@ import {
   Plus,
   Minus,
   Sparkles,
+  Star,
+  MessageSquare,
+  User,
 } from 'lucide-react-native';
 import { Ingredient } from '@/types/recipe';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
@@ -50,7 +54,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe } = useRecipes();
+  const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe, addReview, getReviewsForRecipe, getAverageRating } = useRecipes();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
   const [showMenu, setShowMenu] = useState(false);
@@ -62,6 +66,10 @@ export default function RecipeDetailScreen() {
   const [adjustedServings, setAdjustedServings] = useState<number | null>(null);
   const [adjustedIngredients, setAdjustedIngredients] = useState<Ingredient[] | null>(null);
   const [isAdjusting, setIsAdjusting] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewAuthor, setReviewAuthor] = useState('');
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<ExpoAv.Audio.Sound | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -348,6 +356,55 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
 
   const canEdit = recipe ? isCustomRecipe(recipe.id) : false;
 
+  const recipeReviews = recipe ? getReviewsForRecipe(recipe.id) : [];
+  const averageRating = recipe ? getAverageRating(recipe.id) : null;
+  const displayRating = averageRating !== null ? averageRating.toFixed(1) : recipe?.rating.toFixed(1);
+  const displayReviewCount = recipeReviews.length > 0 ? recipeReviews.length : recipe?.reviewCount ?? 0;
+
+  const handleSubmitReview = () => {
+    if (!recipe || !reviewComment.trim() || !reviewAuthor.trim()) {
+      Alert.alert('Missing Information', 'Please enter your name and a comment.');
+      return;
+    }
+    addReview({
+      recipeId: recipe.id,
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+      authorName: reviewAuthor.trim(),
+    });
+    setShowReviewModal(false);
+    setReviewRating(5);
+    setReviewComment('');
+    setReviewAuthor('');
+    Alert.alert('Thank You!', 'Your review has been submitted.');
+  };
+
+  const formatReviewDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const renderStars = (rating: number, size: number = 16, interactive: boolean = false, onPress?: (rating: number) => void) => {
+    return (
+      <View style={styles.starsContainer}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Pressable
+            key={star}
+            onPress={() => interactive && onPress && onPress(star)}
+            disabled={!interactive}
+            style={styles.starButton}
+          >
+            <Star
+              size={size}
+              color={star <= rating ? '#FFB800' : Colors.borderLight}
+              fill={star <= rating ? '#FFB800' : 'transparent'}
+            />
+          </Pressable>
+        ))}
+      </View>
+    );
+  };
+
   const handleShare = async () => {
     console.log('handleShare called');
     if (!recipe) return;
@@ -562,10 +619,10 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
               <Text style={styles.cuisineText}>{recipe.cuisine}</Text>
             </View>
             <Text style={styles.heroTitle}>{recipe.title}</Text>
-            <View style={styles.ratingRow}>
-              <Text style={styles.rating}>★ {recipe.rating}</Text>
-              <Text style={styles.reviewCount}>({recipe.reviewCount} reviews)</Text>
-            </View>
+            <Pressable style={styles.ratingRow} onPress={() => setShowReviewModal(true)}>
+              <Text style={styles.rating}>★ {displayRating}</Text>
+              <Text style={styles.reviewCount}>({displayReviewCount} reviews)</Text>
+            </Pressable>
           </View>
         </View>
 
@@ -726,6 +783,46 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
             ))}
           </View>
 
+          <View style={styles.reviewsSection}>
+            <View style={styles.reviewsHeader}>
+              <View style={styles.reviewsTitleRow}>
+                <MessageSquare size={20} color={Colors.primary} />
+                <Text style={styles.reviewsTitle}>Reviews</Text>
+                <Text style={styles.reviewsCount}>({displayReviewCount})</Text>
+              </View>
+              <Pressable style={styles.addReviewButton} onPress={() => setShowReviewModal(true)}>
+                <Plus size={16} color={Colors.textOnPrimary} />
+                <Text style={styles.addReviewButtonText}>Add Review</Text>
+              </Pressable>
+            </View>
+
+            {recipeReviews.length > 0 ? (
+              <View style={styles.reviewsList}>
+                {recipeReviews.map((review) => (
+                  <View key={review.id} style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <View style={styles.reviewAuthorRow}>
+                        <View style={styles.reviewAvatar}>
+                          <User size={16} color={Colors.textSecondary} />
+                        </View>
+                        <Text style={styles.reviewAuthor}>{review.authorName}</Text>
+                      </View>
+                      {renderStars(review.rating, 14)}
+                    </View>
+                    <Text style={styles.reviewComment}>{review.comment}</Text>
+                    <Text style={styles.reviewDate}>{formatReviewDate(review.createdAt)}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.noReviewsContainer}>
+                <MessageSquare size={40} color={Colors.borderLight} />
+                <Text style={styles.noReviewsText}>No reviews yet</Text>
+                <Text style={styles.noReviewsSubtext}>Be the first to share your experience!</Text>
+              </View>
+            )}
+          </View>
+
           <View style={styles.bottomPadding} />
         </Animated.View>
       </Animated.ScrollView>
@@ -842,6 +939,59 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                 <Text style={styles.resetServingsText}>Reset to Original ({recipe.servings} servings)</Text>
               </Pressable>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showReviewModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReviewModal(false)}
+      >
+        <View style={styles.reviewModalOverlay}>
+          <View style={styles.reviewModalContainer}>
+            <View style={styles.reviewModalHeader}>
+              <Text style={styles.reviewModalTitle}>Write a Review</Text>
+              <Pressable onPress={() => setShowReviewModal(false)} style={styles.reviewModalCloseButton}>
+                <X size={24} color={Colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <Text style={styles.reviewModalLabel}>Your Rating</Text>
+            <View style={styles.reviewRatingSelector}>
+              {renderStars(reviewRating, 32, true, setReviewRating)}
+            </View>
+
+            <Text style={styles.reviewModalLabel}>Your Name</Text>
+            <View style={styles.reviewInputContainer}>
+              <User size={18} color={Colors.textSecondary} />
+              <TextInput
+                style={styles.reviewTextInput}
+                placeholder="Enter your name"
+                placeholderTextColor={Colors.textSecondary}
+                value={reviewAuthor}
+                onChangeText={setReviewAuthor}
+              />
+            </View>
+
+            <Text style={styles.reviewModalLabel}>Your Review</Text>
+            <View style={[styles.reviewInputContainer, styles.reviewTextAreaContainer]}>
+              <TextInput
+                style={styles.reviewTextArea}
+                placeholder="Share your experience with this recipe..."
+                placeholderTextColor={Colors.textSecondary}
+                value={reviewComment}
+                onChangeText={setReviewComment}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <Pressable style={styles.submitReviewButton} onPress={handleSubmitReview}>
+              <Text style={styles.submitReviewButtonText}>Submit Review</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -1604,5 +1754,184 @@ const styles = StyleSheet.create({
     ...Typography.bodySmall,
     color: Colors.textSecondary,
     textDecorationLine: 'underline' as const,
+  },
+  reviewsSection: {
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  reviewsTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  reviewsTitle: {
+    ...Typography.h3,
+    color: Colors.text,
+  },
+  reviewsCount: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+  },
+  addReviewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+  },
+  addReviewButtonText: {
+    ...Typography.caption,
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
+  },
+  reviewsList: {
+    gap: Spacing.md,
+  },
+  reviewItem: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    ...Shadow.sm,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  reviewAuthorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  reviewAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewAuthor: {
+    ...Typography.label,
+    color: Colors.text,
+  },
+  reviewComment: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    lineHeight: 22,
+  },
+  reviewDate: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: Spacing.sm,
+    opacity: 0.7,
+  },
+  noReviewsContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  noReviewsText: {
+    ...Typography.label,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+  },
+  noReviewsSubtext: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  starButton: {
+    padding: 2,
+  },
+  reviewModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  reviewModalContainer: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    width: '100%',
+    maxWidth: 400,
+    ...Shadow.lg,
+  },
+  reviewModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  reviewModalTitle: {
+    ...Typography.h3,
+    color: Colors.text,
+  },
+  reviewModalCloseButton: {
+    padding: Spacing.xs,
+  },
+  reviewModalLabel: {
+    ...Typography.label,
+    color: Colors.text,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  reviewRatingSelector: {
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  reviewInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    gap: Spacing.sm,
+  },
+  reviewTextAreaContainer: {
+    alignItems: 'flex-start',
+  },
+  reviewTextInput: {
+    flex: 1,
+    ...Typography.body,
+    color: Colors.text,
+    padding: 0,
+  },
+  reviewTextArea: {
+    flex: 1,
+    width: '100%',
+    ...Typography.body,
+    color: Colors.text,
+    minHeight: 100,
+    padding: 0,
+  },
+  submitReviewButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    marginTop: Spacing.xl,
+  },
+  submitReviewButtonText: {
+    ...Typography.label,
+    color: Colors.textOnPrimary,
+    fontSize: 16,
   },
 });

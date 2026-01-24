@@ -3,13 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { mockRecipes } from '@/mocks/recipes';
-import { Recipe, MealPlan, UserPreferences } from '@/types/recipe';
+import { Recipe, MealPlan, UserPreferences, Review } from '@/types/recipe';
 
 const FAVORITES_KEY = 'culinaria_favorites';
 const MEAL_PLANS_KEY = 'culinaria_meal_plans';
 const PREFERENCES_KEY = 'culinaria_preferences';
 const RECENT_KEY = 'culinaria_recent';
 const CUSTOM_RECIPES_KEY = 'culinaria_custom_recipes';
+const REVIEWS_KEY = 'culinaria_reviews';
 
 export const [RecipeProvider, useRecipes] = createContextHook(() => {
   const queryClient = useQueryClient();
@@ -23,6 +24,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     skillLevel: 'intermediate',
   });
   const [customRecipes, setCustomRecipes] = useState<Recipe[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   const favoritesQuery = useQuery({
     queryKey: ['favorites'],
@@ -64,6 +66,14 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     },
   });
 
+  const reviewsQuery = useQuery({
+    queryKey: ['reviews'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(REVIEWS_KEY);
+      return stored ? JSON.parse(stored) : [];
+    },
+  });
+
   useEffect(() => {
     if (favoritesQuery.data) setFavorites(favoritesQuery.data);
   }, [favoritesQuery.data]);
@@ -83,6 +93,10 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
   useEffect(() => {
     if (customRecipesQuery.data) setCustomRecipes(customRecipesQuery.data);
   }, [customRecipesQuery.data]);
+
+  useEffect(() => {
+    if (reviewsQuery.data) setReviews(reviewsQuery.data);
+  }, [reviewsQuery.data]);
 
   const saveFavoritesMutation = useMutation({
     mutationFn: async (newFavorites: string[]) => {
@@ -131,6 +145,16 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customRecipes'] });
+    },
+  });
+
+  const saveReviewsMutation = useMutation({
+    mutationFn: async (newReviews: Review[]) => {
+      await AsyncStorage.setItem(REVIEWS_KEY, JSON.stringify(newReviews));
+      return newReviews;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
     },
   });
 
@@ -227,6 +251,31 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     return customRecipes.some((r) => r.id === recipeId);
   }, [customRecipes]);
 
+  const addReview = useCallback((review: Omit<Review, 'id' | 'createdAt'>) => {
+    const newReview: Review = {
+      ...review,
+      id: `review_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setReviews((prev) => {
+      const newReviews = [newReview, ...prev];
+      saveReviewsMutation.mutate(newReviews);
+      return newReviews;
+    });
+    return newReview;
+  }, []);
+
+  const getReviewsForRecipe = useCallback((recipeId: string) => {
+    return reviews.filter((r) => r.recipeId === recipeId);
+  }, [reviews]);
+
+  const getAverageRating = useCallback((recipeId: string) => {
+    const recipeReviews = reviews.filter((r) => r.recipeId === recipeId);
+    if (recipeReviews.length === 0) return null;
+    const total = recipeReviews.reduce((sum, r) => sum + r.rating, 0);
+    return total / recipeReviews.length;
+  }, [reviews]);
+
   const allRecipes = useMemo(() => {
     const combined = [...customRecipes, ...mockRecipes];
     return combined.map((recipe) => ({
@@ -249,7 +298,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     return allRecipes.find((recipe) => recipe.id === id);
   }, [allRecipes]);
 
-  const isLoading = favoritesQuery.isLoading || mealPlansQuery.isLoading || preferencesQuery.isLoading || customRecipesQuery.isLoading;
+  const isLoading = favoritesQuery.isLoading || mealPlansQuery.isLoading || preferencesQuery.isLoading || customRecipesQuery.isLoading || reviewsQuery.isLoading;
 
   return {
     allRecipes,
@@ -259,6 +308,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     mealPlans,
     userPreferences,
     customRecipes,
+    reviews,
     isLoading,
     toggleFavorite,
     addRecentlyViewed,
@@ -271,6 +321,9 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     deleteRecipe,
     updateRecipe,
     isCustomRecipe,
+    addReview,
+    getReviewsForRecipe,
+    getAverageRating,
   };
 });
 
