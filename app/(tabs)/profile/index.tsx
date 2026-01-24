@@ -52,6 +52,7 @@ export default function ProfileScreen() {
   const [showListModal, setShowListModal] = useState<ListType>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(currentUser.displayName);
+  const [editUsername, setEditUsername] = useState(currentUser.username);
   const [editBio, setEditBio] = useState(currentUser.bio);
   const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser.avatarUrl);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,12 +60,13 @@ export default function ProfileScreen() {
   const handleSaveProfile = useCallback(() => {
     updateProfile({
       displayName: editName,
+      username: editUsername,
       bio: editBio,
       avatarUrl: editAvatarUrl,
     });
     setShowEditModal(false);
     Alert.alert('Success', 'Profile updated successfully');
-  }, [editName, editBio, editAvatarUrl, updateProfile]);
+  }, [editName, editUsername, editBio, editAvatarUrl, updateProfile]);
 
   const pickImage = useCallback(async (useCamera: boolean) => {
     try {
@@ -414,6 +416,17 @@ export default function ProfileScreen() {
                 onChangeText={setEditName}
                 placeholder="Your name"
                 placeholderTextColor={Colors.textSecondary}
+              />
+
+              <Text style={styles.inputLabel}>Username</Text>
+              <TextInput
+                style={styles.input}
+                value={editUsername}
+                onChangeText={setEditUsername}
+                placeholder="username"
+                placeholderTextColor={Colors.textSecondary}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
 
               <Text style={styles.inputLabel}>Bio</Text>
