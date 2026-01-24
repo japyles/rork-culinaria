@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.borderLight,
   },
   editButton: {
-    width: '100%',
+    width: '50%',
   },
   section: {
     paddingVertical: Spacing.md,
