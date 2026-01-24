@@ -41,7 +41,7 @@ import {
   Sparkles,
   Star,
   MessageSquare,
-  User,
+  User as UserIcon,
 } from 'lucide-react-native';
 import { Ingredient, User } from '@/types/recipe';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
@@ -835,7 +835,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                     <View style={styles.reviewHeader}>
                       <View style={styles.reviewAuthorRow}>
                         <View style={styles.reviewAvatar}>
-                          <User size={16} color={Colors.textSecondary} />
+                          <UserIcon size={16} color={Colors.textSecondary} />
                         </View>
                         <Text style={styles.reviewAuthor}>{review.authorName}</Text>
                       </View>
@@ -1083,7 +1083,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
 
             <Text style={styles.reviewModalLabel}>Your Name</Text>
             <View style={styles.reviewInputContainer}>
-              <User size={18} color={Colors.textSecondary} />
+              <UserIcon size={18} color={Colors.textSecondary} />
               <TextInput
                 style={styles.reviewTextInput}
                 placeholder="Enter your name"
