@@ -149,7 +149,7 @@ export default function ProfileScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Profile</Text>
-            <Pressable style={styles.settingsButton}>
+            <Pressable style={styles.settingsButton} onPress={() => setShowEditModal(true)}>
               <Settings size={22} color={Colors.text} />
             </Pressable>
           </View>
