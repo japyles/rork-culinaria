@@ -492,8 +492,83 @@ export default function ScanRecipeScreen() {
           contentContainerStyle={styles.editContent}
           showsVerticalScrollIndicator={false}
         >
-          {capturedImage && (
-            <Image source={{ uri: capturedImage }} style={styles.previewImage} />
+          {capturedImage ? (
+            <View style={styles.imageEditContainer}>
+              <Image source={{ uri: capturedImage }} style={styles.previewImage} />
+              <View style={styles.imageEditOverlay}>
+                <Pressable
+                  style={styles.imageEditButton}
+                  onPress={async () => {
+                    try {
+                      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                      if (status !== 'granted') {
+                        Alert.alert('Permission needed', 'Camera permission is required to take photos');
+                        return;
+                      }
+                      const result = await ImagePicker.launchCameraAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [4, 3],
+                        quality: 0.8,
+                      });
+                      if (!result.canceled && result.assets[0]) {
+                        setCapturedImage(result.assets[0].uri);
+                      }
+                    } catch (err) {
+                      console.error('Error taking photo:', err);
+                    }
+                  }}
+                >
+                  <Camera size={20} color={Colors.textOnPrimary} />
+                  <Text style={styles.imageEditButtonText}>Camera</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.imageEditButton}
+                  onPress={async () => {
+                    try {
+                      const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [4, 3],
+                        quality: 0.8,
+                      });
+                      if (!result.canceled && result.assets[0]) {
+                        setCapturedImage(result.assets[0].uri);
+                      }
+                    } catch (err) {
+                      console.error('Error picking image:', err);
+                    }
+                  }}
+                >
+                  <ImageIcon size={20} color={Colors.textOnPrimary} />
+                  <Text style={styles.imageEditButtonText}>Gallery</Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.noImageContainer}>
+              <Pressable
+                style={styles.addImageButton}
+                onPress={async () => {
+                  try {
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                      allowsEditing: true,
+                      aspect: [4, 3],
+                      quality: 0.8,
+                    });
+                    if (!result.canceled && result.assets[0]) {
+                      setCapturedImage(result.assets[0].uri);
+                    }
+                  } catch (err) {
+                    console.error('Error picking image:', err);
+                  }
+                }}
+              >
+                <ImageIcon size={32} color={Colors.primary} />
+                <Text style={styles.addImageText}>Add Recipe Image</Text>
+              </Pressable>
+            </View>
           )}
 
           <View style={styles.formSection}>
@@ -1077,7 +1152,56 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     borderRadius: BorderRadius.lg,
+  },
+  imageEditContainer: {
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
     marginBottom: Spacing.lg,
+  },
+  imageEditOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.md,
+    padding: Spacing.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  imageEditButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: BorderRadius.md,
+  },
+  imageEditButtonText: {
+    ...Typography.caption,
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
+  },
+  noImageContainer: {
+    marginBottom: Spacing.lg,
+  },
+  addImageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.xl,
+    borderWidth: 2,
+    borderColor: Colors.borderLight,
+    borderStyle: 'dashed',
+  },
+  addImageText: {
+    ...Typography.body,
+    color: Colors.primary,
+    fontWeight: '600' as const,
   },
   formSection: {
     marginBottom: Spacing.lg,
