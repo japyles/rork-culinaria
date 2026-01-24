@@ -43,9 +43,10 @@ import {
   MessageSquare,
   User,
 } from 'lucide-react-native';
-import { Ingredient } from '@/types/recipe';
+import { Ingredient, User } from '@/types/recipe';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useSocial } from '@/contexts/SocialContext';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
 
@@ -55,6 +56,7 @@ export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe, addReview, getReviewsForRecipe, getAverageRating } = useRecipes();
+  const { getFollowingUsers, getFollowersUsers, shareRecipe, isFollowing: isFollowingUser } = useSocial();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
   const [showMenu, setShowMenu] = useState(false);
@@ -70,6 +72,9 @@ export default function RecipeDetailScreen() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewAuthor, setReviewAuthor] = useState('');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedShareUsers, setSelectedShareUsers] = useState<string[]>([]);
+  const [shareMessage, setShareMessage] = useState('');
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<ExpoAv.Audio.Sound | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -408,20 +413,25 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
   const handleShare = async () => {
     console.log('handleShare called');
     if (!recipe) return;
+    setShowShareModal(true);
+  };
+
+  const handleExternalShare = async () => {
+    if (!recipe) return;
     try {
       const deepLink = Linking.createURL(`/recipe/${recipe.id}`);
       const appStoreUrl = 'https://apps.apple.com/app/id123456789';
       const playStoreUrl = 'https://play.google.com/store/apps/details?id=app.rork.culinaria';
       
-      const shareMessage = `Check out this recipe: ${recipe.title}\n\nOpen in Culinaria: ${deepLink}\n\nDon't have the app?\niPhone: ${appStoreUrl}\nAndroid: ${playStoreUrl}`;
+      const externalShareMessage = `Check out this recipe: ${recipe.title}\n\nOpen in Culinaria: ${deepLink}\n\nDon't have the app?\niPhone: ${appStoreUrl}\nAndroid: ${playStoreUrl}`;
       
       const shareContent = Platform.select({
         web: {
           title: recipe.title,
-          text: shareMessage,
+          text: externalShareMessage,
         },
         default: {
-          message: shareMessage,
+          message: externalShareMessage,
           title: recipe.title,
         },
       });
@@ -430,7 +440,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
         if (navigator.share) {
           await navigator.share(shareContent as ShareData);
         } else {
-          await navigator.clipboard.writeText(shareMessage);
+          await navigator.clipboard.writeText(externalShareMessage);
           Alert.alert('Copied!', 'Recipe link copied to clipboard');
         }
       } else {
@@ -440,6 +450,28 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
       console.log('Error sharing:', error);
     }
   };
+
+  const toggleUserSelection = (userId: string) => {
+    setSelectedShareUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleShareWithUsers = () => {
+    if (!recipe || selectedShareUsers.length === 0) {
+      Alert.alert('Select Users', 'Please select at least one user to share with.');
+      return;
+    }
+    shareRecipe(recipe.id, selectedShareUsers, shareMessage || undefined);
+    setShowShareModal(false);
+    setSelectedShareUsers([]);
+    setShareMessage('');
+    Alert.alert('Shared!', `Recipe shared with ${selectedShareUsers.length} user${selectedShareUsers.length > 1 ? 's' : ''}.`);
+  };
+
+  const allConnectedUsers = [...new Map([...getFollowingUsers, ...getFollowersUsers].map(u => [u.id, u])).values()];
 
   const handleOpenMenu = () => {
     console.log('handleOpenMenu called');
@@ -826,6 +858,92 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
           <View style={styles.bottomPadding} />
         </Animated.View>
       </Animated.ScrollView>
+
+      <Modal
+        visible={showShareModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowShareModal(false)}
+      >
+        <View style={styles.shareModalOverlay}>
+          <View style={styles.shareModalContainer}>
+            <View style={styles.shareModalHeader}>
+              <Text style={styles.shareModalTitle}>Share Recipe</Text>
+              <Pressable onPress={() => setShowShareModal(false)} style={styles.shareModalCloseButton}>
+                <X size={24} color={Colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <Pressable style={styles.externalShareButton} onPress={handleExternalShare}>
+              <Share2 size={20} color={Colors.primary} />
+              <Text style={styles.externalShareText}>Share via other apps...</Text>
+            </Pressable>
+
+            <Text style={styles.shareModalSubtitle}>Share with your connections</Text>
+
+            {allConnectedUsers.length > 0 ? (
+              <Animated.ScrollView style={styles.shareUsersList} showsVerticalScrollIndicator={false}>
+                {allConnectedUsers.map((user) => (
+                  <Pressable
+                    key={user.id}
+                    style={[
+                      styles.shareUserItem,
+                      selectedShareUsers.includes(user.id) && styles.shareUserItemSelected,
+                    ]}
+                    onPress={() => toggleUserSelection(user.id)}
+                  >
+                    <Animated.Image source={{ uri: user.avatarUrl }} style={styles.shareUserAvatar} />
+                    <View style={styles.shareUserInfo}>
+                      <Text style={styles.shareUserName}>{user.displayName}</Text>
+                      <Text style={styles.shareUserUsername}>@{user.username}</Text>
+                    </View>
+                    <View style={[
+                      styles.shareCheckbox,
+                      selectedShareUsers.includes(user.id) && styles.shareCheckboxSelected,
+                    ]}>
+                      {selectedShareUsers.includes(user.id) && (
+                        <Check size={14} color={Colors.textOnPrimary} />
+                      )}
+                    </View>
+                  </Pressable>
+                ))}
+              </Animated.ScrollView>
+            ) : (
+              <View style={styles.noConnectionsContainer}>
+                <Users size={40} color={Colors.borderLight} />
+                <Text style={styles.noConnectionsText}>No connections yet</Text>
+                <Text style={styles.noConnectionsSubtext}>Follow users to share recipes with them</Text>
+              </View>
+            )}
+
+            {selectedShareUsers.length > 0 && (
+              <View style={styles.shareMessageSection}>
+                <TextInput
+                  style={styles.shareMessageInput}
+                  placeholder="Add a message (optional)"
+                  placeholderTextColor={Colors.textSecondary}
+                  value={shareMessage}
+                  onChangeText={setShareMessage}
+                  multiline
+                />
+              </View>
+            )}
+
+            <Pressable
+              style={[
+                styles.shareSubmitButton,
+                selectedShareUsers.length === 0 && styles.shareSubmitButtonDisabled,
+              ]}
+              onPress={handleShareWithUsers}
+              disabled={selectedShareUsers.length === 0}
+            >
+              <Text style={styles.shareSubmitButtonText}>
+                Share with {selectedShareUsers.length} user{selectedShareUsers.length !== 1 ? 's' : ''}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       <Modal
         visible={showMenu}
@@ -1930,6 +2048,137 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xl,
   },
   submitReviewButtonText: {
+    ...Typography.label,
+    color: Colors.textOnPrimary,
+    fontSize: 16,
+  },
+  shareModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  shareModalContainer: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    maxHeight: '80%',
+    ...Shadow.lg,
+  },
+  shareModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  shareModalTitle: {
+    ...Typography.h3,
+    color: Colors.text,
+  },
+  shareModalCloseButton: {
+    padding: Spacing.xs,
+  },
+  externalShareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary + '15',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  externalShareText: {
+    ...Typography.body,
+    color: Colors.primary,
+    fontWeight: '500' as const,
+  },
+  shareModalSubtitle: {
+    ...Typography.label,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.md,
+  },
+  shareUsersList: {
+    maxHeight: 300,
+  },
+  shareUserItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xs,
+  },
+  shareUserItemSelected: {
+    backgroundColor: Colors.primary + '15',
+  },
+  shareUserAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: Spacing.md,
+  },
+  shareUserInfo: {
+    flex: 1,
+  },
+  shareUserName: {
+    ...Typography.bodyBold,
+    color: Colors.text,
+  },
+  shareUserUsername: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  shareCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.borderLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareCheckboxSelected: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  noConnectionsContainer: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  noConnectionsText: {
+    ...Typography.label,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
+  },
+  noConnectionsSubtext: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
+  },
+  shareMessageSection: {
+    marginTop: Spacing.md,
+  },
+  shareMessageInput: {
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    ...Typography.body,
+    color: Colors.text,
+    minHeight: 60,
+    textAlignVertical: 'top' as const,
+  },
+  shareSubmitButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  shareSubmitButtonDisabled: {
+    backgroundColor: Colors.borderLight,
+  },
+  shareSubmitButtonText: {
     ...Typography.label,
     color: Colors.textOnPrimary,
     fontSize: 16,

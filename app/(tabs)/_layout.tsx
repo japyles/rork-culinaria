@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Search, ChefHat, CalendarDays, Heart } from "lucide-react-native";
+import { Home, Search, ChefHat, CalendarDays, User } from "lucide-react-native";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import Colors from "@/constants/colors";
@@ -63,10 +63,17 @@ export default function TabLayout() {
       <Tabs.Screen
         name="favorites"
         options={{
+          href: null,
           title: "Favorites",
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
           tabBarIcon: ({ color, focused }) => (
             <View style={focused && styles.activeIconContainer}>
-              <Heart size={22} color={color} />
+              <User size={22} color={color} />
             </View>
           ),
         }}

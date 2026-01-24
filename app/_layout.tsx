@@ -4,6 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { RecipeProvider } from "@/contexts/RecipeContext";
+import { SocialProvider } from "@/contexts/SocialContext";
 import Colors from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -49,6 +50,13 @@ function RootLayoutNav() {
           presentation: "fullScreenModal",
         }}
       />
+      <Stack.Screen
+        name="user/[id]"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
     </Stack>
   );
 }
@@ -62,7 +70,9 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <RecipeProvider>
-          <RootLayoutNav />
+          <SocialProvider>
+            <RootLayoutNav />
+          </SocialProvider>
         </RecipeProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>

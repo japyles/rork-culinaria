@@ -98,3 +98,25 @@ export interface Review {
   authorName: string;
   createdAt: string;
 }
+
+export interface User {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string;
+  bio: string;
+  recipesCount: number;
+  followersCount: number;
+  followingCount: number;
+  isVerified?: boolean;
+  joinedAt: string;
+}
+
+export interface SharedRecipe {
+  id: string;
+  recipeId: string;
+  fromUserId: string;
+  toUserId: string;
+  message?: string;
+  sharedAt: string;
+}

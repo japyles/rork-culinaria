@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,29 +8,38 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
-import { X, Check } from 'lucide-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { X, Check, Users, BadgeCheck, ChefHat } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useFilteredRecipes } from '@/contexts/RecipeContext';
+import { useSocial, useUserSearch } from '@/contexts/SocialContext';
 import { categories, cuisines } from '@/mocks/recipes';
+import { User } from '@/types/recipe';
 import RecipeCard from '@/components/RecipeCard';
 import SearchBar from '@/components/SearchBar';
 import CategoryChip from '@/components/CategoryChip';
 import Button from '@/components/Button';
 
 const difficulties = ['Easy', 'Medium', 'Hard'];
+type SearchMode = 'recipes' | 'users';
 
 export default function DiscoverScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
+  const router = useRouter();
   const [search, setSearch] = useState('');
+  const [searchMode, setSearchMode] = useState<SearchMode>('recipes');
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>(
     params.category
   );
   const [selectedCuisine, setSelectedCuisine] = useState<string | undefined>();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+
+  const { isFollowing, toggleFollow, getSuggestedUsers } = useSocial();
+  const searchedUsers = useUserSearch(search);
 
   const filteredRecipes = useFilteredRecipes(
     search,
@@ -63,87 +72,210 @@ export default function DiscoverScreen() {
     setSelectedDifficulty(undefined);
   };
 
+  const renderUserItem = useCallback(
+    ({ item }: { item: User }) => {
+      const following = isFollowing(item.id);
+      return (
+        <Pressable
+          style={styles.userCard}
+          onPress={() => router.push(`/user/${item.id}`)}
+        >
+          <Image source={{ uri: item.avatarUrl }} style={styles.userAvatar} />
+          <View style={styles.userInfo}>
+            <View style={styles.userNameRow}>
+              <Text style={styles.userDisplayName}>{item.displayName}</Text>
+              {item.isVerified && (
+                <BadgeCheck size={14} color={Colors.primary} />
+              )}
+            </View>
+            <Text style={styles.userUsername}>@{item.username}</Text>
+            <Text style={styles.userStats}>
+              {item.recipesCount} recipes · {item.followersCount > 1000
+                ? `${(item.followersCount / 1000).toFixed(1)}K`
+                : item.followersCount} followers
+            </Text>
+          </View>
+          <Pressable
+            style={[
+              styles.followButton,
+              following && styles.followingButton,
+            ]}
+            onPress={(e) => {
+              e.stopPropagation();
+              toggleFollow(item.id);
+            }}
+          >
+            <Text
+              style={[
+                styles.followButtonText,
+                following && styles.followingButtonText,
+              ]}
+            >
+              {following ? 'Following' : 'Follow'}
+            </Text>
+          </Pressable>
+        </Pressable>
+      );
+    },
+    [isFollowing, toggleFollow, router]
+  );
+
   const renderHeader = () => (
     <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
       <Text style={styles.title}>Discover</Text>
-      <Text style={styles.subtitle}>Find your next culinary adventure</Text>
+      <Text style={styles.subtitle}>Find recipes and connect with cooks</Text>
 
       <View style={styles.searchContainer}>
         <SearchBar
           value={search}
           onChangeText={setSearch}
           onFilterPress={() => setShowFilters(true)}
-          placeholder="Search recipes, ingredients..."
+          placeholder={searchMode === 'recipes' ? "Search recipes, ingredients..." : "Search users..."}
         />
-        {activeFiltersCount > 0 && (
+        {activeFiltersCount > 0 && searchMode === 'recipes' && (
           <View style={styles.filterBadge}>
             <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
           </View>
         )}
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesContainer}
-      >
-        <CategoryChip
-          label="All"
-          isSelected={!selectedCategory}
-          onPress={() => setSelectedCategory(undefined)}
-        />
-        {categories.map((category) => (
-          <CategoryChip
-            key={category.id}
-            label={category.name}
-            icon={category.icon}
-            color={category.color}
-            isSelected={selectedCategory === category.id}
-            onPress={() =>
-              setSelectedCategory(
-                selectedCategory === category.id ? undefined : category.id
-              )
-            }
-          />
-        ))}
-      </ScrollView>
+      <View style={styles.modeToggle}>
+        <Pressable
+          style={[
+            styles.modeButton,
+            searchMode === 'recipes' && styles.modeButtonActive,
+          ]}
+          onPress={() => setSearchMode('recipes')}
+        >
+          <ChefHat size={16} color={searchMode === 'recipes' ? Colors.textOnPrimary : Colors.textSecondary} />
+          <Text
+            style={[
+              styles.modeButtonText,
+              searchMode === 'recipes' && styles.modeButtonTextActive,
+            ]}
+          >
+            Recipes
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[
+            styles.modeButton,
+            searchMode === 'users' && styles.modeButtonActive,
+          ]}
+          onPress={() => setSearchMode('users')}
+        >
+          <Users size={16} color={searchMode === 'users' ? Colors.textOnPrimary : Colors.textSecondary} />
+          <Text
+            style={[
+              styles.modeButtonText,
+              searchMode === 'users' && styles.modeButtonTextActive,
+            ]}
+          >
+            Users
+          </Text>
+        </Pressable>
+      </View>
 
-      <Text style={styles.resultsCount}>
-        {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
-      </Text>
+      {searchMode === 'recipes' && (
+        <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesContainer}
+          >
+            <CategoryChip
+              label="All"
+              isSelected={!selectedCategory}
+              onPress={() => setSelectedCategory(undefined)}
+            />
+            {categories.map((category) => (
+              <CategoryChip
+                key={category.id}
+                label={category.name}
+                icon={category.icon}
+                color={category.color}
+                isSelected={selectedCategory === category.id}
+                onPress={() =>
+                  setSelectedCategory(
+                    selectedCategory === category.id ? undefined : category.id
+                  )
+                }
+              />
+            ))}
+          </ScrollView>
+
+          <Text style={styles.resultsCount}>
+            {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
+          </Text>
+        </>
+      )}
+
+      {searchMode === 'users' && !search && (
+        <View style={styles.suggestedSection}>
+          <Text style={styles.suggestedTitle}>Suggested Users</Text>
+        </View>
+      )}
+
+      {searchMode === 'users' && search && (
+        <Text style={styles.resultsCount}>
+          {searchedUsers.length} user{searchedUsers.length !== 1 ? 's' : ''} found
+        </Text>
+      )}
     </Animated.View>
   );
+
+  const displayedUsers = search ? searchedUsers : getSuggestedUsers;
 
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <FlatList
-          data={filteredRecipes}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => (
-            <View style={styles.cardContainer}>
-              <RecipeCard recipe={item} />
-            </View>
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyIcon}>🍳</Text>
-              <Text style={styles.emptyTitle}>No recipes found</Text>
-              <Text style={styles.emptyText}>
-                Try adjusting your search or filters
-              </Text>
-              <Button
-                title="Clear filters"
-                variant="outline"
-                size="sm"
-                onPress={clearFilters}
-              />
-            </View>
-          }
-        />
+        {searchMode === 'recipes' ? (
+          <FlatList
+            data={filteredRecipes}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={renderHeader}
+            renderItem={({ item }) => (
+              <View style={styles.cardContainer}>
+                <RecipeCard recipe={item} />
+              </View>
+            )}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>🍳</Text>
+                <Text style={styles.emptyTitle}>No recipes found</Text>
+                <Text style={styles.emptyText}>
+                  Try adjusting your search or filters
+                </Text>
+                <Button
+                  title="Clear filters"
+                  variant="outline"
+                  size="sm"
+                  onPress={clearFilters}
+                />
+              </View>
+            }
+          />
+        ) : (
+          <FlatList
+            data={displayedUsers}
+            keyExtractor={(item) => item.id}
+            ListHeaderComponent={renderHeader}
+            renderItem={renderUserItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Users size={48} color={Colors.textSecondary} />
+                <Text style={styles.emptyTitle}>No users found</Text>
+                <Text style={styles.emptyText}>
+                  Try a different search term
+                </Text>
+              </View>
+            }
+          />
+        )}
 
         <Modal
           visible={showFilters}
@@ -321,6 +453,97 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center' as const,
     marginBottom: Spacing.lg,
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.full,
+    padding: 4,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  modeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    gap: Spacing.xs,
+  },
+  modeButtonActive: {
+    backgroundColor: Colors.primary,
+  },
+  modeButtonText: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+  },
+  modeButtonTextActive: {
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
+  },
+  userCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+  },
+  userAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: Spacing.md,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+  },
+  userDisplayName: {
+    ...Typography.bodyBold,
+    color: Colors.text,
+  },
+  userUsername: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  userStats: {
+    ...Typography.caption,
+    color: Colors.primary,
+    marginTop: Spacing.xs,
+  },
+  followButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+  },
+  followingButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  followButtonText: {
+    ...Typography.caption,
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
+  },
+  followingButtonText: {
+    color: Colors.primary,
+  },
+  suggestedSection: {
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  suggestedTitle: {
+    ...Typography.label,
+    color: Colors.textSecondary,
   },
   modalContainer: {
     flex: 1,
