@@ -205,12 +205,6 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
 
-            <Button
-              title="Edit Profile"
-              variant="outline"
-              onPress={() => setShowEditModal(true)}
-              style={styles.editButton}
-            />
           </View>
 
           <View style={styles.section}>
