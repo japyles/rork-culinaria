@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   Alert,
   Platform,
   ActionSheetIOS,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -255,48 +257,58 @@ export default function ProfileScreen() {
             <Text style={styles.username}>@{currentUser.username}</Text>
             <Text style={styles.bio}>{currentUser.bio}</Text>
 
-            <View style={styles.statsRow}>
-              <Pressable
-                style={styles.statItem}
-                onPress={() => setShowListModal('recipes')}
+            <View style={styles.statsCarouselContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.statsCarousel}
+                decelerationRate="fast"
+                snapToInterval={85}
               >
-                <ChefHat size={18} color={Colors.primary} />
-                <Text style={styles.statValue}>{customRecipes.length}</Text>
-                <Text style={styles.statLabel}>Recipes</Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.statCard, styles.statCard1]}
+                  onPress={() => setShowListModal('recipes')}
+                >
+                  <View style={styles.statCardIcon}>
+                    <ChefHat size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.statCardValue}>{customRecipes.length}</Text>
+                  <Text style={styles.statCardLabel}>Recipes</Text>
+                </Pressable>
 
-              <View style={styles.statDivider} />
+                <Pressable
+                  style={[styles.statCard, styles.statCard2]}
+                  onPress={() => router.push('/(tabs)/favorites')}
+                >
+                  <View style={[styles.statCardIcon, styles.statCardIconAccent]}>
+                    <Heart size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.statCardValue}>{favorites.length}</Text>
+                  <Text style={styles.statCardLabel}>Favorites</Text>
+                </Pressable>
 
-              <Pressable
-                style={styles.statItem}
-                onPress={() => router.push('/favorites')}
-              >
-                <Heart size={18} color={Colors.accent} />
-                <Text style={styles.statValue}>{favorites.length}</Text>
-                <Text style={styles.statLabel}>Favorites</Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.statCard, styles.statCard3]}
+                  onPress={() => setShowListModal('followers')}
+                >
+                  <View style={[styles.statCardIcon, styles.statCardIconSecondary]}>
+                    <Users size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.statCardValue}>{followers.length}</Text>
+                  <Text style={styles.statCardLabel}>Followers</Text>
+                </Pressable>
 
-              <View style={styles.statDivider} />
-
-              <Pressable
-                style={styles.statItem}
-                onPress={() => setShowListModal('followers')}
-              >
-                <Users size={18} color={Colors.primary} />
-                <Text style={styles.statValue}>{followers.length}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
-              </Pressable>
-
-              <View style={styles.statDivider} />
-
-              <Pressable
-                style={styles.statItem}
-                onPress={() => setShowListModal('following')}
-              >
-                <UserPlus size={18} color={Colors.primary} />
-                <Text style={styles.statValue}>{following.length}</Text>
-                <Text style={styles.statLabel}>Following</Text>
-              </Pressable>
+                <Pressable
+                  style={[styles.statCard, styles.statCard4]}
+                  onPress={() => setShowListModal('following')}
+                >
+                  <View style={[styles.statCardIcon, styles.statCardIconTertiary]}>
+                    <UserPlus size={22} color="#fff" />
+                  </View>
+                  <Text style={styles.statCardValue}>{following.length}</Text>
+                  <Text style={styles.statCardLabel}>Following</Text>
+                </Pressable>
+              </ScrollView>
             </View>
 
           </View>
@@ -605,31 +617,75 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.lg,
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
+  statsCarouselContainer: {
+    width: '100%',
     marginBottom: Spacing.lg,
   },
-  statItem: {
-    flex: 1,
+  statsCarousel: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
+  statCard: {
+    width: 95,
+    height: 130,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.md,
     alignItems: 'center',
-    gap: Spacing.xs,
+    justifyContent: 'center',
+    marginRight: -15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.8)',
   },
-  statValue: {
-    ...Typography.h3,
+  statCard1: {
+    zIndex: 4,
+    transform: [{ rotate: '-3deg' }],
+  },
+  statCard2: {
+    zIndex: 3,
+    transform: [{ rotate: '2deg' }],
+  },
+  statCard3: {
+    zIndex: 2,
+    transform: [{ rotate: '-2deg' }],
+  },
+  statCard4: {
+    zIndex: 1,
+    transform: [{ rotate: '3deg' }],
+    marginRight: 0,
+  },
+  statCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  statCardIconAccent: {
+    backgroundColor: Colors.accent,
+  },
+  statCardIconSecondary: {
+    backgroundColor: Colors.secondary,
+  },
+  statCardIconTertiary: {
+    backgroundColor: '#6366F1',
+  },
+  statCardValue: {
+    ...Typography.h2,
     color: Colors.text,
+    marginBottom: 2,
   },
-  statLabel: {
+  statCardLabel: {
     ...Typography.caption,
     color: Colors.textSecondary,
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: Colors.borderLight,
+    fontWeight: '500' as const,
   },
   editButton: {
     width: '50%',
