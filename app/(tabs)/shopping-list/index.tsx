@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ShoppingCart, Check, Trash2, X, Truck, ExternalLink, Copy } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
+
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import GlassCard from '@/components/GlassCard';
@@ -129,8 +129,18 @@ export default function ShoppingListScreen() {
       return;
     }
     const listText = formatItemsForClipboard(items);
-    await Clipboard.setStringAsync(listText);
-    Alert.alert('Copied!', 'Shopping list copied to clipboard. Paste it into any grocery app.');
+    try {
+      if (Platform.OS === 'web' && navigator?.clipboard) {
+        await navigator.clipboard.writeText(listText);
+      } else {
+        const Clipboard = await import('expo-clipboard');
+        await Clipboard.setStringAsync(listText);
+      }
+      Alert.alert('Copied!', 'Shopping list copied to clipboard. Paste it into any grocery app.');
+    } catch (error) {
+      console.log('Error copying to clipboard:', error);
+      Alert.alert('Error', 'Could not copy to clipboard. Please try again.');
+    }
   };
 
   return (
