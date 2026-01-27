@@ -166,7 +166,7 @@ export default function FavoritesModalScreen() {
 
   const renderHeader = () => (
     
-
+		<View>
       <View style={styles.tabsContainer}>
         <Animated.View
           style={[
