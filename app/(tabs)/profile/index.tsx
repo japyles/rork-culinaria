@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
   Alert,
   Platform,
   ActionSheetIOS,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -255,49 +257,57 @@ export default function ProfileScreen() {
             <Text style={styles.username}>@{currentUser.username}</Text>
             <Text style={styles.bio}>{currentUser.bio}</Text>
 
-            <View style={styles.statsRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.statsCardsContainer}
+              decelerationRate="fast"
+              snapToInterval={85}
+            >
               <Pressable
-                style={styles.statItem}
+                style={[styles.statCard, styles.statCardRecipes]}
                 onPress={() => setShowListModal('recipes')}
               >
-                <ChefHat size={18} color={Colors.primary} />
-                <Text style={styles.statValue}>{customRecipes.length}</Text>
-                <Text style={styles.statLabel}>Recipes</Text>
+                <View style={styles.statCardIconContainer}>
+                  <ChefHat size={22} color="#fff" />
+                </View>
+                <Text style={styles.statCardValue}>{customRecipes.length}</Text>
+                <Text style={styles.statCardLabel}>Recipes</Text>
               </Pressable>
 
-              <View style={styles.statDivider} />
-
               <Pressable
-                style={styles.statItem}
-                onPress={() => router.push('/favorites')}
+                style={[styles.statCard, styles.statCardFavorites]}
+                onPress={() => router.push('/(tabs)/favorites')}
               >
-                <Heart size={18} color={Colors.accent} />
-                <Text style={styles.statValue}>{favorites.length}</Text>
-                <Text style={styles.statLabel}>Favorites</Text>
+                <View style={styles.statCardIconContainer}>
+                  <Heart size={22} color="#fff" />
+                </View>
+                <Text style={styles.statCardValue}>{favorites.length}</Text>
+                <Text style={styles.statCardLabel}>Favorites</Text>
               </Pressable>
 
-              <View style={styles.statDivider} />
-
               <Pressable
-                style={styles.statItem}
+                style={[styles.statCard, styles.statCardFollowers]}
                 onPress={() => setShowListModal('followers')}
               >
-                <Users size={18} color={Colors.primary} />
-                <Text style={styles.statValue}>{followers.length}</Text>
-                <Text style={styles.statLabel}>Followers</Text>
+                <View style={styles.statCardIconContainer}>
+                  <Users size={22} color="#fff" />
+                </View>
+                <Text style={styles.statCardValue}>{followers.length}</Text>
+                <Text style={styles.statCardLabel}>Followers</Text>
               </Pressable>
-
-              <View style={styles.statDivider} />
 
               <Pressable
-                style={styles.statItem}
+                style={[styles.statCard, styles.statCardFollowing]}
                 onPress={() => setShowListModal('following')}
               >
-                <UserPlus size={18} color={Colors.primary} />
-                <Text style={styles.statValue}>{following.length}</Text>
-                <Text style={styles.statLabel}>Following</Text>
+                <View style={styles.statCardIconContainer}>
+                  <UserPlus size={22} color="#fff" />
+                </View>
+                <Text style={styles.statCardValue}>{following.length}</Text>
+                <Text style={styles.statCardLabel}>Following</Text>
               </Pressable>
-            </View>
+            </ScrollView>
 
           </View>
 
@@ -605,31 +615,62 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.lg,
   },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
+  statsCardsContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+  },
+  statCard: {
+    width: 95,
+    height: 130,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  statItem: {
-    flex: 1,
     alignItems: 'center',
-    gap: Spacing.xs,
+    justifyContent: 'center',
+    marginRight: -10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  statValue: {
-    ...Typography.h3,
-    color: Colors.text,
+  statCardRecipes: {
+    backgroundColor: Colors.primary,
+    zIndex: 4,
   },
-  statLabel: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
+  statCardFavorites: {
+    backgroundColor: Colors.accent,
+    zIndex: 3,
   },
-  statDivider: {
-    width: 1,
+  statCardFollowers: {
+    backgroundColor: Colors.secondary,
+    zIndex: 2,
+  },
+  statCardFollowing: {
+    backgroundColor: '#6366F1',
+    zIndex: 1,
+    marginRight: 0,
+  },
+  statCardIconContainer: {
+    width: 40,
     height: 40,
-    backgroundColor: Colors.borderLight,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  statCardValue: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: '#fff',
+    marginBottom: 2,
+  },
+  statCardLabel: {
+    fontSize: 11,
+    fontWeight: '500' as const,
+    color: 'rgba(255,255,255,0.85)',
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
   },
   editButton: {
     width: '50%',
