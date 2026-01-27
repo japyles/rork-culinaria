@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   quickActionCard: {
     alignItems: 'center',
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.md,
   },
   quickActionIcon: {
     width: 56,
