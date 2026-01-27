@@ -663,19 +663,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    // backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
   statCardIconAccent: {
-    // backgroundColor: Colors.primary,
   },
   statCardIconSecondary: {
-    // backgroundColor: Colors.secondary,
   },
   statCardIconTertiary: {
-    // backgroundColor: '#6366F1',
   },
   statCardValue: {
     ...Typography.h2,
