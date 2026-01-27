@@ -21,7 +21,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.glass.background,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: Colors.glass.border,
     ...Shadow.md,
   },
 });
