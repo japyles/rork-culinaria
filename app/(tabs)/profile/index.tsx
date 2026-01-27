@@ -25,6 +25,7 @@ import {
   BadgeCheck,
   X,
   Search,
+  Heart,
 } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
@@ -47,7 +48,7 @@ export default function ProfileScreen() {
     isFollowing,
     updateProfile,
   } = useSocial();
-  const { customRecipes } = useRecipes();
+  const { customRecipes, favorites } = useRecipes();
 
   const [showListModal, setShowListModal] = useState<ListType>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -262,6 +263,17 @@ export default function ProfileScreen() {
                 <ChefHat size={18} color={Colors.primary} />
                 <Text style={styles.statValue}>{customRecipes.length}</Text>
                 <Text style={styles.statLabel}>Recipes</Text>
+              </Pressable>
+
+              <View style={styles.statDivider} />
+
+              <Pressable
+                style={styles.statItem}
+                onPress={() => router.push('/favorites')}
+              >
+                <Heart size={18} color={Colors.accent} />
+                <Text style={styles.statValue}>{favorites.length}</Text>
+                <Text style={styles.statLabel}>Favorites</Text>
               </Pressable>
 
               <View style={styles.statDivider} />
