@@ -34,6 +34,7 @@ export default function FavoritesModalScreen() {
   const { favoriteRecipes, recentRecipes } = useRecipes();
   const [activeTab, setActiveTab] = useState<TabType>('favorites');
   const [currentDetent, setCurrentDetent] = useState(DETENTS.HALF);
+  const currentDetentRef = useRef(DETENTS.HALF);
   
   const sheetHeight = useRef(new Animated.Value(SCREEN_HEIGHT * DETENTS.HALF)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -41,6 +42,7 @@ export default function FavoritesModalScreen() {
 
   const snapToDetent = useCallback((detent: number) => {
     setCurrentDetent(detent);
+    currentDetentRef.current = detent;
     Animated.spring(sheetHeight, {
       toValue: SCREEN_HEIGHT * detent,
       friction: 10,
@@ -73,7 +75,8 @@ export default function FavoritesModalScreen() {
         return Math.abs(gestureState.dy) > 5;
       },
       onPanResponderMove: (_, gestureState) => {
-        const newHeight = SCREEN_HEIGHT * currentDetent - gestureState.dy;
+        const detent = currentDetentRef.current;
+        const newHeight = SCREEN_HEIGHT * detent - gestureState.dy;
         const clampedHeight = Math.max(
           SCREEN_HEIGHT * 0.2,
           Math.min(SCREEN_HEIGHT, newHeight)
@@ -81,8 +84,9 @@ export default function FavoritesModalScreen() {
         sheetHeight.setValue(clampedHeight);
       },
       onPanResponderRelease: (_, gestureState) => {
+        const detent = currentDetentRef.current;
         const velocity = gestureState.vy;
-        const currentHeight = SCREEN_HEIGHT * currentDetent - gestureState.dy;
+        const currentHeight = SCREEN_HEIGHT * detent - gestureState.dy;
         const currentRatio = currentHeight / SCREEN_HEIGHT;
 
         if (velocity > 1.5 || (velocity > 0.5 && currentRatio < 0.4)) {
@@ -91,9 +95,9 @@ export default function FavoritesModalScreen() {
         }
 
         if (velocity < -0.5) {
-          if (currentDetent === DETENTS.HALF) {
+          if (detent === DETENTS.HALF) {
             snapToDetent(DETENTS.THREE_QUARTER);
-          } else if (currentDetent === DETENTS.THREE_QUARTER) {
+          } else if (detent === DETENTS.THREE_QUARTER) {
             snapToDetent(DETENTS.FULL);
           } else {
             snapToDetent(DETENTS.FULL);
@@ -102,9 +106,9 @@ export default function FavoritesModalScreen() {
         }
 
         if (velocity > 0.5) {
-          if (currentDetent === DETENTS.FULL) {
+          if (detent === DETENTS.FULL) {
             snapToDetent(DETENTS.THREE_QUARTER);
-          } else if (currentDetent === DETENTS.THREE_QUARTER) {
+          } else if (detent === DETENTS.THREE_QUARTER) {
             snapToDetent(DETENTS.HALF);
           } else {
             snapToDetent(DETENTS.HALF);
