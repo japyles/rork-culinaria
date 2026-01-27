@@ -11,14 +11,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CalendarDays, Plus, ChevronLeft, ChevronRight, X, Clock, Users } from 'lucide-react-native';
+import { CalendarDays, Plus, ChevronLeft, ChevronRight, X, Clock, Users, Trash2, ShoppingCart, Check } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
-import { Recipe } from '@/types/recipe';
+import { Recipe, MealPlanEntry, Ingredient } from '@/types/recipe';
 import GlassCard from '@/components/GlassCard';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'] as const;
+
+interface MealItemWithRecipe {
+  entry: MealPlanEntry;
+  recipe: Recipe;
+}
 
 export default function MealPlanScreen() {
   const { 
@@ -26,13 +31,18 @@ export default function MealPlanScreen() {
     getRecipeById,
     addMealPlanEntry, 
     removeMealPlanEntry, 
-    getMealPlanEntry,
-    mealPlanEntries 
+    getMealPlanEntriesForSlot,
+    mealPlanEntries,
+    addToShoppingList,
   } = useRecipes();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState(getWeekStart(new Date()));
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<typeof MEAL_TYPES[number]>('breakfast');
+  const [showMealOptionsModal, setShowMealOptionsModal] = useState(false);
+  const [selectedMealItem, setSelectedMealItem] = useState<MealItemWithRecipe | null>(null);
+  const [showIngredientModal, setShowIngredientModal] = useState(false);
+  const [selectedIngredients, setSelectedIngredients] = useState<Set<string>>(new Set());
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -104,18 +114,73 @@ export default function MealPlanScreen() {
     setShowRecipeModal(false);
   };
 
-  const handleRemoveMeal = (mealType: typeof MEAL_TYPES[number]) => {
-    const dateKey = formatDateKey(selectedDate);
-    removeMealPlanEntry(dateKey, mealType);
+  const handleMealItemPress = (entry: MealPlanEntry, recipe: Recipe) => {
+    setSelectedMealItem({ entry, recipe });
+    setShowMealOptionsModal(true);
   };
 
-  const getMealForType = (mealType: typeof MEAL_TYPES[number]): Recipe | undefined => {
-    const dateKey = formatDateKey(selectedDate);
-    const entry = getMealPlanEntry(dateKey, mealType);
-    if (entry) {
-      return getRecipeById(entry.recipeId);
+  const handleDeleteMeal = () => {
+    if (selectedMealItem) {
+      removeMealPlanEntry(selectedMealItem.entry.id);
+      setShowMealOptionsModal(false);
+      setSelectedMealItem(null);
     }
-    return undefined;
+  };
+
+  const handleAddToShoppingList = () => {
+    if (selectedMealItem) {
+      setSelectedIngredients(new Set(selectedMealItem.recipe.ingredients.map(i => i.id)));
+      setShowMealOptionsModal(false);
+      setShowIngredientModal(true);
+    }
+  };
+
+  const toggleIngredient = (ingredientId: string) => {
+    setSelectedIngredients(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(ingredientId)) {
+        newSet.delete(ingredientId);
+      } else {
+        newSet.add(ingredientId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllIngredients = () => {
+    if (selectedMealItem) {
+      setSelectedIngredients(new Set(selectedMealItem.recipe.ingredients.map(i => i.id)));
+    }
+  };
+
+  const deselectAllIngredients = () => {
+    setSelectedIngredients(new Set());
+  };
+
+  const confirmAddToShoppingList = () => {
+    if (selectedMealItem && selectedIngredients.size > 0) {
+      const ingredientsToAdd = selectedMealItem.recipe.ingredients.filter(
+        ing => selectedIngredients.has(ing.id)
+      );
+      addToShoppingList(ingredientsToAdd, selectedMealItem.recipe.id, selectedMealItem.recipe.title);
+      setShowIngredientModal(false);
+      setSelectedMealItem(null);
+      setSelectedIngredients(new Set());
+    }
+  };
+
+  const getMealsForType = (mealType: typeof MEAL_TYPES[number]): MealItemWithRecipe[] => {
+    const dateKey = formatDateKey(selectedDate);
+    const entries = getMealPlanEntriesForSlot(dateKey, mealType);
+    return entries
+      .map(entry => {
+        const recipe = getRecipeById(entry.recipeId);
+        if (recipe) {
+          return { entry, recipe };
+        }
+        return null;
+      })
+      .filter((item): item is MealItemWithRecipe => item !== null);
   };
 
   const hasPlannedMeals = (date: Date): boolean => {
@@ -202,48 +267,52 @@ export default function MealPlanScreen() {
             </Text>
 
             {MEAL_TYPES.map((mealType) => {
-              const meal = getMealForType(mealType);
+              const meals = getMealsForType(mealType);
               return (
                 <GlassCard key={mealType} style={styles.mealCard}>
                   <View style={styles.mealHeader}>
                     <Text style={styles.mealType}>
                       {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
                     </Text>
-                    {meal && (
-                      <Pressable
-                        onPress={() => handleRemoveMeal(mealType)}
-                        style={styles.removeButton}
-                      >
-                        <X size={16} color={Colors.textSecondary} />
-                      </Pressable>
+                    {meals.length > 0 && (
+                      <Text style={styles.mealCount}>{meals.length} item{meals.length !== 1 ? 's' : ''}</Text>
                     )}
                   </View>
-                  {meal ? (
-                    <View style={styles.plannedMeal}>
-                      <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} />
-                      <View style={styles.mealInfo}>
-                        <Text style={styles.plannedMealTitle} numberOfLines={2}>{meal.title}</Text>
-                        <View style={styles.mealMeta}>
-                          <Clock size={12} color={Colors.textSecondary} />
-                          <Text style={styles.plannedMealMeta}>
-                            {meal.prepTime + meal.cookTime} min
-                          </Text>
-                          <Users size={12} color={Colors.textSecondary} style={{ marginLeft: 8 }} />
-                          <Text style={styles.plannedMealMeta}>
-                            {meal.servings}
-                          </Text>
-                        </View>
-                      </View>
+                  
+                  {meals.length > 0 && (
+                    <View style={styles.plannedMeals}>
+                      {meals.map(({ entry, recipe }) => (
+                        <Pressable
+                          key={entry.id}
+                          style={styles.plannedMeal}
+                          onPress={() => handleMealItemPress(entry, recipe)}
+                        >
+                          <Image source={{ uri: recipe.imageUrl }} style={styles.mealImage} />
+                          <View style={styles.mealInfo}>
+                            <Text style={styles.plannedMealTitle} numberOfLines={2}>{recipe.title}</Text>
+                            <View style={styles.mealMeta}>
+                              <Clock size={12} color={Colors.textSecondary} />
+                              <Text style={styles.plannedMealMeta}>
+                                {recipe.prepTime + recipe.cookTime} min
+                              </Text>
+                              <Users size={12} color={Colors.textSecondary} style={{ marginLeft: 8 }} />
+                              <Text style={styles.plannedMealMeta}>
+                                {recipe.servings}
+                              </Text>
+                            </View>
+                          </View>
+                        </Pressable>
+                      ))}
                     </View>
-                  ) : (
-                    <Pressable
-                      style={styles.addMealButton}
-                      onPress={() => handleAddMeal(mealType)}
-                    >
-                      <Plus size={20} color={Colors.primary} />
-                      <Text style={styles.addMealText}>Add {mealType}</Text>
-                    </Pressable>
                   )}
+                  
+                  <Pressable
+                    style={styles.addMealButton}
+                    onPress={() => handleAddMeal(mealType)}
+                  >
+                    <Plus size={20} color={Colors.primary} />
+                    <Text style={styles.addMealText}>Add {mealType}</Text>
+                  </Pressable>
                 </GlassCard>
               );
             })}
@@ -252,6 +321,7 @@ export default function MealPlanScreen() {
           <View style={styles.bottomPadding} />
         </ScrollView>
 
+        {/* Recipe Selection Modal */}
         <Modal
           visible={showRecipeModal}
           animationType="slide"
@@ -283,6 +353,125 @@ export default function MealPlanScreen() {
                 </Pressable>
               ))}
             </ScrollView>
+          </SafeAreaView>
+        </Modal>
+
+        {/* Meal Options Modal */}
+        <Modal
+          visible={showMealOptionsModal}
+          animationType="fade"
+          transparent
+        >
+          <Pressable 
+            style={styles.optionsOverlay}
+            onPress={() => {
+              setShowMealOptionsModal(false);
+              setSelectedMealItem(null);
+            }}
+          >
+            <Pressable style={styles.optionsContainer} onPress={(e) => e.stopPropagation()}>
+              {selectedMealItem && (
+                <>
+                  <View style={styles.optionsHeader}>
+                    <Image source={{ uri: selectedMealItem.recipe.imageUrl }} style={styles.optionsImage} />
+                    <View style={styles.optionsHeaderInfo}>
+                      <Text style={styles.optionsTitle} numberOfLines={2}>{selectedMealItem.recipe.title}</Text>
+                      <Text style={styles.optionsMeta}>
+                        {selectedMealItem.recipe.ingredients.length} ingredients
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.optionsDivider} />
+                  
+                  <Pressable style={styles.optionButton} onPress={handleAddToShoppingList}>
+                    <ShoppingCart size={22} color={Colors.primary} />
+                    <Text style={styles.optionText}>Add to Shopping List</Text>
+                  </Pressable>
+                  
+                  <Pressable style={[styles.optionButton, styles.deleteOption]} onPress={handleDeleteMeal}>
+                    <Trash2 size={22} color={Colors.error} />
+                    <Text style={[styles.optionText, styles.deleteText]}>Remove from Meal Plan</Text>
+                  </Pressable>
+                </>
+              )}
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        {/* Ingredient Selection Modal */}
+        <Modal
+          visible={showIngredientModal}
+          animationType="slide"
+          presentationStyle="pageSheet"
+        >
+          <SafeAreaView style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Ingredients</Text>
+              <Pressable onPress={() => {
+                setShowIngredientModal(false);
+                setSelectedMealItem(null);
+                setSelectedIngredients(new Set());
+              }} style={styles.closeButton}>
+                <X size={24} color={Colors.text} />
+              </Pressable>
+            </View>
+            
+            {selectedMealItem && (
+              <>
+                <View style={styles.ingredientHeader}>
+                  <Text style={styles.ingredientRecipeTitle}>{selectedMealItem.recipe.title}</Text>
+                  <View style={styles.selectionActions}>
+                    <Pressable onPress={selectAllIngredients} style={styles.selectionButton}>
+                      <Text style={styles.selectionButtonText}>Select All</Text>
+                    </Pressable>
+                    <Pressable onPress={deselectAllIngredients} style={styles.selectionButton}>
+                      <Text style={styles.selectionButtonText}>Deselect All</Text>
+                    </Pressable>
+                  </View>
+                </View>
+                
+                <ScrollView style={styles.ingredientList}>
+                  {selectedMealItem.recipe.ingredients.map((ingredient) => (
+                    <Pressable
+                      key={ingredient.id}
+                      style={styles.ingredientItem}
+                      onPress={() => toggleIngredient(ingredient.id)}
+                    >
+                      <View style={[
+                        styles.ingredientCheckbox,
+                        selectedIngredients.has(ingredient.id) && styles.ingredientCheckboxChecked
+                      ]}>
+                        {selectedIngredients.has(ingredient.id) && (
+                          <Check size={14} color={Colors.textOnPrimary} />
+                        )}
+                      </View>
+                      <View style={styles.ingredientInfo}>
+                        <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                        <Text style={styles.ingredientAmount}>{ingredient.amount} {ingredient.unit}</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+                
+                <View style={styles.ingredientFooter}>
+                  <Text style={styles.selectedCount}>
+                    {selectedIngredients.size} of {selectedMealItem.recipe.ingredients.length} selected
+                  </Text>
+                  <Pressable
+                    style={[
+                      styles.confirmButton,
+                      selectedIngredients.size === 0 && styles.confirmButtonDisabled
+                    ]}
+                    onPress={confirmAddToShoppingList}
+                    disabled={selectedIngredients.size === 0}
+                  >
+                    <ShoppingCart size={18} color={Colors.textOnPrimary} />
+                    <Text style={styles.confirmButtonText}>Add to Shopping List</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
           </SafeAreaView>
         </Modal>
       </SafeAreaView>
@@ -402,17 +591,25 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
   },
-  removeButton: {
-    padding: Spacing.xs,
+  mealCount: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  plannedMeals: {
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
   },
   plannedMeal: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.sm,
   },
   mealImage: {
-    width: 70,
-    height: 70,
-    borderRadius: BorderRadius.md,
+    width: 60,
+    height: 60,
+    borderRadius: BorderRadius.sm,
     backgroundColor: Colors.borderLight,
   },
   mealInfo: {
@@ -501,6 +698,157 @@ const styles = StyleSheet.create({
   recipeSelectMeta: {
     ...Typography.caption,
     color: Colors.textSecondary,
+  },
+  optionsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.lg,
+  },
+  optionsContainer: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    width: '100%',
+    maxWidth: 340,
+    overflow: 'hidden',
+  },
+  optionsHeader: {
+    flexDirection: 'row',
+    padding: Spacing.md,
+    alignItems: 'center',
+  },
+  optionsImage: {
+    width: 50,
+    height: 50,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.borderLight,
+  },
+  optionsHeaderInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  optionsTitle: {
+    ...Typography.body,
+    color: Colors.text,
+    fontWeight: '600' as const,
+  },
+  optionsMeta: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  optionsDivider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
+  },
+  optionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  optionText: {
+    ...Typography.body,
+    color: Colors.text,
+  },
+  deleteOption: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+  },
+  deleteText: {
+    color: Colors.error,
+  },
+  ingredientHeader: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  ingredientRecipeTitle: {
+    ...Typography.h3,
+    color: Colors.text,
+    marginBottom: Spacing.sm,
+  },
+  selectionActions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  selectionButton: {
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    backgroundColor: Colors.primary + '15',
+    borderRadius: BorderRadius.sm,
+  },
+  selectionButtonText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '600' as const,
+  },
+  ingredientList: {
+    flex: 1,
+    padding: Spacing.lg,
+  },
+  ingredientItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  ingredientCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  ingredientCheckboxChecked: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  ingredientInfo: {
+    flex: 1,
+  },
+  ingredientName: {
+    ...Typography.body,
+    color: Colors.text,
+  },
+  ingredientAmount: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  ingredientFooter: {
+    padding: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    backgroundColor: Colors.surface,
+  },
+  selectedCount: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  confirmButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: Colors.border,
+  },
+  confirmButtonText: {
+    ...Typography.label,
+    color: Colors.textOnPrimary,
   },
   bottomPadding: {
     height: Spacing.xxxl,

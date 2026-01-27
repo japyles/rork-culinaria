@@ -133,6 +133,7 @@ export interface ShoppingListItem {
 }
 
 export interface MealPlanEntry {
+  id: string;
   date: string;
   mealType: 'breakfast' | 'lunch' | 'dinner';
   recipeId: string;

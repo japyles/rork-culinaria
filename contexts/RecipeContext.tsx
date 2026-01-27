@@ -373,29 +373,28 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     saveShoppingListMutation.mutate([]);
   }, []);
 
-  const addMealPlanEntry = useCallback((entry: MealPlanEntry) => {
+  const addMealPlanEntry = useCallback((entry: Omit<MealPlanEntry, 'id'>) => {
+    const newEntry: MealPlanEntry = {
+      ...entry,
+      id: `meal_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    };
     setMealPlanEntries((prev) => {
-      const filtered = prev.filter(
-        (e) => !(e.date === entry.date && e.mealType === entry.mealType)
-      );
-      const updated = [...filtered, entry];
+      const updated = [...prev, newEntry];
       saveMealPlanEntriesMutation.mutate(updated);
       return updated;
     });
   }, []);
 
-  const removeMealPlanEntry = useCallback((date: string, mealType: 'breakfast' | 'lunch' | 'dinner') => {
+  const removeMealPlanEntry = useCallback((entryId: string) => {
     setMealPlanEntries((prev) => {
-      const updated = prev.filter(
-        (e) => !(e.date === date && e.mealType === mealType)
-      );
+      const updated = prev.filter((e) => e.id !== entryId);
       saveMealPlanEntriesMutation.mutate(updated);
       return updated;
     });
   }, []);
 
-  const getMealPlanEntry = useCallback((date: string, mealType: 'breakfast' | 'lunch' | 'dinner') => {
-    return mealPlanEntries.find((e) => e.date === date && e.mealType === mealType);
+  const getMealPlanEntriesForSlot = useCallback((date: string, mealType: 'breakfast' | 'lunch' | 'dinner') => {
+    return mealPlanEntries.filter((e) => e.date === date && e.mealType === mealType);
   }, [mealPlanEntries]);
 
   const getMealPlanForDate = useCallback((date: string) => {
@@ -459,7 +458,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     clearShoppingList,
     addMealPlanEntry,
     removeMealPlanEntry,
-    getMealPlanEntry,
+    getMealPlanEntriesForSlot,
     getMealPlanForDate,
   };
 });
