@@ -165,24 +165,7 @@ export default function FavoritesModalScreen() {
   };
 
   const renderHeader = () => (
-    <View>
-      <View style={styles.statsContainer}>
-        <GlassCard style={styles.statCard}>
-          <Heart size={18} color={Colors.primaryDark} />
-          <Text style={styles.statValue}>{stats.totalSaved}</Text>
-          <Text style={styles.statLabel}>Saved</Text>
-        </GlassCard>
-        <GlassCard style={styles.statCard}>
-          <BookOpen size={18} color={Colors.secondary} />
-          <Text style={styles.statValue}>{stats.totalCooked}</Text>
-          <Text style={styles.statLabel}>Viewed</Text>
-        </GlassCard>
-        <GlassCard style={styles.statCard}>
-          <Clock size={18} color={Colors.accent} />
-          <Text style={styles.statValue}>{stats.avgTime}m</Text>
-          <Text style={styles.statLabel}>Avg Time</Text>
-        </GlassCard>
-      </View>
+    
 
       <View style={styles.tabsContainer}>
         <Animated.View
