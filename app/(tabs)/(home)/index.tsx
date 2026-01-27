@@ -8,11 +8,16 @@ import {
   Animated,
   Image,
   Pressable,
+  Dimensions,
+  ImageBackground,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Sparkles, Video, TrendingUp, Camera } from 'lucide-react-native';
+import { Sparkles, Video, TrendingUp, Camera, Menu } from 'lucide-react-native';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { categories } from '@/mocks/recipes';
@@ -23,9 +28,11 @@ import GlassCard from '@/components/GlassCard';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { allRecipes, recentRecipes, favoriteRecipes } = useRecipes();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -51,35 +58,49 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={[Colors.background, '#FFF8E7', Colors.background]}
-        style={StyleSheet.absoluteFill}
-      />
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <Animated.View
-            style={[
-              styles.header,
-              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
-            ]}
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        <View style={styles.heroContainer}>
+          <ImageBackground
+            source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&auto=format&fit=crop' }}
+            style={styles.heroImage}
+            resizeMode="cover"
           >
-            <View>
-              <Text style={styles.greeting}>Good morning,</Text>
-              <Text style={styles.title}>What's cooking today?</Text>
-            </View>
-            <Pressable
-              style={styles.avatarContainer}
-              onPress={() => router.push('/profile')}
+            <LinearGradient
+              colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.5)']}
+              style={styles.heroOverlay}
             >
-              <Image
-                source={{ uri: 'https://plus.unsplash.com/premium_photo-1664369472896-5646e99a26e8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=200' }}
-                style={styles.avatar}
-              />
-            </Pressable>
-          </Animated.View>
+              <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
+                <Pressable style={styles.menuButton}>
+                  <Menu size={24} color="#fff" />
+                </Pressable>
+                <Pressable
+                  style={styles.heroAvatarContainer}
+                  onPress={() => router.push('/profile')}
+                >
+                  <Image
+                    source={{ uri: 'https://plus.unsplash.com/premium_photo-1664369472896-5646e99a26e8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=200' }}
+                    style={styles.heroAvatar}
+                  />
+                </Pressable>
+              </View>
+              <View style={styles.heroContent}>
+                <Text style={styles.heroGreeting}>HEY,</Text>
+                <Text style={styles.heroName}>CHEF.</Text>
+                <Text style={styles.heroSubtitle}>Discover delicious{"\n"}recipes today.</Text>
+              </View>
+            </LinearGradient>
+          </ImageBackground>
+        </View>
+
+        <View style={styles.mainContent}>
 
           <Animated.View
             style={[
@@ -91,34 +112,34 @@ export default function HomeScreen() {
               style={styles.quickAction}
               onPress={() => router.push('/ai-chef')}
             >
-              <GlassCard style={styles.quickActionCard}>
-                <View style={[styles.quickActionIcon, { backgroundColor: Colors.primary + '20' }]}>
-                  <Sparkles size={24} color={Colors.primary} />
+              <View style={styles.quickActionCard}>
+                <View style={[styles.quickActionIcon, { backgroundColor: Colors.primary + '15' }]}>
+                  <Sparkles size={22} color={Colors.primary} />
                 </View>
                 <Text style={styles.quickActionText}>AI Recipe</Text>
-              </GlassCard>
+              </View>
             </Pressable>
             <Pressable
               style={styles.quickAction}
               onPress={() => router.push('/scan-recipe')}
             >
-              <GlassCard style={styles.quickActionCard}>
-                <View style={[styles.quickActionIcon, { backgroundColor: Colors.accent + '20' }]}>
-                  <Camera size={24} color={Colors.accent} />
+              <View style={styles.quickActionCard}>
+                <View style={[styles.quickActionIcon, { backgroundColor: Colors.accent + '15' }]}>
+                  <Camera size={22} color={Colors.accent} />
                 </View>
                 <Text style={styles.quickActionText}>Scan Recipe</Text>
-              </GlassCard>
+              </View>
             </Pressable>
             <Pressable
               style={styles.quickAction}
               onPress={() => router.push('/video-extract')}
             >
-              <GlassCard style={styles.quickActionCard}>
-                <View style={[styles.quickActionIcon, { backgroundColor: Colors.secondary + '20' }]}>
-                  <Video size={24} color={Colors.secondary} />
+              <View style={styles.quickActionCard}>
+                <View style={[styles.quickActionIcon, { backgroundColor: Colors.secondary + '15' }]}>
+                  <Video size={22} color={Colors.secondary} />
                 </View>
                 <Text style={styles.quickActionText}>From Video</Text>
-              </GlassCard>
+              </View>
             </Pressable>
           </Animated.View>
 
@@ -194,8 +215,8 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.bottomPadding} />
-        </ScrollView>
-      </SafeAreaView>
+        </View>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -205,45 +226,79 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  safeArea: {
-    flex: 1,
-  },
   scrollContent: {
     paddingBottom: Spacing.xxl,
   },
-  header: {
+  heroContainer: {
+    height: HERO_HEIGHT,
+    width: '100%',
+  },
+  heroImage: {
+    flex: 1,
+    width: '100%',
+  },
+  heroOverlay: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  heroHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.lg,
   },
-  greeting: {
-    ...Typography.body,
-    color: Colors.textSecondary,
+  menuButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  title: {
-    ...Typography.h1,
-    color: Colors.text,
-    marginTop: Spacing.xs,
-  },
-  avatarContainer: {
+  heroAvatarContainer: {
     borderRadius: BorderRadius.full,
-    borderWidth: 3,
-    borderColor: Colors.primary,
-    ...Shadow.md,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.8)',
   },
-  avatar: {
-    width: 48,
-    height: 48,
+  heroAvatar: {
+    width: 40,
+    height: 40,
     borderRadius: BorderRadius.full,
+  },
+  heroContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
+  },
+  heroGreeting: {
+    fontSize: 42,
+    fontWeight: '800' as const,
+    color: '#fff',
+    letterSpacing: -1,
+  },
+  heroName: {
+    fontSize: 42,
+    fontWeight: '800' as const,
+    color: '#fff',
+    letterSpacing: -1,
+    marginBottom: Spacing.sm,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    lineHeight: 22,
+  },
+  mainContent: {
+    backgroundColor: Colors.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: -24,
+    paddingTop: Spacing.lg,
   },
   quickActions: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   quickAction: {
     flex: 1,
@@ -251,18 +306,22 @@ const styles = StyleSheet.create({
   quickActionCard: {
     alignItems: 'center',
     paddingVertical: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    ...Shadow.sm,
   },
   quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: BorderRadius.lg,
+    width: 50,
+    height: 50,
+    borderRadius: BorderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   quickActionText: {
     ...Typography.label,
     color: Colors.text,
+    fontSize: 12,
   },
   section: {
     marginTop: Spacing.lg,
