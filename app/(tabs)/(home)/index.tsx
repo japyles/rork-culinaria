@@ -91,7 +91,7 @@ export default function HomeScreen() {
               style={styles.quickAction}
               onPress={() => router.push('/ai-chef')}
             >
-              <GlassCard style={styles.quickActionCard} padding=Spacing.sm>
+              <GlassCard style={styles.quickActionCard}>
                 <View style={[styles.quickActionIcon, { backgroundColor: Colors.primary + '20' }]}>
                   <Sparkles size={24} color={Colors.primary} />
                 </View>
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   },
   quickActionCard: {
     alignItems: 'center',
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
   quickActionIcon: {
     width: 56,
