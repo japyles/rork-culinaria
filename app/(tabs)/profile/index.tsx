@@ -86,6 +86,7 @@ export default function ProfileScreen() {
       friction: 10,
       tension: 50,
       useNativeDriver: false,
+      overshootClamping: true,
     }).start();
   }, [sheetHeight]);
 
@@ -99,6 +100,7 @@ export default function ProfileScreen() {
         friction: 10,
         tension: 50,
         useNativeDriver: false,
+        overshootClamping: true,
       }),
       Animated.timing(backdropOpacity, {
         toValue: 1,
