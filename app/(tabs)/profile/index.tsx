@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -59,6 +59,29 @@ export default function ProfileScreen() {
   const [editBio, setEditBio] = useState(currentUser.bio);
   const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser.avatarUrl);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const shakeAnim1 = useRef(new Animated.Value(0)).current;
+  const shakeAnim2 = useRef(new Animated.Value(0)).current;
+  const shakeAnim3 = useRef(new Animated.Value(0)).current;
+  const shakeAnim4 = useRef(new Animated.Value(0)).current;
+
+  const triggerShake = useCallback((anim: Animated.Value, callback: () => void) => {
+    Animated.sequence([
+      Animated.timing(anim, { toValue: 1, duration: 50, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: -1, duration: 50, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 1, duration: 50, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: -1, duration: 50, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 0.5, duration: 50, useNativeDriver: true }),
+      Animated.timing(anim, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start(() => callback());
+  }, []);
+
+  const getShakeRotation = (anim: Animated.Value) => {
+    return anim.interpolate({
+      inputRange: [-1, 0, 1],
+      outputRange: ['-8deg', '0deg', '8deg'],
+    });
+  };
 
   const handleSaveProfile = useCallback(() => {
     updateProfile({
@@ -266,47 +289,51 @@ export default function ProfileScreen() {
                 snapToInterval={85}
               >
                 <Pressable
-                  style={[styles.statCard, styles.statCard1]}
-                  onPress={() => setShowListModal('recipes')}
+                  onPress={() => triggerShake(shakeAnim1, () => setShowListModal('recipes'))}
                 >
-                  <View style={styles.statCardIcon}>
-                    <ChefHat size={22} color={Colors.primary} />
-                  </View>
-                  <Text style={styles.statCardValue}>{customRecipes.length}</Text>
-                  <Text style={styles.statCardLabel}>Recipes</Text>
+                  <Animated.View style={[styles.statCard, styles.statCard1, { transform: [{ rotate: '-3deg' }, { rotate: getShakeRotation(shakeAnim1) }] }]}>
+                    <View style={styles.statCardIcon}>
+                      <ChefHat size={22} color={Colors.primary} />
+                    </View>
+                    <Text style={styles.statCardValue}>{customRecipes.length}</Text>
+                    <Text style={styles.statCardLabel}>Recipes</Text>
+                  </Animated.View>
                 </Pressable>
 
                 <Pressable
-                  style={[styles.statCard, styles.statCard2]}
-                  onPress={() => router.push('/(tabs)/favorites')}
+                  onPress={() => triggerShake(shakeAnim2, () => router.push('/(tabs)/favorites'))}
                 >
-                  <View style={[styles.statCardIcon, styles.statCardIconAccent]}>
-                    <Heart size={22} color={Colors.accent} />
-                  </View>
-                  <Text style={styles.statCardValue}>{favorites.length}</Text>
-                  <Text style={styles.statCardLabel}>Favorites</Text>
+                  <Animated.View style={[styles.statCard, styles.statCard2, { transform: [{ rotate: '2deg' }, { rotate: getShakeRotation(shakeAnim2) }] }]}>
+                    <View style={[styles.statCardIcon, styles.statCardIconAccent]}>
+                      <Heart size={22} color={Colors.accent} />
+                    </View>
+                    <Text style={styles.statCardValue}>{favorites.length}</Text>
+                    <Text style={styles.statCardLabel}>Favorites</Text>
+                  </Animated.View>
                 </Pressable>
 
                 <Pressable
-                  style={[styles.statCard, styles.statCard3]}
-                  onPress={() => setShowListModal('followers')}
+                  onPress={() => triggerShake(shakeAnim3, () => setShowListModal('followers'))}
                 >
-                  <View style={[styles.statCardIcon, styles.statCardIconSecondary]}>
-                    <Users size={22} color={Colors.secondary} />
-                  </View>
-                  <Text style={styles.statCardValue}>{followers.length}</Text>
-                  <Text style={styles.statCardLabel}>Followers</Text>
+                  <Animated.View style={[styles.statCard, styles.statCard3, { transform: [{ rotate: '-2deg' }, { rotate: getShakeRotation(shakeAnim3) }] }]}>
+                    <View style={[styles.statCardIcon, styles.statCardIconSecondary]}>
+                      <Users size={22} color={Colors.secondary} />
+                    </View>
+                    <Text style={styles.statCardValue}>{followers.length}</Text>
+                    <Text style={styles.statCardLabel}>Followers</Text>
+                  </Animated.View>
                 </Pressable>
 
                 <Pressable
-                  style={[styles.statCard, styles.statCard4]}
-                  onPress={() => setShowListModal('following')}
+                  onPress={() => triggerShake(shakeAnim4, () => setShowListModal('following'))}
                 >
-                  <View style={[styles.statCardIcon, styles.statCardIconTertiary]}>
-                    <UserPlus size={22} color={Colors.success} />
-                  </View>
-                  <Text style={styles.statCardValue}>{following.length}</Text>
-                  <Text style={styles.statCardLabel}>Following</Text>
+                  <Animated.View style={[styles.statCard, styles.statCard4, { transform: [{ rotate: '3deg' }, { rotate: getShakeRotation(shakeAnim4) }] }]}>
+                    <View style={[styles.statCardIcon, styles.statCardIconTertiary]}>
+                      <UserPlus size={22} color={Colors.success} />
+                    </View>
+                    <Text style={styles.statCardValue}>{following.length}</Text>
+                    <Text style={styles.statCardLabel}>Following</Text>
+                  </Animated.View>
                 </Pressable>
               </ScrollView>
             </View>
@@ -644,19 +671,15 @@ const styles = StyleSheet.create({
   },
   statCard1: {
     zIndex: 4,
-    transform: [{ rotate: '-3deg' }],
   },
   statCard2: {
     zIndex: 3,
-    transform: [{ rotate: '2deg' }],
   },
   statCard3: {
     zIndex: 2,
-    transform: [{ rotate: '-2deg' }],
   },
   statCard4: {
     zIndex: 1,
-    transform: [{ rotate: '3deg' }],
     marginRight: 0,
   },
   statCardIcon: {
