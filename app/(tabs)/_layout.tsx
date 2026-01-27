@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Search, ChefHat, CalendarDays, User } from "lucide-react-native";
+import { Home, Search, ChefHat, CalendarDays, User, ShoppingCart } from "lucide-react-native";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import Colors from "@/constants/colors";
@@ -52,10 +52,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="meal-plan"
         options={{
-          title: "Meal Plan",
+          title: "Meals",
           tabBarIcon: ({ color, focused }) => (
             <View style={focused && styles.activeIconContainer}>
               <CalendarDays size={22} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="shopping-list"
+        options={{
+          title: "Shop",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused && styles.activeIconContainer}>
+              <ShoppingCart size={22} color={color} />
             </View>
           ),
         }}

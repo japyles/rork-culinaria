@@ -8,7 +8,7 @@ import {
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Heart, Clock, Users, ChefHat } from 'lucide-react-native';
+import { Heart, Clock, Users, ChefHat, ShoppingCart } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Colors, { BorderRadius, Spacing, Shadow, Typography } from '@/constants/colors';
 import { Recipe } from '@/types/recipe';
@@ -21,7 +21,7 @@ interface RecipeCardProps {
 
 export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardProps) {
   const router = useRouter();
-  const { toggleFavorite, addRecentlyViewed } = useRecipes();
+  const { toggleFavorite, addRecentlyViewed, addToShoppingList } = useRecipes();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const heartAnim = useRef(new Animated.Value(1)).current;
 
@@ -51,6 +51,10 @@ export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardPr
       Animated.spring(heartAnim, { toValue: 1, friction: 3, useNativeDriver: true }),
     ]).start();
     toggleFavorite(recipe.id);
+  };
+
+  const handleAddToShoppingList = () => {
+    addToShoppingList(recipe.ingredients, recipe.id, recipe.title);
   };
 
   const totalTime = recipe.prepTime + recipe.cookTime;
@@ -163,6 +167,9 @@ export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardPr
               <Users size={14} color={Colors.textSecondary} />
               <Text style={styles.metaText}>{recipe.servings}</Text>
             </View>
+            <Pressable onPress={handleAddToShoppingList} style={styles.shoppingButton}>
+              <ShoppingCart size={16} color={Colors.primary} />
+            </Pressable>
             <View style={styles.ratingContainer}>
               <Text style={styles.rating}>★ {recipe.rating}</Text>
             </View>
@@ -242,6 +249,10 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textSecondary,
     marginLeft: Spacing.xs,
+  },
+  shoppingButton: {
+    padding: Spacing.xs,
+    marginRight: Spacing.xs,
   },
   ratingContainer: {
     marginLeft: 'auto',

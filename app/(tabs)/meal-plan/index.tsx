@@ -7,27 +7,32 @@ import {
   Animated,
   Pressable,
   Modal,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CalendarDays, Plus, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
+import { CalendarDays, Plus, ChevronLeft, ChevronRight, X, Clock, Users } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
-import { MealPlanDay, Recipe } from '@/types/recipe';
+import { Recipe } from '@/types/recipe';
 import GlassCard from '@/components/GlassCard';
-import Button from '@/components/Button';
-import RecipeCard from '@/components/RecipeCard';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner'] as const;
 
 export default function MealPlanScreen() {
-  const { allRecipes, mealPlans, addMealPlan, updateMealPlan } = useRecipes();
+  const { 
+    allRecipes, 
+    getRecipeById,
+    addMealPlanEntry, 
+    removeMealPlanEntry, 
+    getMealPlanEntry,
+    mealPlanEntries 
+  } = useRecipes();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentWeekStart, setCurrentWeekStart] = useState(getWeekStart(new Date()));
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<typeof MEAL_TYPES[number]>('breakfast');
-  const [weekPlan, setWeekPlan] = useState<Record<string, MealPlanDay>>({});
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -91,27 +96,31 @@ export default function MealPlanScreen() {
 
   const handleSelectRecipe = (recipe: Recipe) => {
     const dateKey = formatDateKey(selectedDate);
-    setWeekPlan((prev) => ({
-      ...prev,
-      [dateKey]: {
-        date: dateKey,
-        meals: {
-          ...prev[dateKey]?.meals,
-          [selectedMealType]: recipe,
-        },
-      },
-    }));
+    addMealPlanEntry({
+      date: dateKey,
+      mealType: selectedMealType,
+      recipeId: recipe.id,
+    });
     setShowRecipeModal(false);
   };
 
-  const getDayPlan = (date: Date): MealPlanDay | undefined => {
-    return weekPlan[formatDateKey(date)];
+  const handleRemoveMeal = (mealType: typeof MEAL_TYPES[number]) => {
+    const dateKey = formatDateKey(selectedDate);
+    removeMealPlanEntry(dateKey, mealType);
   };
 
-  const selectedDayPlan = getDayPlan(selectedDate);
-
   const getMealForType = (mealType: typeof MEAL_TYPES[number]): Recipe | undefined => {
-    return selectedDayPlan?.meals?.[mealType];
+    const dateKey = formatDateKey(selectedDate);
+    const entry = getMealPlanEntry(dateKey, mealType);
+    if (entry) {
+      return getRecipeById(entry.recipeId);
+    }
+    return undefined;
+  };
+
+  const hasPlannedMeals = (date: Date): boolean => {
+    const dateKey = formatDateKey(date);
+    return mealPlanEntries.some((e) => e.date === dateKey);
   };
 
   return (
@@ -175,7 +184,7 @@ export default function MealPlanScreen() {
                   >
                     {date.getDate()}
                   </Text>
-                  {getDayPlan(date) && (
+                  {hasPlannedMeals(date) && (
                     <View style={[styles.planIndicator, isSelected(date) && styles.planIndicatorSelected]} />
                   )}
                 </Pressable>
@@ -202,19 +211,7 @@ export default function MealPlanScreen() {
                     </Text>
                     {meal && (
                       <Pressable
-                        onPress={() => {
-                          const dateKey = formatDateKey(selectedDate);
-                          setWeekPlan((prev) => ({
-                            ...prev,
-                            [dateKey]: {
-                              ...prev[dateKey],
-                              meals: {
-                                ...prev[dateKey]?.meals,
-                                [mealType]: undefined,
-                              },
-                            },
-                          }));
-                        }}
+                        onPress={() => handleRemoveMeal(mealType)}
                         style={styles.removeButton}
                       >
                         <X size={16} color={Colors.textSecondary} />
@@ -223,10 +220,20 @@ export default function MealPlanScreen() {
                   </View>
                   {meal ? (
                     <View style={styles.plannedMeal}>
-                      <Text style={styles.plannedMealTitle}>{meal.title}</Text>
-                      <Text style={styles.plannedMealMeta}>
-                        {meal.prepTime + meal.cookTime} min • {meal.servings} servings
-                      </Text>
+                      <Image source={{ uri: meal.imageUrl }} style={styles.mealImage} />
+                      <View style={styles.mealInfo}>
+                        <Text style={styles.plannedMealTitle} numberOfLines={2}>{meal.title}</Text>
+                        <View style={styles.mealMeta}>
+                          <Clock size={12} color={Colors.textSecondary} />
+                          <Text style={styles.plannedMealMeta}>
+                            {meal.prepTime + meal.cookTime} min
+                          </Text>
+                          <Users size={12} color={Colors.textSecondary} style={{ marginLeft: 8 }} />
+                          <Text style={styles.plannedMealMeta}>
+                            {meal.servings}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   ) : (
                     <Pressable
@@ -264,8 +271,15 @@ export default function MealPlanScreen() {
                 <Pressable
                   key={recipe.id}
                   onPress={() => handleSelectRecipe(recipe)}
+                  style={styles.recipeSelectItem}
                 >
-                  <RecipeCard recipe={recipe} />
+                  <Image source={{ uri: recipe.imageUrl }} style={styles.recipeSelectImage} />
+                  <View style={styles.recipeSelectInfo}>
+                    <Text style={styles.recipeSelectTitle} numberOfLines={2}>{recipe.title}</Text>
+                    <Text style={styles.recipeSelectMeta}>
+                      {recipe.prepTime + recipe.cookTime} min • {recipe.servings} servings
+                    </Text>
+                  </View>
                 </Pressable>
               ))}
             </ScrollView>
@@ -392,17 +406,33 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   plannedMeal: {
-    paddingVertical: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mealImage: {
+    width: 70,
+    height: 70,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.borderLight,
+  },
+  mealInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
   },
   plannedMealTitle: {
     ...Typography.body,
     color: Colors.text,
     fontWeight: '600' as const,
+    marginBottom: Spacing.xs,
+  },
+  mealMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   plannedMealMeta: {
     ...Typography.caption,
     color: Colors.textSecondary,
-    marginTop: Spacing.xs,
+    marginLeft: 4,
   },
   addMealButton: {
     flexDirection: 'row',
@@ -442,6 +472,35 @@ const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
     padding: Spacing.lg,
+  },
+  recipeSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+    ...Shadow.sm,
+  },
+  recipeSelectImage: {
+    width: 60,
+    height: 60,
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.borderLight,
+  },
+  recipeSelectInfo: {
+    flex: 1,
+    marginLeft: Spacing.md,
+  },
+  recipeSelectTitle: {
+    ...Typography.body,
+    color: Colors.text,
+    fontWeight: '600' as const,
+    marginBottom: Spacing.xs,
+  },
+  recipeSelectMeta: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
   },
   bottomPadding: {
     height: Spacing.xxxl,

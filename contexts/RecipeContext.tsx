@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { mockRecipes } from '@/mocks/recipes';
-import { Recipe, MealPlan, UserPreferences, Review } from '@/types/recipe';
+import { Recipe, MealPlan, UserPreferences, Review, ShoppingListItem, MealPlanEntry, Ingredient } from '@/types/recipe';
 
 const FAVORITES_KEY = 'culinaria_favorites';
 const MEAL_PLANS_KEY = 'culinaria_meal_plans';
@@ -11,6 +11,8 @@ const PREFERENCES_KEY = 'culinaria_preferences';
 const RECENT_KEY = 'culinaria_recent';
 const CUSTOM_RECIPES_KEY = 'culinaria_custom_recipes';
 const REVIEWS_KEY = 'culinaria_reviews';
+const SHOPPING_LIST_KEY = 'culinaria_shopping_list';
+const MEAL_PLAN_ENTRIES_KEY = 'culinaria_meal_plan_entries';
 
 export const [RecipeProvider, useRecipes] = createContextHook(() => {
   const queryClient = useQueryClient();
@@ -25,6 +27,8 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
   });
   const [customRecipes, setCustomRecipes] = useState<Recipe[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
+  const [mealPlanEntries, setMealPlanEntries] = useState<MealPlanEntry[]>([]);
 
   const favoritesQuery = useQuery({
     queryKey: ['favorites'],
@@ -74,6 +78,22 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     },
   });
 
+  const shoppingListQuery = useQuery({
+    queryKey: ['shoppingList'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(SHOPPING_LIST_KEY);
+      return stored ? JSON.parse(stored) : [];
+    },
+  });
+
+  const mealPlanEntriesQuery = useQuery({
+    queryKey: ['mealPlanEntries'],
+    queryFn: async () => {
+      const stored = await AsyncStorage.getItem(MEAL_PLAN_ENTRIES_KEY);
+      return stored ? JSON.parse(stored) : [];
+    },
+  });
+
   useEffect(() => {
     if (favoritesQuery.data) setFavorites(favoritesQuery.data);
   }, [favoritesQuery.data]);
@@ -97,6 +117,14 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
   useEffect(() => {
     if (reviewsQuery.data) setReviews(reviewsQuery.data);
   }, [reviewsQuery.data]);
+
+  useEffect(() => {
+    if (shoppingListQuery.data) setShoppingList(shoppingListQuery.data);
+  }, [shoppingListQuery.data]);
+
+  useEffect(() => {
+    if (mealPlanEntriesQuery.data) setMealPlanEntries(mealPlanEntriesQuery.data);
+  }, [mealPlanEntriesQuery.data]);
 
   const saveFavoritesMutation = useMutation({
     mutationFn: async (newFavorites: string[]) => {
@@ -155,6 +183,26 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    },
+  });
+
+  const saveShoppingListMutation = useMutation({
+    mutationFn: async (items: ShoppingListItem[]) => {
+      await AsyncStorage.setItem(SHOPPING_LIST_KEY, JSON.stringify(items));
+      return items;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['shoppingList'] });
+    },
+  });
+
+  const saveMealPlanEntriesMutation = useMutation({
+    mutationFn: async (entries: MealPlanEntry[]) => {
+      await AsyncStorage.setItem(MEAL_PLAN_ENTRIES_KEY, JSON.stringify(entries));
+      return entries;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mealPlanEntries'] });
     },
   });
 
@@ -276,6 +324,84 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     return total / recipeReviews.length;
   }, [reviews]);
 
+  const addToShoppingList = useCallback((ingredients: Ingredient[], recipeId?: string, recipeName?: string) => {
+    setShoppingList((prev) => {
+      const newItems: ShoppingListItem[] = ingredients.map((ing) => ({
+        id: `shop_${Date.now()}_${ing.id}`,
+        name: ing.name,
+        amount: ing.amount,
+        unit: ing.unit,
+        recipeId,
+        recipeName,
+        isChecked: false,
+        addedAt: new Date().toISOString(),
+      }));
+      const updated = [...prev, ...newItems];
+      saveShoppingListMutation.mutate(updated);
+      return updated;
+    });
+  }, []);
+
+  const toggleShoppingItem = useCallback((itemId: string) => {
+    setShoppingList((prev) => {
+      const updated = prev.map((item) =>
+        item.id === itemId ? { ...item, isChecked: !item.isChecked } : item
+      );
+      saveShoppingListMutation.mutate(updated);
+      return updated;
+    });
+  }, []);
+
+  const removeShoppingItem = useCallback((itemId: string) => {
+    setShoppingList((prev) => {
+      const updated = prev.filter((item) => item.id !== itemId);
+      saveShoppingListMutation.mutate(updated);
+      return updated;
+    });
+  }, []);
+
+  const clearCheckedItems = useCallback(() => {
+    setShoppingList((prev) => {
+      const updated = prev.filter((item) => !item.isChecked);
+      saveShoppingListMutation.mutate(updated);
+      return updated;
+    });
+  }, []);
+
+  const clearShoppingList = useCallback(() => {
+    setShoppingList([]);
+    saveShoppingListMutation.mutate([]);
+  }, []);
+
+  const addMealPlanEntry = useCallback((entry: MealPlanEntry) => {
+    setMealPlanEntries((prev) => {
+      const filtered = prev.filter(
+        (e) => !(e.date === entry.date && e.mealType === entry.mealType)
+      );
+      const updated = [...filtered, entry];
+      saveMealPlanEntriesMutation.mutate(updated);
+      return updated;
+    });
+  }, []);
+
+  const removeMealPlanEntry = useCallback((date: string, mealType: 'breakfast' | 'lunch' | 'dinner') => {
+    setMealPlanEntries((prev) => {
+      const updated = prev.filter(
+        (e) => !(e.date === date && e.mealType === mealType)
+      );
+      saveMealPlanEntriesMutation.mutate(updated);
+      return updated;
+    });
+  }, []);
+
+  const getMealPlanEntry = useCallback((date: string, mealType: 'breakfast' | 'lunch' | 'dinner') => {
+    return mealPlanEntries.find((e) => e.date === date && e.mealType === mealType);
+  }, [mealPlanEntries]);
+
+  const getMealPlanForDate = useCallback((date: string) => {
+    return mealPlanEntries.filter((e) => e.date === date);
+  }, [mealPlanEntries]);
+
   const allRecipes = useMemo(() => {
     const combined = [...customRecipes, ...mockRecipes];
     return combined.map((recipe) => ({
@@ -298,7 +424,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     return allRecipes.find((recipe) => recipe.id === id);
   }, [allRecipes]);
 
-  const isLoading = favoritesQuery.isLoading || mealPlansQuery.isLoading || preferencesQuery.isLoading || customRecipesQuery.isLoading || reviewsQuery.isLoading;
+  const isLoading = favoritesQuery.isLoading || mealPlansQuery.isLoading || preferencesQuery.isLoading || customRecipesQuery.isLoading || reviewsQuery.isLoading || shoppingListQuery.isLoading || mealPlanEntriesQuery.isLoading;
 
   return {
     allRecipes,
@@ -309,6 +435,8 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     userPreferences,
     customRecipes,
     reviews,
+    shoppingList,
+    mealPlanEntries,
     isLoading,
     toggleFavorite,
     addRecentlyViewed,
@@ -324,6 +452,15 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     addReview,
     getReviewsForRecipe,
     getAverageRating,
+    addToShoppingList,
+    toggleShoppingItem,
+    removeShoppingItem,
+    clearCheckedItems,
+    clearShoppingList,
+    addMealPlanEntry,
+    removeMealPlanEntry,
+    getMealPlanEntry,
+    getMealPlanForDate,
   };
 });
 

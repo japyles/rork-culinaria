@@ -120,3 +120,20 @@ export interface SharedRecipe {
   message?: string;
   sharedAt: string;
 }
+
+export interface ShoppingListItem {
+  id: string;
+  name: string;
+  amount: string;
+  unit: string;
+  recipeId?: string;
+  recipeName?: string;
+  isChecked: boolean;
+  addedAt: string;
+}
+
+export interface MealPlanEntry {
+  date: string;
+  mealType: 'breakfast' | 'lunch' | 'dinner';
+  recipeId: string;
+}
