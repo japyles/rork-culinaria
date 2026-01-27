@@ -44,11 +44,10 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const DETENTS = {
   HALF: 0.5,
-  THREE_QUARTER: 0.75,
-  FULL: 0.9,
+  MAX: 0.82,
 };
 
-const MAX_HEIGHT_RATIO = 0.9;
+const MAX_HEIGHT_RATIO = 0.82;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -165,33 +164,21 @@ export default function ProfileScreen() {
         }
 
         if (velocity < -0.5) {
-          if (detent === DETENTS.HALF) {
-            snapToDetentRef.current(DETENTS.THREE_QUARTER);
-          } else {
-            snapToDetentRef.current(DETENTS.FULL);
-          }
+          snapToDetentRef.current(DETENTS.MAX);
           return;
         }
 
         if (velocity > 0.5) {
-          if (detent === DETENTS.FULL) {
-            snapToDetentRef.current(DETENTS.THREE_QUARTER);
-          } else if (detent === DETENTS.THREE_QUARTER) {
-            snapToDetentRef.current(DETENTS.HALF);
-          } else {
-            snapToDetentRef.current(DETENTS.HALF);
-          }
+          snapToDetentRef.current(DETENTS.HALF);
           return;
         }
 
         if (clampedRatio < 0.35) {
           closeSheetRef.current();
-        } else if (clampedRatio < 0.625) {
+        } else if (clampedRatio < 0.66) {
           snapToDetentRef.current(DETENTS.HALF);
-        } else if (clampedRatio < 0.825) {
-          snapToDetentRef.current(DETENTS.THREE_QUARTER);
         } else {
-          snapToDetentRef.current(DETENTS.FULL);
+          snapToDetentRef.current(DETENTS.MAX);
         }
       },
     })
