@@ -669,10 +669,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   statCardIconAccent: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.primary,
   },
   statCardIconSecondary: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.secondary,
   },
   statCardIconTertiary: {
     backgroundColor: '#6366F1',
