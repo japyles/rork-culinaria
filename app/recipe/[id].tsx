@@ -45,7 +45,8 @@ import {
 } from 'lucide-react-native';
 import { Ingredient, User } from '@/types/recipe';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
-import { useRecipes } from '@/contexts/RecipeContext';
+import { useRecipes, } from '@/contexts/RecipeContext';
+import * as Haptics from 'expo-haptics';
 import { useSocial } from '@/contexts/SocialContext';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
@@ -55,7 +56,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe, addReview, getReviewsForRecipe, getAverageRating } = useRecipes();
+  const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe, addReview, getReviewsForRecipe, getAverageRating, addToShoppingList } = useRecipes();
   const { getFollowingUsers, getFollowersUsers, shareRecipe, isFollowing: isFollowingUser } = useSocial();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
@@ -755,6 +756,17 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                     {ingredient.amount} {ingredient.unit}
                   </Text>
                   <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                  <Pressable
+                    style={styles.addIngredientButton}
+                    onPress={() => {
+                      addToShoppingList([ingredient], recipe?.id, recipe?.title);
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      Alert.alert('Added', `${ingredient.name} added to shopping list`);
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Plus size={18} color={Colors.primary} />
+                  </Pressable>
                 </View>
               ))}
             </View>
@@ -1442,6 +1454,15 @@ const styles = StyleSheet.create({
     color: Colors.text,
     flex: 1,
     fontWeight: '500' as const,
+  },
+  addIngredientButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.sm,
   },
   stepsList: {
     marginBottom: Spacing.lg,
