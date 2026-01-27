@@ -15,6 +15,7 @@ import {
   Dimensions,
   Animated,
   PanResponder,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -81,12 +82,11 @@ export default function ProfileScreen() {
 
   const snapToDetent = useCallback((detent: number) => {
     currentDetentRef.current = detent;
-    Animated.spring(sheetHeight, {
+    Animated.timing(sheetHeight, {
       toValue: SCREEN_HEIGHT * detent,
-      friction: 10,
-      tension: 50,
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-      overshootClamping: true,
     }).start();
   }, [sheetHeight]);
 
@@ -95,12 +95,11 @@ export default function ProfileScreen() {
     setSheetVisible(true);
     currentDetentRef.current = DETENTS.HALF;
     Animated.parallel([
-      Animated.spring(sheetHeight, {
+      Animated.timing(sheetHeight, {
         toValue: SCREEN_HEIGHT * DETENTS.HALF,
-        friction: 10,
-        tension: 50,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
-        overshootClamping: true,
       }),
       Animated.timing(backdropOpacity, {
         toValue: 1,

@@ -10,6 +10,7 @@ import {
   Dimensions,
   PanResponder,
   Platform,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -39,10 +40,10 @@ export default function FavoritesModalScreen() {
   const snapToDetent = useCallback((detent: number) => {
     setCurrentDetent(detent);
     currentDetentRef.current = detent;
-    Animated.spring(sheetHeight, {
+    Animated.timing(sheetHeight, {
       toValue: SCREEN_HEIGHT * detent,
-      friction: 10,
-      tension: 50,
+      duration: 250,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
   }, [sheetHeight]);
@@ -75,7 +76,7 @@ export default function FavoritesModalScreen() {
         const newHeight = SCREEN_HEIGHT * detent - gestureState.dy;
         const clampedHeight = Math.max(
           SCREEN_HEIGHT * 0.2,
-          Math.min(SCREEN_HEIGHT, newHeight)
+          Math.min(SCREEN_HEIGHT * DETENTS.FULL, newHeight)
         );
         sheetHeight.setValue(clampedHeight);
       },
@@ -127,10 +128,10 @@ export default function FavoritesModalScreen() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.spring(sheetHeight, {
+      Animated.timing(sheetHeight, {
         toValue: SCREEN_HEIGHT * DETENTS.HALF,
-        friction: 10,
-        tension: 50,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }),
       Animated.timing(backdropOpacity, {
