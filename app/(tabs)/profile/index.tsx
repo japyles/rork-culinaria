@@ -270,7 +270,7 @@ export default function ProfileScreen() {
                   onPress={() => setShowListModal('recipes')}
                 >
                   <View style={styles.statCardIcon}>
-                    <ChefHat size={22} color="#fff" />
+                    <ChefHat size={22} color=Colors.primary />
                   </View>
                   <Text style={styles.statCardValue}>{customRecipes.length}</Text>
                   <Text style={styles.statCardLabel}>Recipes</Text>
@@ -663,19 +663,19 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary,
+    // backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
   statCardIconAccent: {
-    backgroundColor: Colors.primary,
+    // backgroundColor: Colors.primary,
   },
   statCardIconSecondary: {
-    backgroundColor: Colors.secondary,
+    // backgroundColor: Colors.secondary,
   },
   statCardIconTertiary: {
-    backgroundColor: '#6366F1',
+    // backgroundColor: '#6366F1',
   },
   statCardValue: {
     ...Typography.h2,
