@@ -749,6 +749,17 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                   </Pressable>
                 </View>
               )}
+              <Pressable
+                style={styles.addAllIngredientsButton}
+                onPress={() => {
+                  addToShoppingList(displayIngredients, recipe?.id, recipe?.title);
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  Alert.alert('Added', `All ${displayIngredients.length} ingredients added to shopping list`);
+                }}
+              >
+                <Plus size={18} color={Colors.textOnPrimary} />
+                <Text style={styles.addAllIngredientsText}>Add All Ingredients to Shopping List</Text>
+              </Pressable>
               {displayIngredients.map((ingredient, index) => (
                 <View key={ingredient.id || index} style={styles.ingredientItem}>
                   <View style={[styles.ingredientBullet, adjustedServings && styles.ingredientBulletAdjusted]} />
@@ -1429,6 +1440,22 @@ const styles = StyleSheet.create({
   },
   ingredientsList: {
     marginBottom: Spacing.lg,
+  },
+  addAllIngredientsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  addAllIngredientsText: {
+    ...Typography.label,
+    color: Colors.textOnPrimary,
+    fontSize: 14,
   },
   ingredientItem: {
     flexDirection: 'row',
