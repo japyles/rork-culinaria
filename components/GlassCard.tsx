@@ -18,7 +18,6 @@ export default function GlassCard({ children, style, padding = Spacing.lg }: Gla
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.glass.background,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.glass.border,
