@@ -6,10 +6,9 @@ interface GlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   padding?: number;
-  backgroundColor?: viewStyle;
 }
 
-export default function GlassCard({ children, style, padding = Spacing.lg, backgroundColor=Colors.glass.background }: GlassCardProps) {
+export default function GlassCard({ children, style, padding = Spacing.lg }: GlassCardProps) {
   return (
     <View style={[styles.container, { padding }, style]}>
       {children}
@@ -19,6 +18,7 @@ export default function GlassCard({ children, style, padding = Spacing.lg, backg
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: Colors.glass.background,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.glass.border,
