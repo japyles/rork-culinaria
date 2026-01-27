@@ -122,23 +122,6 @@ export default function DiscoverScreen() {
 
   const renderHeader = useCallback(() => (
     <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
-      <Text style={styles.title}>Discover</Text>
-      <Text style={styles.subtitle}>Find recipes and connect with cooks</Text>
-
-      <View style={styles.searchContainer}>
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          onFilterPress={() => setShowFilters(true)}
-          placeholder={searchMode === 'recipes' ? "Search recipes, ingredients..." : "Search users..."}
-        />
-        {activeFiltersCount > 0 && searchMode === 'recipes' && (
-          <View style={styles.filterBadge}>
-            <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
-          </View>
-        )}
-      </View>
-
       <View style={styles.modeToggle}>
         <Pressable
           style={[
@@ -222,13 +205,32 @@ export default function DiscoverScreen() {
         </Text>
       )}
     </Animated.View>
-  ), [search, searchMode, fadeAnim, activeFiltersCount, selectedCategory, filteredRecipes.length, searchedUsers.length]);
+  ), [searchMode, fadeAnim, selectedCategory, filteredRecipes.length, searchedUsers.length, search]);
 
   const displayedUsers = search ? searchedUsers : getSuggestedUsers;
 
   return (
     <View style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
+        <View style={styles.fixedHeader}>
+          <Text style={styles.title}>Discover</Text>
+          <Text style={styles.subtitle}>Find recipes and connect with cooks</Text>
+
+          <View style={styles.searchContainer}>
+            <SearchBar
+              value={search}
+              onChangeText={setSearch}
+              onFilterPress={() => setShowFilters(true)}
+              placeholder={searchMode === 'recipes' ? "Search recipes, ingredients..." : "Search users..."}
+            />
+            {activeFiltersCount > 0 && searchMode === 'recipes' && (
+              <View style={styles.filterBadge}>
+                <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+
         {searchMode === 'recipes' ? (
           <FlatList
             data={filteredRecipes}
@@ -382,24 +384,25 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  header: {
+  fixedHeader: {
     paddingTop: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.background,
+  },
+  header: {
     paddingBottom: Spacing.md,
   },
   title: {
     ...Typography.h1,
     color: Colors.text,
-    paddingHorizontal: Spacing.lg,
   },
   subtitle: {
     ...Typography.body,
     color: Colors.textSecondary,
-    paddingHorizontal: Spacing.lg,
     marginTop: Spacing.xs,
     marginBottom: Spacing.lg,
   },
   searchContainer: {
-    paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
     position: 'relative',
   },
@@ -463,6 +466,7 @@ const styles = StyleSheet.create({
     padding: 4,
     marginHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
   },
   modeButton: {
     flex: 1,
