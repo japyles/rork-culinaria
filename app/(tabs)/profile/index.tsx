@@ -301,7 +301,7 @@ export default function ProfileScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => triggerShake(shakeAnim2, () => router.push('/(tabs)/favorites'))}
+                  onPress={() => triggerShake(shakeAnim2, () => router.push('/favorites-modal'))}
                 >
                   <Animated.View style={[styles.statCard, styles.statCard2, { transform: [{ rotate: '2deg' }, { rotate: getShakeRotation(shakeAnim2) }] }]}>
                     <View style={[styles.statCardIcon, styles.statCardIconAccent]}>

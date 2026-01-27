@@ -57,6 +57,14 @@ function RootLayoutNav() {
           presentation: "card",
         }}
       />
+      <Stack.Screen
+        name="favorites-modal"
+        options={{
+          headerShown: false,
+          presentation: "transparentModal",
+          animation: "fade",
+        }}
+      />
     </Stack>
   );
 }
