@@ -24,7 +24,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const DETENTS = {
   HALF: 0.5,
   THREE_QUARTER: 0.75,
-  FULL: 1,
+  FULL: 0.9,
 };
 
 type TabType = 'favorites' | 'recent';
