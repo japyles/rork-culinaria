@@ -45,7 +45,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const DETENTS = {
   HALF: 0.5,
   THREE_QUARTER: 0.75,
-  FULL: 0.9,
+  FULL: 0.79,
 };
 
 export default function ProfileScreen() {
