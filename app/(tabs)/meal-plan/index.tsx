@@ -172,15 +172,14 @@ export default function MealPlanScreen() {
   const getMealsForType = (mealType: typeof MEAL_TYPES[number]): MealItemWithRecipe[] => {
     const dateKey = formatDateKey(selectedDate);
     const entries = getMealPlanEntriesForSlot(dateKey, mealType);
-    return entries
-      .map(entry => {
-        const recipe = getRecipeById(entry.recipeId);
-        if (recipe) {
-          return { entry, recipe };
-        }
-        return null;
-      })
-      .filter((item): item is MealItemWithRecipe => item !== null);
+    const result: MealItemWithRecipe[] = [];
+    for (const entry of entries) {
+      const recipe = getRecipeById(entry.recipeId);
+      if (recipe) {
+        result.push({ entry, recipe });
+      }
+    }
+    return result;
   };
 
   const hasPlannedMeals = (date: Date): boolean => {
