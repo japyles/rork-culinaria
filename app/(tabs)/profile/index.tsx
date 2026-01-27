@@ -270,7 +270,7 @@ export default function ProfileScreen() {
                   onPress={() => setShowListModal('recipes')}
                 >
                   <View style={styles.statCardIcon}>
-                    <ChefHat size={22} color=Colors.primary />
+                    <ChefHat size={22} color={Colors.primary} />
                   </View>
                   <Text style={styles.statCardValue}>{customRecipes.length}</Text>
                   <Text style={styles.statCardLabel}>Recipes</Text>
