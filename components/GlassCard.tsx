@@ -8,7 +8,7 @@ interface GlassCardProps {
   padding?: number;
 }
 
-export default function GlassCard({ children, style, padding = Spacing.sm }: GlassCardProps) {
+export default function GlassCard({ children, style, padding = Spacing.lg }: GlassCardProps) {
   return (
     <View style={[styles.container, { padding }, style]}>
       {children}
