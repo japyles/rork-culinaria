@@ -28,6 +28,8 @@ const DETENTS = {
   FULL: 0.9,
 };
 
+const MAX_HEIGHT_RATIO = 0.9;
+
 export default function FavoritesModalScreen() {
   const router = useRouter();
   const { favoriteRecipes } = useRecipes();
@@ -65,6 +67,14 @@ export default function FavoritesModalScreen() {
     });
   }, [sheetHeight, backdropOpacity, router]);
 
+  const snapToDetentRef = useRef(snapToDetent);
+  const closeSheetRef = useRef(closeSheet);
+  
+  useEffect(() => {
+    snapToDetentRef.current = snapToDetent;
+    closeSheetRef.current = closeSheet;
+  }, [snapToDetent, closeSheet]);
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -76,7 +86,7 @@ export default function FavoritesModalScreen() {
         const newHeight = SCREEN_HEIGHT * detent - gestureState.dy;
         const clampedHeight = Math.max(
           SCREEN_HEIGHT * 0.2,
-          Math.min(SCREEN_HEIGHT * DETENTS.FULL, newHeight)
+          Math.min(SCREEN_HEIGHT * MAX_HEIGHT_RATIO, newHeight)
         );
         sheetHeight.setValue(clampedHeight);
       },
@@ -84,43 +94,41 @@ export default function FavoritesModalScreen() {
         const detent = currentDetentRef.current;
         const velocity = gestureState.vy;
         const currentHeight = SCREEN_HEIGHT * detent - gestureState.dy;
-        const currentRatio = currentHeight / SCREEN_HEIGHT;
+        const clampedRatio = Math.min(currentHeight / SCREEN_HEIGHT, MAX_HEIGHT_RATIO);
 
-        if (velocity > 1.5 || (velocity > 0.5 && currentRatio < 0.4)) {
-          closeSheet();
+        if (velocity > 1.5 || (velocity > 0.5 && clampedRatio < 0.4)) {
+          closeSheetRef.current();
           return;
         }
 
         if (velocity < -0.5) {
           if (detent === DETENTS.HALF) {
-            snapToDetent(DETENTS.THREE_QUARTER);
-          } else if (detent === DETENTS.THREE_QUARTER) {
-            snapToDetent(DETENTS.FULL);
+            snapToDetentRef.current(DETENTS.THREE_QUARTER);
           } else {
-            snapToDetent(DETENTS.FULL);
+            snapToDetentRef.current(DETENTS.FULL);
           }
           return;
         }
 
         if (velocity > 0.5) {
           if (detent === DETENTS.FULL) {
-            snapToDetent(DETENTS.THREE_QUARTER);
+            snapToDetentRef.current(DETENTS.THREE_QUARTER);
           } else if (detent === DETENTS.THREE_QUARTER) {
-            snapToDetent(DETENTS.HALF);
+            snapToDetentRef.current(DETENTS.HALF);
           } else {
-            snapToDetent(DETENTS.HALF);
+            snapToDetentRef.current(DETENTS.HALF);
           }
           return;
         }
 
-        if (currentRatio < 0.35) {
-          closeSheet();
-        } else if (currentRatio < 0.625) {
-          snapToDetent(DETENTS.HALF);
-        } else if (currentRatio < 0.875) {
-          snapToDetent(DETENTS.THREE_QUARTER);
+        if (clampedRatio < 0.35) {
+          closeSheetRef.current();
+        } else if (clampedRatio < 0.625) {
+          snapToDetentRef.current(DETENTS.HALF);
+        } else if (clampedRatio < 0.825) {
+          snapToDetentRef.current(DETENTS.THREE_QUARTER);
         } else {
-          snapToDetent(DETENTS.FULL);
+          snapToDetentRef.current(DETENTS.FULL);
         }
       },
     })
