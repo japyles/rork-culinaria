@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,15 @@ import {
   ScrollView,
   Animated,
   Pressable,
+  Modal,
+  Linking,
+  Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ShoppingCart, Check, Trash2, X } from 'lucide-react-native';
+import { ShoppingCart, Check, Trash2, X, Truck, ExternalLink, Copy } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import GlassCard from '@/components/GlassCard';
@@ -23,6 +28,8 @@ export default function ShoppingListScreen() {
     clearCheckedItems, 
     clearShoppingList 
   } = useRecipes();
+  
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -50,6 +57,81 @@ export default function ShoppingListScreen() {
 
   const checkedCount = shoppingList.filter((item) => item.isChecked).length;
   const totalCount = shoppingList.length;
+  const uncheckedItems = useMemo(() => 
+    shoppingList.filter((item) => !item.isChecked), 
+    [shoppingList]
+  );
+
+  const formatItemsForSearch = (items: typeof shoppingList) => {
+    return items.map((item) => `${item.amount} ${item.unit} ${item.name}`.trim()).join(', ');
+  };
+
+  const formatItemsForClipboard = (items: typeof shoppingList) => {
+    return items.map((item) => `• ${item.amount} ${item.unit} ${item.name}`.trim()).join('\n');
+  };
+
+  const handleInstacart = async () => {
+    setShowDeliveryModal(false);
+    const items = uncheckedItems.length > 0 ? uncheckedItems : shoppingList;
+    if (items.length === 0) {
+      Alert.alert('Empty List', 'Add some items to your shopping list first.');
+      return;
+    }
+    const searchTerms = items.map((item) => item.name).slice(0, 5).join(' ');
+    const url = `https://www.instacart.com/store/search_v3/search?search_term=${encodeURIComponent(searchTerms)}`;
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.log('Error opening Instacart:', error);
+      Alert.alert('Error', 'Could not open Instacart. Please try again.');
+    }
+  };
+
+  const handleWalmart = async () => {
+    setShowDeliveryModal(false);
+    const items = uncheckedItems.length > 0 ? uncheckedItems : shoppingList;
+    if (items.length === 0) {
+      Alert.alert('Empty List', 'Add some items to your shopping list first.');
+      return;
+    }
+    const searchTerms = items.map((item) => item.name).slice(0, 5).join(' ');
+    const url = `https://www.walmart.com/search?q=${encodeURIComponent(searchTerms)}`;
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.log('Error opening Walmart:', error);
+      Alert.alert('Error', 'Could not open Walmart. Please try again.');
+    }
+  };
+
+  const handleAmazon = async () => {
+    setShowDeliveryModal(false);
+    const items = uncheckedItems.length > 0 ? uncheckedItems : shoppingList;
+    if (items.length === 0) {
+      Alert.alert('Empty List', 'Add some items to your shopping list first.');
+      return;
+    }
+    const searchTerms = items.map((item) => item.name).slice(0, 5).join(' ');
+    const url = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerms)}&i=amazonfresh`;
+    try {
+      await Linking.openURL(url);
+    } catch (error) {
+      console.log('Error opening Amazon:', error);
+      Alert.alert('Error', 'Could not open Amazon. Please try again.');
+    }
+  };
+
+  const handleCopyList = async () => {
+    setShowDeliveryModal(false);
+    const items = uncheckedItems.length > 0 ? uncheckedItems : shoppingList;
+    if (items.length === 0) {
+      Alert.alert('Empty List', 'Add some items to your shopping list first.');
+      return;
+    }
+    const listText = formatItemsForClipboard(items);
+    await Clipboard.setStringAsync(listText);
+    Alert.alert('Copied!', 'Shopping list copied to clipboard. Paste it into any grocery app.');
+  };
 
   return (
     <View style={styles.container}>
@@ -77,16 +159,27 @@ export default function ShoppingListScreen() {
           </Animated.View>
 
           {totalCount > 0 && (
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%` }
-                  ]} 
-                />
+            <>
+              <View style={styles.progressContainer}>
+                <View style={styles.progressBar}>
+                  <View 
+                    style={[
+                      styles.progressFill, 
+                      { width: `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%` }
+                    ]} 
+                  />
+                </View>
               </View>
-            </View>
+              
+              <Pressable 
+                style={styles.deliveryButton}
+                onPress={() => setShowDeliveryModal(true)}
+              >
+                <Truck size={20} color={Colors.textOnPrimary} />
+                <Text style={styles.deliveryButtonText}>Order Groceries</Text>
+                <ExternalLink size={16} color={Colors.textOnPrimary} style={{ opacity: 0.7 }} />
+              </Pressable>
+            </>
           )}
 
           {totalCount === 0 ? (
@@ -134,6 +227,80 @@ export default function ShoppingListScreen() {
 
           <View style={styles.bottomPadding} />
         </ScrollView>
+
+        <Modal
+          visible={showDeliveryModal}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowDeliveryModal(false)}
+        >
+          <Pressable 
+            style={styles.modalOverlay} 
+            onPress={() => setShowDeliveryModal(false)}
+          >
+            <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.modalHandle} />
+              <Text style={styles.modalTitle}>Order Groceries</Text>
+              <Text style={styles.modalSubtitle}>
+                Choose a delivery service to order your ingredients
+              </Text>
+
+              <View style={styles.deliveryOptions}>
+                <Pressable style={styles.deliveryOption} onPress={handleInstacart}>
+                  <View style={[styles.deliveryIconContainer, { backgroundColor: '#43B02A' }]}>
+                    <Text style={styles.deliveryIconText}>🥕</Text>
+                  </View>
+                  <View style={styles.deliveryOptionInfo}>
+                    <Text style={styles.deliveryOptionTitle}>Instacart</Text>
+                    <Text style={styles.deliveryOptionDesc}>Same-day delivery from local stores</Text>
+                  </View>
+                  <ExternalLink size={18} color={Colors.textSecondary} />
+                </Pressable>
+
+                <Pressable style={styles.deliveryOption} onPress={handleWalmart}>
+                  <View style={[styles.deliveryIconContainer, { backgroundColor: '#0071DC' }]}>
+                    <Text style={styles.deliveryIconText}>🛒</Text>
+                  </View>
+                  <View style={styles.deliveryOptionInfo}>
+                    <Text style={styles.deliveryOptionTitle}>Walmart</Text>
+                    <Text style={styles.deliveryOptionDesc}>Grocery pickup & delivery</Text>
+                  </View>
+                  <ExternalLink size={18} color={Colors.textSecondary} />
+                </Pressable>
+
+                <Pressable style={styles.deliveryOption} onPress={handleAmazon}>
+                  <View style={[styles.deliveryIconContainer, { backgroundColor: '#FF9900' }]}>
+                    <Text style={styles.deliveryIconText}>📦</Text>
+                  </View>
+                  <View style={styles.deliveryOptionInfo}>
+                    <Text style={styles.deliveryOptionTitle}>Amazon Fresh</Text>
+                    <Text style={styles.deliveryOptionDesc}>Fresh groceries delivered</Text>
+                  </View>
+                  <ExternalLink size={18} color={Colors.textSecondary} />
+                </Pressable>
+
+                <View style={styles.divider} />
+
+                <Pressable style={styles.deliveryOption} onPress={handleCopyList}>
+                  <View style={[styles.deliveryIconContainer, { backgroundColor: Colors.primary }]}>
+                    <Copy size={20} color={Colors.textOnPrimary} />
+                  </View>
+                  <View style={styles.deliveryOptionInfo}>
+                    <Text style={styles.deliveryOptionTitle}>Copy List</Text>
+                    <Text style={styles.deliveryOptionDesc}>Copy to clipboard for any app</Text>
+                  </View>
+                </Pressable>
+              </View>
+
+              <Pressable 
+                style={styles.cancelButton} 
+                onPress={() => setShowDeliveryModal(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </SafeAreaView>
     </View>
   );
@@ -315,5 +482,103 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: Spacing.xxxl,
+  },
+  deliveryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+    ...Shadow.sm,
+  },
+  deliveryButtonText: {
+    ...Typography.body,
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.cardBackground,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Platform.OS === 'ios' ? Spacing.xxxl : Spacing.xl,
+    paddingTop: Spacing.md,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: Colors.border,
+    borderRadius: BorderRadius.full,
+    alignSelf: 'center',
+    marginBottom: Spacing.lg,
+  },
+  modalTitle: {
+    ...Typography.h2,
+    color: Colors.text,
+    textAlign: 'center',
+    marginBottom: Spacing.xs,
+  },
+  modalSubtitle: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.lg,
+  },
+  deliveryOptions: {
+    gap: Spacing.sm,
+  },
+  deliveryOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.md,
+  },
+  deliveryIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deliveryIconText: {
+    fontSize: 24,
+  },
+  deliveryOptionInfo: {
+    flex: 1,
+  },
+  deliveryOptionTitle: {
+    ...Typography.body,
+    color: Colors.text,
+    fontWeight: '600' as const,
+  },
+  deliveryOptionDesc: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
+    marginVertical: Spacing.sm,
+  },
+  cancelButton: {
+    marginTop: Spacing.lg,
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    fontWeight: '600' as const,
   },
 });
