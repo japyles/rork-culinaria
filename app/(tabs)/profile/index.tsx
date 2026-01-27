@@ -281,7 +281,7 @@ export default function ProfileScreen() {
                   onPress={() => router.push('/(tabs)/favorites')}
                 >
                   <View style={[styles.statCardIcon, styles.statCardIconAccent]}>
-                    <Heart size={22} color="#fff" />
+                    <Heart size={22} color={Colors.accent} />
                   </View>
                   <Text style={styles.statCardValue}>{favorites.length}</Text>
                   <Text style={styles.statCardLabel}>Favorites</Text>
@@ -292,7 +292,7 @@ export default function ProfileScreen() {
                   onPress={() => setShowListModal('followers')}
                 >
                   <View style={[styles.statCardIcon, styles.statCardIconSecondary]}>
-                    <Users size={22} color="#fff" />
+                    <Users size={22} color={Colors.secondary} />
                   </View>
                   <Text style={styles.statCardValue}>{followers.length}</Text>
                   <Text style={styles.statCardLabel}>Followers</Text>
@@ -303,7 +303,7 @@ export default function ProfileScreen() {
                   onPress={() => setShowListModal('following')}
                 >
                   <View style={[styles.statCardIcon, styles.statCardIconTertiary]}>
-                    <UserPlus size={22} color="#fff" />
+                    <UserPlus size={22} color={Colors.success} />
                   </View>
                   <Text style={styles.statCardValue}>{following.length}</Text>
                   <Text style={styles.statCardLabel}>Following</Text>
