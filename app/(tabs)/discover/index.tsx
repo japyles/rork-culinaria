@@ -120,7 +120,7 @@ export default function DiscoverScreen() {
     [isFollowing, toggleFollow, router]
   );
 
-  const renderHeader = () => (
+  const renderHeader = useCallback(() => (
     <Animated.View style={[styles.header, { opacity: fadeAnim }]}>
       <Text style={styles.title}>Discover</Text>
       <Text style={styles.subtitle}>Find recipes and connect with cooks</Text>
@@ -222,7 +222,7 @@ export default function DiscoverScreen() {
         </Text>
       )}
     </Animated.View>
-  );
+  ), [search, searchMode, fadeAnim, activeFiltersCount, selectedCategory, filteredRecipes.length, searchedUsers.length]);
 
   const displayedUsers = search ? searchedUsers : getSuggestedUsers;
 
@@ -241,6 +241,7 @@ export default function DiscoverScreen() {
             )}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Text style={styles.emptyIcon}>🍳</Text>
@@ -265,6 +266,7 @@ export default function DiscoverScreen() {
             renderItem={renderUserItem}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Users size={48} color={Colors.textSecondary} />
