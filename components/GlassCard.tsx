@@ -6,7 +6,7 @@ interface GlassCardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   padding?: number;
-  backgroundColor?: String;
+  backgroundColor?: viewStyle;
 }
 
 export default function GlassCard({ children, style, padding = Spacing.lg, backgroundColor=Colors.glass.background }: GlassCardProps) {
