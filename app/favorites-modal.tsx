@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Heart, X, BookOpen, Clock, TrendingUp, GripHorizontal } from 'lucide-react-native';
+import { Heart, X } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import RecipeCard from '@/components/RecipeCard';
@@ -27,18 +27,14 @@ const DETENTS = {
   FULL: 0.9,
 };
 
-type TabType = 'favorites' | 'recent';
-
 export default function FavoritesModalScreen() {
   const router = useRouter();
-  const { favoriteRecipes, recentRecipes } = useRecipes();
-  const [activeTab, setActiveTab] = useState<TabType>('favorites');
+  const { favoriteRecipes } = useRecipes();
   const [currentDetent, setCurrentDetent] = useState(DETENTS.HALF);
   const currentDetentRef = useRef(DETENTS.HALF);
   
   const sheetHeight = useRef(new Animated.Value(SCREEN_HEIGHT * DETENTS.HALF)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
-  const tabIndicatorAnim = useRef(new Animated.Value(0)).current;
 
   const snapToDetent = useCallback((detent: number) => {
     setCurrentDetent(detent);
@@ -145,98 +141,20 @@ export default function FavoritesModalScreen() {
     ]).start();
   }, []);
 
-  useEffect(() => {
-    Animated.spring(tabIndicatorAnim, {
-      toValue: activeTab === 'favorites' ? 0 : 1,
-      friction: 8,
-      useNativeDriver: true,
-    }).start();
-  }, [activeTab]);
-
-  const currentRecipes = activeTab === 'favorites' ? favoriteRecipes : recentRecipes;
-
-  const stats = {
-    totalSaved: favoriteRecipes.length,
-    totalCooked: recentRecipes.length,
-    avgTime: Math.round(
-      favoriteRecipes.reduce((acc, r) => acc + r.prepTime + r.cookTime, 0) /
-        (favoriteRecipes.length || 1)
-    ),
-  };
+  
 
   const renderHeader = () => (
-    
-		<View>
-      <View style={styles.tabsContainer}>
-        <Animated.View
-          style={[
-            styles.tabIndicator,
-            {
-              transform: [
-                {
-                  translateX: tabIndicatorAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 160],
-                  }),
-                },
-              ],
-            },
-          ]}
-        />
-        <Pressable
-          style={styles.tab}
-          onPress={() => setActiveTab('favorites')}
-        >
-          <Heart
-            size={16}
-            color={activeTab === 'favorites' ? Colors.textOnPrimary : Colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'favorites' && styles.tabTextActive,
-            ]}
-          >
-            Favorites
-          </Text>
-        </Pressable>
-        <Pressable
-          style={styles.tab}
-          onPress={() => setActiveTab('recent')}
-        >
-          <TrendingUp
-            size={16}
-            color={activeTab === 'recent' ? Colors.textOnPrimary : Colors.textSecondary}
-          />
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'recent' && styles.tabTextActive,
-            ]}
-          >
-            Recent
-          </Text>
-        </Pressable>
-      </View>
-
-      <Text style={styles.sectionTitle}>
-        {activeTab === 'favorites' ? 'Your Favorites' : 'Recently Viewed'}
-      </Text>
+    <View>
+      <Text style={styles.sectionTitle}>Your Favorites</Text>
     </View>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>
-        {activeTab === 'favorites' ? '❤️' : '👀'}
-      </Text>
-      <Text style={styles.emptyTitle}>
-        {activeTab === 'favorites' ? 'No favorites yet' : 'No recent recipes'}
-      </Text>
+      <Text style={styles.emptyIcon}>❤️</Text>
+      <Text style={styles.emptyTitle}>No favorites yet</Text>
       <Text style={styles.emptyText}>
-        {activeTab === 'favorites'
-          ? 'Start exploring and save recipes you love!'
-          : 'Browse recipes to build your cooking history'}
+        Start exploring and save recipes you love!
       </Text>
     </View>
   );
@@ -277,7 +195,7 @@ export default function FavoritesModalScreen() {
         </View>
 
         <FlatList
-          data={currentRecipes}
+          data={favoriteRecipes}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={renderHeader}
           renderItem={({ item }) => (
@@ -357,64 +275,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: Spacing.xxxl,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.md,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-  },
-  statValue: {
-    ...Typography.bodyBold,
-    color: Colors.text,
-    marginTop: Spacing.xs,
-  },
-  statLabel: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-    fontSize: 11,
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    marginHorizontal: Spacing.lg,
-    backgroundColor: Colors.borderLight,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xs,
-    marginBottom: Spacing.md,
-    position: 'relative',
-  },
-  tabIndicator: {
-    position: 'absolute',
-    left: Spacing.xs,
-    top: Spacing.xs,
-    bottom: Spacing.xs,
-    width: 160,
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    gap: Spacing.xs,
-    zIndex: 1,
-  },
-  tabText: {
-    ...Typography.label,
-    color: Colors.textSecondary,
-    fontSize: 13,
-  },
-  tabTextActive: {
-    color: Colors.textOnPrimary,
   },
   sectionTitle: {
     ...Typography.h3,
