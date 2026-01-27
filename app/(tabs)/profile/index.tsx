@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   statsCarouselContainer: {
-    width: '100%',
+    width: '90%',
     marginBottom: Spacing.lg,
   },
   statsCarousel: {
