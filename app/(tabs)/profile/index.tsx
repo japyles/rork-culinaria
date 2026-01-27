@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.accent,
   },
   statCardIconSecondary: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: Colors.accent,
   },
   statCardIconTertiary: {
     backgroundColor: '#6366F1',
