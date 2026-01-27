@@ -61,8 +61,40 @@ function RootLayoutNav() {
         name="favorites-modal"
         options={{
           headerShown: false,
-          presentation: "transparentModal",
-          animation: "fade",
+          presentation: "formSheet",
+          sheetAllowedDetents: [0.46, 0.82],
+          sheetCornerRadius: 24,
+          sheetGrabberVisible: true,
+        }}
+      />
+      <Stack.Screen
+        name="recipes-modal"
+        options={{
+          headerShown: false,
+          presentation: "formSheet",
+          sheetAllowedDetents: [0.46, 0.82],
+          sheetCornerRadius: 24,
+          sheetGrabberVisible: true,
+        }}
+      />
+      <Stack.Screen
+        name="followers-modal"
+        options={{
+          headerShown: false,
+          presentation: "formSheet",
+          sheetAllowedDetents: [0.46, 0.82],
+          sheetCornerRadius: 24,
+          sheetGrabberVisible: true,
+        }}
+      />
+      <Stack.Screen
+        name="following-modal"
+        options={{
+          headerShown: false,
+          presentation: "formSheet",
+          sheetAllowedDetents: [0.46, 0.82],
+          sheetCornerRadius: 24,
+          sheetGrabberVisible: true,
         }}
       />
     </Stack>

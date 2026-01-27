@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,7 @@ import {
   Alert,
   Platform,
   ActionSheetIOS,
-  Dimensions,
   Animated,
-  PanResponder,
-  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -38,16 +35,7 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { User } from '@/types/recipe';
 import Button from '@/components/Button';
 
-type ListType = 'followers' | 'following' | 'recipes' | null;
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const DETENTS = {
-  HALF: 0.5,
-  MAX: 0.82,
-};
-
-const MAX_HEIGHT_RATIO = 0.82;
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -64,125 +52,16 @@ export default function ProfileScreen() {
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
 
-  const [showListModal, setShowListModal] = useState<ListType>(null);
-  const [sheetVisible, setSheetVisible] = useState(false);
-  const currentDetentRef = useRef(DETENTS.HALF);
-  const sheetHeight = useRef(new Animated.Value(0)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(currentUser.displayName);
   const [editUsername, setEditUsername] = useState(currentUser.username);
   const [editBio, setEditBio] = useState(currentUser.bio);
   const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser.avatarUrl);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const shakeAnim1 = useRef(new Animated.Value(0)).current;
   const shakeAnim2 = useRef(new Animated.Value(0)).current;
   const shakeAnim3 = useRef(new Animated.Value(0)).current;
   const shakeAnim4 = useRef(new Animated.Value(0)).current;
-
-  const snapToDetent = useCallback((detent: number) => {
-    currentDetentRef.current = detent;
-    Animated.timing(sheetHeight, {
-      toValue: SCREEN_HEIGHT * detent,
-      duration: 250,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [sheetHeight]);
-
-  const openSheet = useCallback((type: ListType) => {
-    setShowListModal(type);
-    setSheetVisible(true);
-    currentDetentRef.current = DETENTS.HALF;
-    Animated.parallel([
-      Animated.timing(sheetHeight, {
-        toValue: SCREEN_HEIGHT * DETENTS.HALF,
-        duration: 300,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [sheetHeight, backdropOpacity]);
-
-  const closeSheet = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(sheetHeight, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setSheetVisible(false);
-      setShowListModal(null);
-      setSearchQuery('');
-    });
-  }, [sheetHeight, backdropOpacity]);
-
-  const snapToDetentRef = useRef(snapToDetent);
-  const closeSheetRef = useRef(closeSheet);
-  
-  useEffect(() => {
-    snapToDetentRef.current = snapToDetent;
-    closeSheetRef.current = closeSheet;
-  }, [snapToDetent, closeSheet]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const detent = currentDetentRef.current;
-        const newHeight = SCREEN_HEIGHT * detent - gestureState.dy;
-        const clampedHeight = Math.max(
-          SCREEN_HEIGHT * 0.2,
-          Math.min(SCREEN_HEIGHT * MAX_HEIGHT_RATIO, newHeight)
-        );
-        sheetHeight.setValue(clampedHeight);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const detent = currentDetentRef.current;
-        const velocity = gestureState.vy;
-        const currentHeight = SCREEN_HEIGHT * detent - gestureState.dy;
-        const clampedRatio = Math.min(currentHeight / SCREEN_HEIGHT, MAX_HEIGHT_RATIO);
-
-        if (velocity > 1.5 || (velocity > 0.5 && clampedRatio < 0.4)) {
-          closeSheetRef.current();
-          return;
-        }
-
-        if (velocity < -0.5) {
-          snapToDetentRef.current(DETENTS.MAX);
-          return;
-        }
-
-        if (velocity > 0.5) {
-          snapToDetentRef.current(DETENTS.HALF);
-          return;
-        }
-
-        if (clampedRatio < 0.35) {
-          closeSheetRef.current();
-        } else if (clampedRatio < 0.66) {
-          snapToDetentRef.current(DETENTS.HALF);
-        } else {
-          snapToDetentRef.current(DETENTS.MAX);
-        }
-      },
-    })
-  ).current;
 
   const triggerShake = useCallback((anim: Animated.Value, callback: () => void) => {
     Animated.sequence([
@@ -280,39 +159,6 @@ export default function ProfileScreen() {
     }
   }, [pickImage]);
 
-  const renderUserItem = useCallback(
-    ({ item }: { item: User }) => {
-      const isFollowingUser = isFollowing(item.id);
-      return (
-        <Pressable
-          style={styles.userItem}
-          onPress={() => {
-            setShowListModal(null);
-            router.push(`/user/${item.id}`);
-          }}
-        >
-          <Image source={{ uri: item.avatarUrl }} style={styles.userAvatar} />
-          <View style={styles.userInfo}>
-            <View style={styles.userNameRow}>
-              <Text style={styles.userDisplayName}>{item.displayName}</Text>
-              {item.isVerified && (
-                <BadgeCheck size={14} color={Colors.primary} />
-              )}
-            </View>
-            <Text style={styles.userUsername}>@{item.username}</Text>
-          </View>
-          <Button
-            title={isFollowingUser ? 'Following' : 'Follow'}
-            variant={isFollowingUser ? 'outline' : 'primary'}
-            size="sm"
-            onPress={() => toggleFollow(item.id)}
-          />
-        </Pressable>
-      );
-    },
-    [isFollowing, toggleFollow, router]
-  );
-
   const renderSuggestedUser = useCallback(
     ({ item }: { item: User }) => {
       return (
@@ -345,29 +191,6 @@ export default function ProfileScreen() {
       );
     },
     [toggleFollow, router]
-  );
-
-  const filteredList =
-    showListModal === 'followers'
-      ? getFollowersUsers.filter(
-          (user) =>
-            !searchQuery ||
-            user.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.username.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : showListModal === 'following'
-      ? getFollowingUsers.filter(
-          (user) =>
-            !searchQuery ||
-            user.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.username.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : [];
-
-  const filteredRecipes = customRecipes.filter(
-    (recipe) =>
-      !searchQuery ||
-      recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -408,7 +231,7 @@ export default function ProfileScreen() {
                 snapToInterval={85}
               >
                 <Pressable
-                  onPress={() => triggerShake(shakeAnim1, () => openSheet('recipes'))}
+                  onPress={() => triggerShake(shakeAnim1, () => router.push('/recipes-modal'))}
                 >
                   <Animated.View style={[styles.statCard, styles.statCard1, { transform: [{ rotate: '-3deg' }, { rotate: getShakeRotation(shakeAnim1) }] }]}>
                     <View style={styles.statCardIcon}>
@@ -432,7 +255,7 @@ export default function ProfileScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => triggerShake(shakeAnim3, () => openSheet('followers'))}
+                  onPress={() => triggerShake(shakeAnim3, () => router.push('/followers-modal'))}
                 >
                   <Animated.View style={[styles.statCard, styles.statCard3, { transform: [{ rotate: '-2deg' }, { rotate: getShakeRotation(shakeAnim3) }] }]}>
                     <View style={[styles.statCardIcon, styles.statCardIconSecondary]}>
@@ -444,7 +267,7 @@ export default function ProfileScreen() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => triggerShake(shakeAnim4, () => openSheet('following'))}
+                  onPress={() => triggerShake(shakeAnim4, () => router.push('/following-modal'))}
                 >
                   <Animated.View style={[styles.statCard, styles.statCard4, { transform: [{ rotate: '3deg' }, { rotate: getShakeRotation(shakeAnim4) }] }]}>
                     <View style={[styles.statCardIcon, styles.statCardIconTertiary]}>
@@ -492,7 +315,7 @@ export default function ProfileScreen() {
 
               <Pressable
                 style={styles.actionCard}
-                onPress={() => setShowListModal('following')}
+                onPress={() => router.push('/following-modal')}
               >
                 <Users size={24} color={Colors.secondary} />
                 <Text style={styles.actionTitle}>My Network</Text>
@@ -503,119 +326,6 @@ export default function ProfileScreen() {
             </View>
           </View>
         </ScrollView>
-
-        {sheetVisible && (
-          <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-            <Animated.View
-              style={[
-                styles.sheetBackdrop,
-                {
-                  opacity: backdropOpacity.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0, 0.5],
-                  }),
-                },
-              ]}
-            >
-              <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
-            </Animated.View>
-
-            <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
-              <LinearGradient
-                colors={[Colors.surface, Colors.background]}
-                style={StyleSheet.absoluteFill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-              />
-
-              <View {...panResponder.panHandlers} style={styles.handleContainer}>
-                <View style={styles.handle} />
-                <View style={styles.sheetHeader}>
-                  <View style={styles.headerTitleRow}>
-                    {showListModal === 'recipes' && <ChefHat size={22} color={Colors.primary} />}
-                    {showListModal === 'followers' && <Users size={22} color={Colors.secondary} />}
-                    {showListModal === 'following' && <UserPlus size={22} color={Colors.success} />}
-                    <Text style={styles.sheetTitle}>
-                      {showListModal === 'recipes' ? 'My Recipes' : showListModal === 'followers' ? 'Followers' : 'Following'}
-                    </Text>
-                  </View>
-                  <Pressable onPress={closeSheet} style={styles.sheetCloseButton}>
-                    <X size={22} color={Colors.textSecondary} />
-                  </Pressable>
-                </View>
-              </View>
-
-              <View style={styles.sheetSearchContainer}>
-                <Search size={18} color={Colors.textSecondary} />
-                <TextInput
-                  style={styles.sheetSearchInput}
-                  placeholder={showListModal === 'recipes' ? 'Search recipes...' : 'Search users...'}
-                  placeholderTextColor={Colors.textSecondary}
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </View>
-
-              {showListModal === 'recipes' ? (
-                <FlatList
-                  data={filteredRecipes}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <Pressable
-                      style={styles.recipeItem}
-                      onPress={() => {
-                        closeSheet();
-                        router.push(`/recipe/${item.id}`);
-                      }}
-                    >
-                      <Image source={{ uri: item.imageUrl }} style={styles.recipeImage} />
-                      <View style={styles.recipeInfo}>
-                        <Text style={styles.recipeTitle} numberOfLines={1}>{item.title}</Text>
-                        <Text style={styles.recipeDetails}>
-                          {item.cookTime} min • {item.servings} servings
-                        </Text>
-                      </View>
-                    </Pressable>
-                  )}
-                  contentContainerStyle={styles.sheetListContent}
-                  showsVerticalScrollIndicator={false}
-                  ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                      <ChefHat size={48} color={Colors.textSecondary} />
-                      <Text style={styles.emptyTitle}>No recipes yet</Text>
-                      <Text style={styles.emptySubtext}>
-                        Start creating recipes to see them here!
-                      </Text>
-                    </View>
-                  }
-                />
-              ) : (
-                <FlatList
-                  data={filteredList}
-                  keyExtractor={(item) => item.id}
-                  renderItem={renderUserItem}
-                  contentContainerStyle={styles.sheetListContent}
-                  showsVerticalScrollIndicator={false}
-                  ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                      <Users size={48} color={Colors.textSecondary} />
-                      <Text style={styles.emptyTitle}>
-                        {showListModal === 'followers'
-                          ? 'No followers yet'
-                          : "You're not following anyone"}
-                      </Text>
-                      <Text style={styles.emptySubtext}>
-                        {showListModal === 'followers'
-                          ? 'Share your recipes to gain followers!'
-                          : 'Discover users to follow in the Discover tab'}
-                      </Text>
-                    </View>
-                  }
-                />
-              )}
-            </Animated.View>
-          </View>
-        )}
 
         <Modal
           visible={showEditModal}
@@ -925,51 +635,6 @@ const styles = StyleSheet.create({
   listContent: {
     padding: Spacing.lg,
   },
-  userItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  userAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: Spacing.md,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  userDisplayName: {
-    ...Typography.bodyBold,
-    color: Colors.text,
-  },
-  userUsername: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxxl,
-  },
-  emptyTitle: {
-    ...Typography.h3,
-    color: Colors.text,
-    marginTop: Spacing.md,
-  },
-  emptySubtext: {
-    ...Typography.body,
-    color: Colors.textSecondary,
-    textAlign: 'center' as const,
-    marginTop: Spacing.sm,
-  },
   emptyText: {
     ...Typography.body,
     color: Colors.textSecondary,
@@ -1015,111 +680,5 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: Spacing.md,
-  },
-  recipeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  recipeImage: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.md,
-    marginRight: Spacing.md,
-  },
-  recipeInfo: {
-    flex: 1,
-  },
-  recipeTitle: {
-    ...Typography.body,
-    fontWeight: '600' as const,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  recipeDetails: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
-  },
-  sheetBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000',
-  },
-  sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 16,
-      },
-    }),
-  },
-  handleContainer: {
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: Colors.borderLight,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: Spacing.sm,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.sm,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  sheetTitle: {
-    ...Typography.h2,
-    color: Colors.text,
-  },
-  sheetCloseButton: {
-    padding: Spacing.xs,
-    backgroundColor: Colors.background,
-    borderRadius: BorderRadius.full,
-  },
-  sheetSearchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
-    marginHorizontal: Spacing.lg,
-    marginVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-  },
-  sheetSearchInput: {
-    flex: 1,
-    ...Typography.body,
-    color: Colors.text,
-    paddingVertical: Spacing.sm,
-  },
-  sheetListContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
   },
 });

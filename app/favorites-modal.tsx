@@ -1,16 +1,11 @@
-import React, { useRef, useEffect, useState, useCallback } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
-  Animated,
   Pressable,
-  Image,
-  Dimensions,
-  PanResponder,
   Platform,
-  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -18,126 +13,14 @@ import { Heart, X } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import RecipeCard from '@/components/RecipeCard';
-import GlassCard from '@/components/GlassCard';
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const DETENTS = {
-  HALF: 0.5,
-  MAX: 0.82,
-};
-
-const MAX_HEIGHT_RATIO = 0.82;
 
 export default function FavoritesModalScreen() {
   const router = useRouter();
   const { favoriteRecipes } = useRecipes();
-  const [currentDetent, setCurrentDetent] = useState(DETENTS.HALF);
-  const currentDetentRef = useRef(DETENTS.HALF);
-  
-  const sheetHeight = useRef(new Animated.Value(SCREEN_HEIGHT * DETENTS.HALF)).current;
-  const backdropOpacity = useRef(new Animated.Value(0)).current;
 
-  const snapToDetent = useCallback((detent: number) => {
-    setCurrentDetent(detent);
-    currentDetentRef.current = detent;
-    Animated.timing(sheetHeight, {
-      toValue: SCREEN_HEIGHT * detent,
-      duration: 250,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [sheetHeight]);
-
-  const closeSheet = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(sheetHeight, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: false,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      router.back();
-    });
-  }, [sheetHeight, backdropOpacity, router]);
-
-  const snapToDetentRef = useRef(snapToDetent);
-  const closeSheetRef = useRef(closeSheet);
-  
-  useEffect(() => {
-    snapToDetentRef.current = snapToDetent;
-    closeSheetRef.current = closeSheet;
-  }, [snapToDetent, closeSheet]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 5;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const detent = currentDetentRef.current;
-        const newHeight = SCREEN_HEIGHT * detent - gestureState.dy;
-        const clampedHeight = Math.max(
-          SCREEN_HEIGHT * 0.2,
-          Math.min(SCREEN_HEIGHT * MAX_HEIGHT_RATIO, newHeight)
-        );
-        sheetHeight.setValue(clampedHeight);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const detent = currentDetentRef.current;
-        const velocity = gestureState.vy;
-        const currentHeight = SCREEN_HEIGHT * detent - gestureState.dy;
-        const clampedRatio = Math.min(currentHeight / SCREEN_HEIGHT, MAX_HEIGHT_RATIO);
-
-        if (velocity > 1.5 || (velocity > 0.5 && clampedRatio < 0.4)) {
-          closeSheetRef.current();
-          return;
-        }
-
-        if (velocity < -0.5) {
-          snapToDetentRef.current(DETENTS.MAX);
-          return;
-        }
-
-        if (velocity > 0.5) {
-          snapToDetentRef.current(DETENTS.HALF);
-          return;
-        }
-
-        if (clampedRatio < 0.35) {
-          closeSheetRef.current();
-        } else if (clampedRatio < 0.66) {
-          snapToDetentRef.current(DETENTS.HALF);
-        } else {
-          snapToDetentRef.current(DETENTS.MAX);
-        }
-      },
-    })
-  ).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(sheetHeight, {
-        toValue: SCREEN_HEIGHT * DETENTS.HALF,
-        duration: 300,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(backdropOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  
+  const closeSheet = () => {
+    router.back();
+  };
 
   const renderHeader = () => (
     <View>
@@ -157,53 +40,36 @@ export default function FavoritesModalScreen() {
 
   return (
     <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.backdrop,
-          { opacity: backdropOpacity.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 0.5],
-          }) },
-        ]}
-      >
-        <Pressable style={StyleSheet.absoluteFill} onPress={closeSheet} />
-      </Animated.View>
-
-      <Animated.View style={[styles.sheet, { height: sheetHeight }]}>
-        <LinearGradient
-          colors={[Colors.surface, Colors.background]}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-        />
-        
-        <View {...panResponder.panHandlers} style={styles.handleContainer}>
-          <View style={styles.handle} />
-          <View style={styles.sheetHeader}>
-            <View style={styles.headerTitleRow}>
-              <Heart size={22} color={Colors.primary} />
-              <Text style={styles.sheetTitle}>Favorites</Text>
-            </View>
-            <Pressable onPress={closeSheet} style={styles.closeButton}>
-              <X size={22} color={Colors.textSecondary} />
-            </Pressable>
-          </View>
+      <LinearGradient
+        colors={[Colors.surface, Colors.background]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+      />
+      
+      <View style={styles.sheetHeader}>
+        <View style={styles.headerTitleRow}>
+          <Heart size={22} color={Colors.primary} />
+          <Text style={styles.sheetTitle}>Favorites</Text>
         </View>
+        <Pressable onPress={closeSheet} style={styles.closeButton}>
+          <X size={22} color={Colors.textSecondary} />
+        </Pressable>
+      </View>
 
-        <FlatList
-          data={favoriteRecipes}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderHeader}
-          renderItem={({ item }) => (
-            <View style={styles.cardContainer}>
-              <RecipeCard recipe={item} />
-            </View>
-          )}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-        />
-      </Animated.View>
+      <FlatList
+        data={favoriteRecipes}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        renderItem={({ item }) => (
+          <View style={styles.cardContainer}>
+            <RecipeCard recipe={item} />
+          </View>
+        )}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={renderEmptyState}
+      />
     </View>
   );
 }
@@ -211,49 +77,17 @@ export default function FavoritesModalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000',
-  },
-  sheet: {
     backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 16,
-      },
-    }),
-  },
-  handleContainer: {
-    paddingTop: Spacing.sm,
-    paddingBottom: Spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    backgroundColor: Colors.borderLight,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: Spacing.sm,
   },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -277,6 +111,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
+    marginTop: Spacing.md,
   },
   cardContainer: {
     paddingHorizontal: Spacing.lg,
