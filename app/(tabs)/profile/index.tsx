@@ -229,7 +229,7 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, styles.statCircle1, { transform: [{ scale: shakeAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <LinearGradient
-                    colors={['#F8E1F4', '#FADCE8']}
+                    colors={Colors.gradient.sunset}
                     style={styles.statCircleInner}
                   >
                     <ChefHat size={28} color="#9B6B9E" />
