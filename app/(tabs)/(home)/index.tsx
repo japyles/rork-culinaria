@@ -279,8 +279,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   heroAvatar: {
-    width: 40,
-    height: 40,
+    width: 46,
+    height: 46,
     borderRadius: BorderRadius.full,
   },
   heroContent: {
