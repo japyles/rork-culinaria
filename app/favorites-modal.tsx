@@ -46,6 +46,10 @@ export default function FavoritesModalScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
       />
+
+      <View style={styles.grabberContainer}>
+        <View style={styles.grabber} />
+      </View>
       
       <View style={styles.sheetHeader}>
         <View style={styles.headerTitleRow}>
