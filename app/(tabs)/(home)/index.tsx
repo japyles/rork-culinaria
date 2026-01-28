@@ -52,6 +52,13 @@ export default function HomeScreen() {
     ]).start();
   }, []);
 
+  const timeOfDayGreeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Morning';
+    if (hour >= 12 && hour < 17) return 'Afternoon';
+    return 'Evening';
+  }, []);
+
   const featuredRecipe = useMemo(() => {
     if (allRecipes.length === 0) return null;
     const today = new Date();
@@ -96,7 +103,7 @@ export default function HomeScreen() {
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
                 <View >
                   <Text style={styles.heroTextTop} >
-                    Good Morning,{"\n"}{currentUser.displayName}!
+                    Good {timeOfDayGreeting},{"\n"}{currentUser.displayName}!
                   </Text>
                 	
                 </View>
