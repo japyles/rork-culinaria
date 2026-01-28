@@ -78,9 +78,7 @@ export default function HomeScreen() {
               style={styles.heroOverlay}
             >
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
-                <Pressable style={styles.menuButton}>
-                  <Menu size={24} color="#fff" />
-                </Pressable>
+                
                 <Pressable
                   style={styles.heroAvatarContainer}
                   onPress={() => router.push('/profile')}
