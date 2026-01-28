@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)',
   },
   heroTextTop: {
-		color: Color.background,
+		color: Colors.background,
     fontSize: 12,
   },
   heroAvatar: {
