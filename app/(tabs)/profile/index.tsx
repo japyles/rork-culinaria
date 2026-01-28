@@ -230,19 +230,19 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={78} height={78} style={styles.glassSvg}>
+                    <Svg width={100} height={100} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath1" d="M 10,39 A 29,29 0 0,0 68,39" />
+                        <Path id="curvedPath1" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="39" cy="39" r="37" fill="url(#glassGrad1)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="24" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="20" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="9" fontWeight="600">
+                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad1)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
+                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
                         <TextPath href="#curvedPath1" startOffset="50%" textAnchor="middle">
                           Recipes
                         </TextPath>
@@ -262,19 +262,19 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim2.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={78} height={78} style={styles.glassSvg}>
+                    <Svg width={100} height={100} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath2" d="M 10,39 A 29,29 0 0,0 68,39" />
+                        <Path id="curvedPath2" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="39" cy="39" r="37" fill="url(#glassGrad2)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="24" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="20" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="9" fontWeight="600">
+                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad2)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
+                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
                         <TextPath href="#curvedPath2" startOffset="50%" textAnchor="middle">
                           Favorites
                         </TextPath>
@@ -294,19 +294,19 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim3.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={78} height={78} style={styles.glassSvg}>
+                    <Svg width={100} height={100} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad3" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath3" d="M 10,39 A 29,29 0 0,0 68,39" />
+                        <Path id="curvedPath3" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="39" cy="39" r="37" fill="url(#glassGrad3)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="24" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="20" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="9" fontWeight="600">
+                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad3)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
+                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
                         <TextPath href="#curvedPath3" startOffset="50%" textAnchor="middle">
                           Followers
                         </TextPath>
@@ -326,19 +326,19 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim4.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={78} height={78} style={styles.glassSvg}>
+                    <Svg width={100} height={100} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad4" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath4" d="M 10,39 A 29,29 0 0,0 68,39" />
+                        <Path id="curvedPath4" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="39" cy="39" r="37" fill="url(#glassGrad4)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="24" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="20" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="9" fontWeight="600">
+                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad4)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
+                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
                         <TextPath href="#curvedPath4" startOffset="50%" textAnchor="middle">
                           Following
                         </TextPath>
@@ -550,13 +550,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statCircle: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   statCircleInner: {
     flex: 1,
-    borderRadius: 39,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -569,11 +569,11 @@ const styles = StyleSheet.create({
   circleContent: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    marginTop: -6,
+    gap: 4,
+    marginTop: -12,
   },
   statCircleValue: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: '700' as const,
     color: Colors.text,
   },
