@@ -290,12 +290,13 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -1,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
   heroSubtitle: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.9)',
     lineHeight: 22,
+    marginBottom: Spacing.md,
   },
   mainContent: {
     backgroundColor: Colors.background,
