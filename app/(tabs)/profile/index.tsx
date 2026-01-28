@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 
 import * as ImagePicker from 'expo-image-picker';
-import Svg, { Defs, LinearGradient, Stop, Circle as SvgCircle, Path, Text as SvgText, TextPath } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Stop, Circle as SvgCircle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -237,24 +237,19 @@ export default function ProfileScreen() {
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedText1" d="M 12,58 A 32,32 0 0,0 68,58" fill="none" />
                       </Defs>
                       <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad1)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.text} fontSize="10" fontWeight="600">
-                        <TextPath href="#curvedText1" startOffset="50%" textAnchor="middle">
-                          Recipes
-                        </TextPath>
-                      </SvgText>
                     </Svg>
                     <View style={styles.circleContentContainer}>
                       <View style={styles.circleIconContainer}>
-                        <ChefHat size={24} color={Colors.text} />
+                        <ChefHat size={20} color={Colors.text} />
                         <View style={styles.countBadge}>
                           <Text style={styles.countBadgeText}>{customRecipes.length}</Text>
                         </View>
                       </View>
+                      <Text style={styles.circleLabelText}>Recipes</Text>
                     </View>
                   </View>
                 </Animated.View>
@@ -273,24 +268,19 @@ export default function ProfileScreen() {
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedText2" d="M 12,58 A 32,32 0 0,0 68,58" fill="none" />
                       </Defs>
                       <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad2)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.text} fontSize="10" fontWeight="600">
-                        <TextPath href="#curvedText2" startOffset="50%" textAnchor="middle">
-                          Favorites
-                        </TextPath>
-                      </SvgText>
                     </Svg>
                     <View style={styles.circleContentContainer}>
                       <View style={styles.circleIconContainer}>
-                        <Heart size={24} color={Colors.text} />
+                        <Heart size={20} color={Colors.text} />
                         <View style={styles.countBadge}>
                           <Text style={styles.countBadgeText}>{favorites.length}</Text>
                         </View>
                       </View>
+                      <Text style={styles.circleLabelText}>Favorites</Text>
                     </View>
                   </View>
                 </Animated.View>
@@ -309,24 +299,19 @@ export default function ProfileScreen() {
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedText3" d="M 12,58 A 32,32 0 0,0 68,58" fill="none" />
                       </Defs>
                       <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad3)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.text} fontSize="10" fontWeight="600">
-                        <TextPath href="#curvedText3" startOffset="50%" textAnchor="middle">
-                          Followers
-                        </TextPath>
-                      </SvgText>
                     </Svg>
                     <View style={styles.circleContentContainer}>
                       <View style={styles.circleIconContainer}>
-                        <Users size={24} color={Colors.text} />
+                        <Users size={20} color={Colors.text} />
                         <View style={styles.countBadge}>
                           <Text style={styles.countBadgeText}>{followers.length}</Text>
                         </View>
                       </View>
+                      <Text style={styles.circleLabelText}>Followers</Text>
                     </View>
                   </View>
                 </Animated.View>
@@ -345,24 +330,19 @@ export default function ProfileScreen() {
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedText4" d="M 12,58 A 32,32 0 0,0 68,58" fill="none" />
                       </Defs>
                       <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad4)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.text} fontSize="10" fontWeight="600">
-                        <TextPath href="#curvedText4" startOffset="50%" textAnchor="middle">
-                          Following
-                        </TextPath>
-                      </SvgText>
                     </Svg>
                     <View style={styles.circleContentContainer}>
                       <View style={styles.circleIconContainer}>
-                        <UserPlus size={24} color={Colors.text} />
+                        <UserPlus size={20} color={Colors.text} />
                         <View style={styles.countBadge}>
                           <Text style={styles.countBadgeText}>{following.length}</Text>
                         </View>
                       </View>
+                      <Text style={styles.circleLabelText}>Following</Text>
                     </View>
                   </View>
                 </Animated.View>
@@ -587,12 +567,17 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
+    paddingTop: 8,
   },
   circleIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -6,
+  },
+  circleLabelText: {
+    fontSize: 9,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginTop: 4,
   },
   countBadge: {
     position: 'absolute',
