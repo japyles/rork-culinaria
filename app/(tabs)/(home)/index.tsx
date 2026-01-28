@@ -80,7 +80,7 @@ export default function HomeScreen() {
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
                 <View >
                   <Text style={styles.heroTextTop} >
-                    Good Morning!
+                    Good Morning, Leilani!
                   </Text>
                 	
                 </View>
