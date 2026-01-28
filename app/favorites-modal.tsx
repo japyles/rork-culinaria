@@ -22,11 +22,7 @@ export default function FavoritesModalScreen() {
     router.back();
   };
 
-  const renderHeader = () => (
-    <View>
-      <Text style={styles.sectionTitle}>Your Favorites</Text>
-    </View>
-  );
+  
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
