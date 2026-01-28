@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -49,7 +49,15 @@ export default function HomeScreen() {
     ]).start();
   }, []);
 
-  const featuredRecipe = allRecipes[0];
+  const featuredRecipe = useMemo(() => {
+    if (allRecipes.length === 0) return null;
+    const today = new Date();
+    const startOfYear = new Date(today.getFullYear(), 0, 0);
+    const diff = today.getTime() - startOfYear.getTime();
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const index = dayOfYear % allRecipes.length;
+    return allRecipes[index];
+  }, [allRecipes]);
   const trendingRecipes = allRecipes.slice(1, 5);
 
   const handleCategoryPress = (categoryId: string) => {
