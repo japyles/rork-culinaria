@@ -78,8 +78,8 @@ export default function HomeScreen() {
               style={styles.heroOverlay}
             >
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
-                <View style={styles.heroTextTop} >
-                  <Text>
+                <View >
+                  <Text style={styles.heroTextTop} >
                     Good Morning!
                   </Text>
                 	
