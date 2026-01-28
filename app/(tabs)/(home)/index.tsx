@@ -264,8 +264,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)',
   },
   heroTextTop: {
-		color: Colors.background,
-    fontSize: 16,
+		fontSize: 42,
+    fontWeight: '800' as const,
+    color: '#fff',
+    letterSpacing: -1,
   },
   heroAvatar: {
     width: 40,
@@ -287,7 +289,7 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -1,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
   heroSubtitle: {
     fontSize: 16,
