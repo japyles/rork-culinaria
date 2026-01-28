@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   progressContainer: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
   progressBar: {
     height: 8,
