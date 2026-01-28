@@ -485,11 +485,6 @@ const styles = StyleSheet.create({
     height: 78,
     borderRadius: 39,
     marginBottom: Spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
   },
   statCircleInner: {
     flex: 1,
