@@ -229,7 +229,7 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <View style={styles.glassHighlight} />
+                    
                     <View style={styles.glassShine} />
                     <ChefHat size={26} color={Colors.text} />
                     <Text style={styles.statCircleValue}>{customRecipes.length}</Text>
