@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   heroTextTop: {
 		color: Colors.background,
-    fontSize: 12,
+    fontSize: 16,
   },
   heroAvatar: {
     width: 40,
