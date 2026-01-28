@@ -50,6 +50,7 @@ import * as Haptics from 'expo-haptics';
 import { useSocial } from '@/contexts/SocialContext';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
+import { mockUsers } from '@/mocks/users';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -367,6 +368,8 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
   const displayRating = averageRating !== null ? averageRating.toFixed(1) : recipe?.rating.toFixed(1);
   const displayReviewCount = recipeReviews.length > 0 ? recipeReviews.length : recipe?.reviewCount ?? 0;
 
+  const recipeAuthor = recipe?.authorId ? mockUsers.find(u => u.id === recipe.authorId) : null;
+
   const handleSubmitReview = () => {
     if (!recipe || !reviewComment.trim() || !reviewAuthor.trim()) {
       Alert.alert('Missing Information', 'Please enter your name and a comment.');
@@ -652,6 +655,15 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
               <Text style={styles.cuisineText}>{recipe.cuisine}</Text>
             </View>
             <Text style={styles.heroTitle}>{recipe.title}</Text>
+            {recipeAuthor && (
+              <Pressable 
+                style={styles.authorRow} 
+                onPress={() => router.push(`/user/${recipeAuthor.id}`)}
+              >
+                <Animated.Image source={{ uri: recipeAuthor.avatarUrl }} style={styles.authorAvatar} />
+                <Text style={styles.authorName}>by {recipeAuthor.displayName}</Text>
+              </Pressable>
+            )}
             <Pressable style={styles.ratingRow} onPress={() => setShowReviewModal(true)}>
               <Text style={styles.rating}>★ {displayRating}</Text>
               <Text style={styles.reviewCount}>({displayReviewCount} reviews)</Text>
@@ -1330,6 +1342,24 @@ const styles = StyleSheet.create({
     ...Typography.h1,
     color: Colors.textOnPrimary,
     marginBottom: Spacing.xs,
+  },
+  authorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  authorAvatar: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: Spacing.xs,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  authorName: {
+    ...Typography.bodySmall,
+    color: Colors.textOnPrimary,
+    opacity: 0.9,
   },
   ratingRow: {
     flexDirection: 'row',
