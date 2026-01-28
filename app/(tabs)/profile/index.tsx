@@ -228,12 +228,17 @@ export default function ProfileScreen() {
                 onPress={() => triggerShake(shakeAnim1, () => router.push('/recipes-modal'))}
               >
                 <Animated.View style={[styles.statCircle, styles.statCircle1, { transform: [{ scale: shakeAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
-                  <View
+                  <LinearGradient
+                    colors={['#F3E5F5', '#E1BEE7', '#CE93D8']}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
                     style={styles.statCircleInner}
                   >
-                    <ChefHat size={28} color="#9B6B9E" />
-                    <Text style={styles.statCircleValue}>{customRecipes.length}</Text>
-                  </View>
+                    <View style={styles.dropletHighlight} />
+                    <View style={styles.dropletShine} />
+                    <ChefHat size={26} color="#7B1FA2" />
+                    <Text style={[styles.statCircleValue, { color: '#7B1FA2' }]}>{customRecipes.length}</Text>
+                  </LinearGradient>
                 </Animated.View>
                 <Text style={styles.statCircleLabel}>Recipes</Text>
               </Pressable>
@@ -244,10 +249,14 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, styles.statCircle2, { transform: [{ scale: shakeAnim2.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <LinearGradient
-                    colors={['#FCE4EC', '#F8BBD9']}
+                    colors={['#FCE4EC', '#F8BBD9', '#F48FB1']}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
                     style={styles.statCircleInner}
                   >
-                    <Heart size={28} color="#C2185B" />
+                    <View style={styles.dropletHighlight} />
+                    <View style={styles.dropletShine} />
+                    <Heart size={26} color="#C2185B" />
                     <Text style={[styles.statCircleValue, { color: '#C2185B' }]}>{favorites.length}</Text>
                   </LinearGradient>
                 </Animated.View>
@@ -260,11 +269,15 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, styles.statCircle3, { transform: [{ scale: shakeAnim3.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <LinearGradient
-                    colors={['#E8EAF6', '#C5CAE9']}
+                    colors={['#E8EAF6', '#C5CAE9', '#9FA8DA']}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
                     style={styles.statCircleInner}
                   >
-                    <Users size={28} color="#5C6BC0" />
-                    <Text style={[styles.statCircleValue, { color: '#5C6BC0' }]}>{followers.length}</Text>
+                    <View style={styles.dropletHighlight} />
+                    <View style={styles.dropletShine} />
+                    <Users size={26} color="#3949AB" />
+                    <Text style={[styles.statCircleValue, { color: '#3949AB' }]}>{followers.length}</Text>
                   </LinearGradient>
                 </Animated.View>
                 <Text style={styles.statCircleLabel}>Followers</Text>
@@ -276,11 +289,15 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, styles.statCircle4, { transform: [{ scale: shakeAnim4.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <LinearGradient
-                    colors={['#E0F2F1', '#B2DFDB']}
+                    colors={['#E0F2F1', '#B2DFDB', '#80CBC4']}
+                    start={{ x: 0.5, y: 0 }}
+                    end={{ x: 0.5, y: 1 }}
                     style={styles.statCircleInner}
                   >
-                    <UserPlus size={28} color="#00897B" />
-                    <Text style={[styles.statCircleValue, { color: '#00897B' }]}>{following.length}</Text>
+                    <View style={styles.dropletHighlight} />
+                    <View style={styles.dropletShine} />
+                    <UserPlus size={26} color="#00695C" />
+                    <Text style={[styles.statCircleValue, { color: '#00695C' }]}>{following.length}</Text>
                   </LinearGradient>
                 </Animated.View>
                 <Text style={styles.statCircleLabel}>Following</Text>
@@ -487,29 +504,52 @@ const styles = StyleSheet.create({
     width: 78,
     height: 78,
     borderRadius: 39,
-    borderWidth: 3,
-    padding: 3,
+    padding: 2,
     marginBottom: Spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   statCircle1: {
-    borderColor: '#9B6B9E',
+    backgroundColor: '#CE93D8',
   },
   statCircle2: {
-    borderColor: '#C2185B',
+    backgroundColor: '#F48FB1',
   },
   statCircle3: {
-    borderColor: '#5C6BC0',
+    backgroundColor: '#9FA8DA',
   },
   statCircle4: {
-    borderColor: '#00897B',
+    backgroundColor: '#80CBC4',
   },
   statCircleInner: {
     flex: 1,
-    backgroundColor: Colors.glass.background,
-    borderRadius: 35,
+    borderRadius: 37,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
+    overflow: 'hidden',
+  },
+  dropletHighlight: {
+    position: 'absolute',
+    top: 4,
+    left: 10,
+    width: 24,
+    height: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    transform: [{ rotate: '-20deg' }],
+  },
+  dropletShine: {
+    position: 'absolute',
+    top: 8,
+    left: 18,
+    width: 8,
+    height: 6,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
   },
   statCircleValue: {
     fontSize: 16,
