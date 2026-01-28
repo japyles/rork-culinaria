@@ -60,6 +60,8 @@ export default function FavoritesModalScreen() {
       <FlatList
         data={favoriteRecipes}
         keyExtractor={(item) => item.id}
+        bounces={false}
+        overScrollMode="never"
         ListHeaderComponent={renderHeader}
         renderItem={({ item }) => (
           <View style={styles.cardContainer}>

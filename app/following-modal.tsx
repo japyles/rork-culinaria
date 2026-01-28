@@ -98,6 +98,8 @@ export default function FollowingModalScreen() {
       <FlatList
         data={filteredList}
         keyExtractor={(item) => item.id}
+        bounces={false}
+        overScrollMode="never"
         renderItem={renderUserItem}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}

@@ -62,6 +62,8 @@ export default function RecipesModalScreen() {
       <FlatList
         data={filteredRecipes}
         keyExtractor={(item) => item.id}
+        bounces={false}
+        overScrollMode="never"
         renderItem={({ item }) => (
           <Pressable
             style={styles.recipeItem}
