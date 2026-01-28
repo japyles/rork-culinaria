@@ -562,6 +562,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.sm,
   },
+  userNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   suggestedName: {
     ...Typography.bodyBold,
     color: Colors.text,
