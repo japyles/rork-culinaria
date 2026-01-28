@@ -62,7 +62,6 @@ export default function FavoritesModalScreen() {
         keyExtractor={(item) => item.id}
         bounces={false}
         overScrollMode="never"
-        ListHeaderComponent={renderHeader}
         renderItem={({ item }) => (
           <View style={styles.cardContainer}>
             <RecipeCard recipe={item} />
