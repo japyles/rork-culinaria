@@ -20,6 +20,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useSocial } from '@/contexts/SocialContext';
 import { categories } from '@/mocks/recipes';
 import { mockUsers } from '@/mocks/users';
 import RecipeCard from '@/components/RecipeCard';
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { allRecipes, recentRecipes, favoriteRecipes } = useRecipes();
+  const { currentUser } = useSocial();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -94,7 +96,7 @@ export default function HomeScreen() {
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
                 <View >
                   <Text style={styles.heroTextTop} >
-                    Good Morning,{"\n"}Leilani!
+                    Good Morning,{"\n"}{currentUser.displayName}!
                   </Text>
                 	
                 </View>
