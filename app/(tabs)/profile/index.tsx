@@ -242,15 +242,17 @@ export default function ProfileScreen() {
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleIconContainer}>
-                      <ChefHat size={28} color={Colors.text} />
-                      <View style={styles.countBadge}>
-                        <Text style={styles.countBadgeText}>{customRecipes.length}</Text>
+                    <View style={styles.circleContentContainer}>
+                      <View style={styles.circleIconContainer}>
+                        <ChefHat size={24} color={Colors.text} />
+                        <View style={styles.countBadge}>
+                          <Text style={styles.countBadgeText}>{customRecipes.length}</Text>
+                        </View>
                       </View>
+                      <Text style={styles.circleLabel}>Recipes</Text>
                     </View>
                   </View>
                 </Animated.View>
-                <Text style={styles.circleLabel}>Recipes</Text>
               </Pressable>
 
               <Pressable
@@ -271,15 +273,17 @@ export default function ProfileScreen() {
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleIconContainer}>
-                      <Heart size={28} color={Colors.text} />
-                      <View style={styles.countBadge}>
-                        <Text style={styles.countBadgeText}>{favorites.length}</Text>
+                    <View style={styles.circleContentContainer}>
+                      <View style={styles.circleIconContainer}>
+                        <Heart size={24} color={Colors.text} />
+                        <View style={styles.countBadge}>
+                          <Text style={styles.countBadgeText}>{favorites.length}</Text>
+                        </View>
                       </View>
+                      <Text style={styles.circleLabel}>Favorites</Text>
                     </View>
                   </View>
                 </Animated.View>
-                <Text style={styles.circleLabel}>Favorites</Text>
               </Pressable>
 
               <Pressable
@@ -300,15 +304,17 @@ export default function ProfileScreen() {
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleIconContainer}>
-                      <Users size={28} color={Colors.text} />
-                      <View style={styles.countBadge}>
-                        <Text style={styles.countBadgeText}>{followers.length}</Text>
+                    <View style={styles.circleContentContainer}>
+                      <View style={styles.circleIconContainer}>
+                        <Users size={24} color={Colors.text} />
+                        <View style={styles.countBadge}>
+                          <Text style={styles.countBadgeText}>{followers.length}</Text>
+                        </View>
                       </View>
+                      <Text style={styles.circleLabel}>Followers</Text>
                     </View>
                   </View>
                 </Animated.View>
-                <Text style={styles.circleLabel}>Followers</Text>
               </Pressable>
 
               <Pressable
@@ -329,15 +335,17 @@ export default function ProfileScreen() {
                       <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
                       <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleIconContainer}>
-                      <UserPlus size={28} color={Colors.text} />
-                      <View style={styles.countBadge}>
-                        <Text style={styles.countBadgeText}>{following.length}</Text>
+                    <View style={styles.circleContentContainer}>
+                      <View style={styles.circleIconContainer}>
+                        <UserPlus size={24} color={Colors.text} />
+                        <View style={styles.countBadge}>
+                          <Text style={styles.countBadgeText}>{following.length}</Text>
+                        </View>
                       </View>
+                      <Text style={styles.circleLabel}>Following</Text>
                     </View>
                   </View>
                 </Animated.View>
-                <Text style={styles.circleLabel}>Following</Text>
               </Pressable>
             </View>
 
@@ -554,9 +562,17 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
+  circleContentContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
   circleIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
   },
   countBadge: {
     position: 'absolute',
@@ -576,11 +592,11 @@ const styles = StyleSheet.create({
     color: Colors.textOnPrimary,
   },
   circleLabel: {
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
-    marginTop: 8,
+    color: Colors.text,
     textAlign: 'center' as const,
+    marginTop: 2,
   },
   editButton: {
     width: '50%',
