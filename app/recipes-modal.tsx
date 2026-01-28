@@ -38,6 +38,10 @@ export default function RecipesModalScreen() {
         end={{ x: 0, y: 1 }}
       />
       
+      <View style={styles.grabberContainer}>
+        <View style={styles.grabber} />
+      </View>
+
       <View style={styles.sheetHeader}>
         <View style={styles.headerTitleRow}>
           <ChefHat size={22} color={Colors.primary} />
@@ -102,12 +106,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
+  grabberContainer: {
+    alignItems: 'center',
+    paddingTop: Spacing.sm,
+  },
+  grabber: {
+    width: 36,
+    height: 4,
+    backgroundColor: Colors.textSecondary,
+    borderRadius: 2,
+    opacity: 0.4,
+  },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.sm,
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
