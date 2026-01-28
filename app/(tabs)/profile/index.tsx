@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 
 import * as ImagePicker from 'expo-image-picker';
-import Svg, { Defs, Path, Text as SvgText, TextPath, LinearGradient, Stop, Circle as SvgCircle } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Stop, Circle as SvgCircle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
@@ -230,30 +230,27 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={100} height={100} style={styles.glassSvg}>
+                    <Svg width={80} height={80} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath1" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad1)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
-                        <TextPath href="#curvedPath1" startOffset="50%" textAnchor="middle">
-                          Recipes
-                        </TextPath>
-                      </SvgText>
+                      <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad1)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleContent}>
-                      <ChefHat size={22} color={Colors.text} />
-                      <Text style={styles.statCircleValue}>{customRecipes.length}</Text>
+                    <View style={styles.circleIconContainer}>
+                      <ChefHat size={28} color={Colors.text} />
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countBadgeText}>{customRecipes.length}</Text>
+                      </View>
                     </View>
                   </View>
                 </Animated.View>
+                <Text style={styles.circleLabel}>Recipes</Text>
               </Pressable>
 
               <Pressable
@@ -262,30 +259,27 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim2.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={100} height={100} style={styles.glassSvg}>
+                    <Svg width={80} height={80} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad2" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath2" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad2)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
-                        <TextPath href="#curvedPath2" startOffset="50%" textAnchor="middle">
-                          Favorites
-                        </TextPath>
-                      </SvgText>
+                      <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad2)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleContent}>
-                      <Heart size={22} color={Colors.text} />
-                      <Text style={styles.statCircleValue}>{favorites.length}</Text>
+                    <View style={styles.circleIconContainer}>
+                      <Heart size={28} color={Colors.text} />
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countBadgeText}>{favorites.length}</Text>
+                      </View>
                     </View>
                   </View>
                 </Animated.View>
+                <Text style={styles.circleLabel}>Favorites</Text>
               </Pressable>
 
               <Pressable
@@ -294,30 +288,27 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim3.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={100} height={100} style={styles.glassSvg}>
+                    <Svg width={80} height={80} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad3" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath3" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad3)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
-                        <TextPath href="#curvedPath3" startOffset="50%" textAnchor="middle">
-                          Followers
-                        </TextPath>
-                      </SvgText>
+                      <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad3)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleContent}>
-                      <Users size={22} color={Colors.text} />
-                      <Text style={styles.statCircleValue}>{followers.length}</Text>
+                    <View style={styles.circleIconContainer}>
+                      <Users size={28} color={Colors.text} />
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countBadgeText}>{followers.length}</Text>
+                      </View>
                     </View>
                   </View>
                 </Animated.View>
+                <Text style={styles.circleLabel}>Followers</Text>
               </Pressable>
 
               <Pressable
@@ -326,30 +317,27 @@ export default function ProfileScreen() {
               >
                 <Animated.View style={[styles.statCircle, { transform: [{ scale: shakeAnim4.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
                   <View style={styles.statCircleInner}>
-                    <Svg width={100} height={100} style={styles.glassSvg}>
+                    <Svg width={80} height={80} style={styles.glassSvg}>
                       <Defs>
                         <LinearGradient id="glassGrad4" x1="0%" y1="0%" x2="0%" y2="100%">
                           <Stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
                           <Stop offset="50%" stopColor="rgba(255,255,255,0.15)" />
                           <Stop offset="100%" stopColor="rgba(255,255,255,0.25)" />
                         </LinearGradient>
-                        <Path id="curvedPath4" d="M 15,75 A 35,35 0 0,0 85,75" />
                       </Defs>
-                      <SvgCircle cx="50" cy="50" r="48" fill="url(#glassGrad4)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
-                      <SvgCircle cx="32" cy="28" r="14" fill="rgba(255,255,255,0.4)" />
-                      <SvgCircle cx="27" cy="23" r="5" fill="rgba(255,255,255,0.7)" />
-                      <SvgText fill={Colors.textSecondary} fontSize="12" fontWeight="600">
-                        <TextPath href="#curvedPath4" startOffset="50%" textAnchor="middle">
-                          Following
-                        </TextPath>
-                      </SvgText>
+                      <SvgCircle cx="40" cy="40" r="38" fill="url(#glassGrad4)" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                      <SvgCircle cx="26" cy="22" r="12" fill="rgba(255,255,255,0.4)" />
+                      <SvgCircle cx="22" cy="18" r="4" fill="rgba(255,255,255,0.7)" />
                     </Svg>
-                    <View style={styles.circleContent}>
-                      <UserPlus size={22} color={Colors.text} />
-                      <Text style={styles.statCircleValue}>{following.length}</Text>
+                    <View style={styles.circleIconContainer}>
+                      <UserPlus size={28} color={Colors.text} />
+                      <View style={styles.countBadge}>
+                        <Text style={styles.countBadgeText}>{following.length}</Text>
+                      </View>
                     </View>
                   </View>
                 </Animated.View>
+                <Text style={styles.circleLabel}>Following</Text>
               </Pressable>
             </View>
 
@@ -550,13 +538,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   statCircleInner: {
     flex: 1,
-    borderRadius: 50,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -566,16 +554,33 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
-  circleContent: {
+  circleIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    marginTop: -12,
   },
-  statCircleValue: {
-    fontSize: 18,
+  countBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -12,
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  countBadgeText: {
+    fontSize: 11,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: Colors.textOnPrimary,
+  },
+  circleLabel: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+    marginTop: 8,
+    textAlign: 'center' as const,
   },
   editButton: {
     width: '50%',
