@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { RecipeProvider } from "@/contexts/RecipeContext";
 import { SocialProvider } from "@/contexts/SocialContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import Colors from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -101,6 +102,13 @@ function RootLayoutNav() {
           sheetExpandsWhenScrolledToEdge: false,
         }}
       />
+      <Stack.Screen
+        name="paywall"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+        }}
+      />
     </Stack>
   );
 }
@@ -115,7 +123,9 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <RecipeProvider>
           <SocialProvider>
-            <RootLayoutNav />
+            <SubscriptionProvider>
+              <RootLayoutNav />
+            </SubscriptionProvider>
           </SocialProvider>
         </RecipeProvider>
       </GestureHandlerRootView>

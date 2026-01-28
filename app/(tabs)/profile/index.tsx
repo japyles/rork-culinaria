@@ -29,12 +29,14 @@ import {
   X,
   Search,
   Heart,
+  Crown,
 } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { User } from '@/types/recipe';
 import Button from '@/components/Button';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 
 
 
@@ -52,6 +54,7 @@ export default function ProfileScreen() {
     updateProfile,
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
+  const { isPremium, hasBasicAccess, hasProAccess } = useSubscription();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState(currentUser.displayName);
@@ -393,6 +396,36 @@ export default function ProfileScreen() {
                 </Text>
               </Pressable>
             </View>
+
+            <Pressable
+              style={styles.subscriptionCard}
+              onPress={() => router.push('/paywall')}
+            >
+              <View style={styles.subscriptionContent}>
+                <View style={styles.subscriptionIconContainer}>
+                  <Crown size={24} color={Colors.primary} />
+                </View>
+                <View style={styles.subscriptionInfo}>
+                  <Text style={styles.subscriptionTitle}>
+                    {isPremium
+                      ? hasProAccess
+                        ? 'Pro Member'
+                        : 'Basic Member'
+                      : 'Upgrade to Premium'}
+                  </Text>
+                  <Text style={styles.subscriptionDesc}>
+                    {isPremium
+                      ? 'Manage your subscription'
+                      : 'Unlock all features and recipes'}
+                  </Text>
+                </View>
+              </View>
+              {!isPremium && (
+                <View style={styles.upgradeBadge}>
+                  <Text style={styles.upgradeBadgeText}>Upgrade</Text>
+                </View>
+              )}
+            </Pressable>
           </View>
         </ScrollView>
 
@@ -670,6 +703,54 @@ const styles = StyleSheet.create({
   actionDesc: {
     ...Typography.caption,
     color: Colors.textSecondary,
+  },
+  subscriptionCard: {
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    backgroundColor: Colors.primary + '10',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  subscriptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
+  },
+  subscriptionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary + '20',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subscriptionInfo: {
+    flex: 1,
+  },
+  subscriptionTitle: {
+    ...Typography.bodyBold,
+    color: Colors.text,
+  },
+  subscriptionDesc: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  upgradeBadge: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+  },
+  upgradeBadgeText: {
+    ...Typography.caption,
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
   },
   modalContainer: {
     flex: 1,
