@@ -1358,7 +1358,7 @@ const styles = StyleSheet.create({
   },
   authorName: {
     ...Typography.bodySmall,
-    color: Colors.textOnPrimary,
+    color: Colors.primary,
     opacity: 0.9,
   },
   ratingRow: {
