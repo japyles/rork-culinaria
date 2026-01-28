@@ -21,6 +21,7 @@ const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { categories } from '@/mocks/recipes';
+import { mockUsers } from '@/mocks/users';
 import RecipeCard from '@/components/RecipeCard';
 import SectionHeader from '@/components/SectionHeader';
 import CategoryChip from '@/components/CategoryChip';
@@ -58,6 +59,11 @@ export default function HomeScreen() {
     const index = dayOfYear % allRecipes.length;
     return allRecipes[index];
   }, [allRecipes]);
+
+  const featuredAuthor = useMemo(() => {
+    if (!featuredRecipe?.authorId) return null;
+    return mockUsers.find(user => user.id === featuredRecipe.authorId);
+  }, [featuredRecipe]);
   const trendingRecipes = allRecipes.slice(1, 5);
 
   const handleCategoryPress = (categoryId: string) => {
@@ -158,7 +164,7 @@ export default function HomeScreen() {
             <View style={styles.section}>
               <SectionHeader
                 title="Featured"
-                subtitle="Chef's pick of the day"
+                subtitle={featuredAuthor ? `Chef ${featuredAuthor.displayName}'s pick of the day` : "Chef's pick of the day"}
                 showSeeAll={false}
               />
               <View style={styles.featuredContainer}>

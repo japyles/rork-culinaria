@@ -41,6 +41,7 @@ export interface Recipe {
   isFavorite?: boolean;
   createdAt: string;
   sourceUrl?: string;
+  authorId?: string;
 }
 
 export type RecipeCategory = 

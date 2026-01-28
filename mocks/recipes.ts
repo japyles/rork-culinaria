@@ -32,6 +32,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.8,
     reviewCount: 234,
     createdAt: '2024-01-15',
+    authorId: 'user_1',
   },
   {
     id: '2',
@@ -62,6 +63,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.6,
     reviewCount: 189,
     createdAt: '2024-01-18',
+    authorId: 'user_2',
   },
   {
     id: '3',
@@ -95,6 +97,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.9,
     reviewCount: 312,
     createdAt: '2024-01-20',
+    authorId: 'user_9',
   },
   {
     id: '4',
@@ -128,6 +131,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.9,
     reviewCount: 456,
     createdAt: '2024-01-22',
+    authorId: 'user_3',
   },
   {
     id: '5',
@@ -158,6 +162,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.7,
     reviewCount: 145,
     createdAt: '2024-01-25',
+    authorId: 'user_5',
   },
   {
     id: '6',
@@ -190,6 +195,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.9,
     reviewCount: 567,
     createdAt: '2024-01-28',
+    authorId: 'user_9',
   },
   {
     id: '7',
@@ -221,6 +227,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.6,
     reviewCount: 234,
     createdAt: '2024-02-01',
+    authorId: 'user_5',
   },
   {
     id: '8',
@@ -250,6 +257,7 @@ export const mockRecipes: Recipe[] = [
     rating: 4.5,
     reviewCount: 189,
     createdAt: '2024-02-05',
+    authorId: 'user_9',
   },
 ];
 
