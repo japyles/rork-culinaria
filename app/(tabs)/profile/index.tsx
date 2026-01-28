@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   circleLabelText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600' as const,
     color: Colors.text,
     marginTop: 4,
