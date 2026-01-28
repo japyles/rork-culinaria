@@ -78,7 +78,9 @@ export default function HomeScreen() {
               style={styles.heroOverlay}
             >
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
-                
+                <View>
+                	Good Morning!
+                </View>
                 <Pressable
                   style={styles.heroAvatarContainer}
                   onPress={() => router.push('/profile')}
@@ -241,7 +243,7 @@ const styles = StyleSheet.create({
   },
   heroHeader: {
     flexDirection: 'row',
-    justifyContent: 'end',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
   },
