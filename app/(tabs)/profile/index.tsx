@@ -222,62 +222,70 @@ export default function ProfileScreen() {
             <Text style={styles.username}>@{currentUser.username}</Text>
             <Text style={styles.bio}>{currentUser.bio}</Text>
 
-            <View style={styles.statsCarouselContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.statsCarousel}
-                decelerationRate="fast"
-                snapToInterval={85}
+            <View style={styles.statsCircleContainer}>
+              <Pressable
+                style={styles.statCircleWrapper}
+                onPress={() => triggerShake(shakeAnim1, () => router.push('/recipes-modal'))}
               >
-                <Pressable
-                  onPress={() => triggerShake(shakeAnim1, () => router.push('/recipes-modal'))}
-                >
-                  <Animated.View style={[styles.statCard, styles.statCard1, { transform: [{ rotate: '-3deg' }, { rotate: getShakeRotation(shakeAnim1) }] }]}>
-                    <View style={styles.statCardIcon}>
-                      <ChefHat size={22} color={Colors.primary} />
-                    </View>
-                    <Text style={styles.statCardValue}>{customRecipes.length}</Text>
-                    <Text style={styles.statCardLabel}>Recipes</Text>
-                  </Animated.View>
-                </Pressable>
+                <Animated.View style={[styles.statCircle, styles.statCircle1, { transform: [{ scale: shakeAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
+                  <LinearGradient
+                    colors={['#F8E1F4', '#FADCE8']}
+                    style={styles.statCircleInner}
+                  >
+                    <ChefHat size={28} color="#9B6B9E" />
+                    <Text style={styles.statCircleValue}>{customRecipes.length}</Text>
+                  </LinearGradient>
+                </Animated.View>
+                <Text style={styles.statCircleLabel}>Recipes</Text>
+              </Pressable>
 
-                <Pressable
-                  onPress={() => triggerShake(shakeAnim2, () => router.push('/favorites-modal'))}
-                >
-                  <Animated.View style={[styles.statCard, styles.statCard2, { transform: [{ rotate: '2deg' }, { rotate: getShakeRotation(shakeAnim2) }] }]}>
-                    <View style={[styles.statCardIcon, styles.statCardIconAccent]}>
-                      <Heart size={22} color={Colors.accent} />
-                    </View>
-                    <Text style={styles.statCardValue}>{favorites.length}</Text>
-                    <Text style={styles.statCardLabel}>Favorites</Text>
-                  </Animated.View>
-                </Pressable>
+              <Pressable
+                style={styles.statCircleWrapper}
+                onPress={() => triggerShake(shakeAnim2, () => router.push('/favorites-modal'))}
+              >
+                <Animated.View style={[styles.statCircle, styles.statCircle2, { transform: [{ scale: shakeAnim2.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
+                  <LinearGradient
+                    colors={['#FCE4EC', '#F8BBD9']}
+                    style={styles.statCircleInner}
+                  >
+                    <Heart size={28} color="#C2185B" />
+                    <Text style={[styles.statCircleValue, { color: '#C2185B' }]}>{favorites.length}</Text>
+                  </LinearGradient>
+                </Animated.View>
+                <Text style={styles.statCircleLabel}>Favorites</Text>
+              </Pressable>
 
-                <Pressable
-                  onPress={() => triggerShake(shakeAnim3, () => router.push('/followers-modal'))}
-                >
-                  <Animated.View style={[styles.statCard, styles.statCard3, { transform: [{ rotate: '-2deg' }, { rotate: getShakeRotation(shakeAnim3) }] }]}>
-                    <View style={[styles.statCardIcon, styles.statCardIconSecondary]}>
-                      <Users size={22} color={Colors.secondary} />
-                    </View>
-                    <Text style={styles.statCardValue}>{followers.length}</Text>
-                    <Text style={styles.statCardLabel}>Followers</Text>
-                  </Animated.View>
-                </Pressable>
+              <Pressable
+                style={styles.statCircleWrapper}
+                onPress={() => triggerShake(shakeAnim3, () => router.push('/followers-modal'))}
+              >
+                <Animated.View style={[styles.statCircle, styles.statCircle3, { transform: [{ scale: shakeAnim3.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
+                  <LinearGradient
+                    colors={['#E8EAF6', '#C5CAE9']}
+                    style={styles.statCircleInner}
+                  >
+                    <Users size={28} color="#5C6BC0" />
+                    <Text style={[styles.statCircleValue, { color: '#5C6BC0' }]}>{followers.length}</Text>
+                  </LinearGradient>
+                </Animated.View>
+                <Text style={styles.statCircleLabel}>Followers</Text>
+              </Pressable>
 
-                <Pressable
-                  onPress={() => triggerShake(shakeAnim4, () => router.push('/following-modal'))}
-                >
-                  <Animated.View style={[styles.statCard, styles.statCard4, { transform: [{ rotate: '3deg' }, { rotate: getShakeRotation(shakeAnim4) }] }]}>
-                    <View style={[styles.statCardIcon, styles.statCardIconTertiary]}>
-                      <UserPlus size={22} color={Colors.success} />
-                    </View>
-                    <Text style={styles.statCardValue}>{following.length}</Text>
-                    <Text style={styles.statCardLabel}>Following</Text>
-                  </Animated.View>
-                </Pressable>
-              </ScrollView>
+              <Pressable
+                style={styles.statCircleWrapper}
+                onPress={() => triggerShake(shakeAnim4, () => router.push('/following-modal'))}
+              >
+                <Animated.View style={[styles.statCircle, styles.statCircle4, { transform: [{ scale: shakeAnim4.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
+                  <LinearGradient
+                    colors={['#E0F2F1', '#B2DFDB']}
+                    style={styles.statCircleInner}
+                  >
+                    <UserPlus size={28} color="#00897B" />
+                    <Text style={[styles.statCircleValue, { color: '#00897B' }]}>{following.length}</Text>
+                  </LinearGradient>
+                </Animated.View>
+                <Text style={styles.statCircleLabel}>Following</Text>
+              </Pressable>
             </View>
 
           </View>
@@ -465,68 +473,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.lg,
   },
-  statsCarouselContainer: {
-    width: '90%',
+  statsCircleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
     marginBottom: Spacing.lg,
+    paddingHorizontal: Spacing.sm,
   },
-  statsCarousel: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-  },
-  statCard: {
-    width: 95,
-    height: 130,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.md,
+  statCircleWrapper: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: -15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.8)',
   },
-  statCard1: {
-    zIndex: 4,
-  },
-  statCard2: {
-    zIndex: 3,
-  },
-  statCard3: {
-    zIndex: 2,
-  },
-  statCard4: {
-    zIndex: 1,
-    marginRight: 0,
-  },
-  statCardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+  statCircle: {
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    borderWidth: 3,
+    padding: 3,
     marginBottom: Spacing.sm,
   },
-  statCardIconAccent: {
+  statCircle1: {
+    borderColor: '#9B6B9E',
   },
-  statCardIconSecondary: {
+  statCircle2: {
+    borderColor: '#C2185B',
   },
-  statCardIconTertiary: {
+  statCircle3: {
+    borderColor: '#5C6BC0',
   },
-  statCardValue: {
-    ...Typography.h2,
-    color: Colors.text,
-    marginBottom: 2,
+  statCircle4: {
+    borderColor: '#00897B',
   },
-  statCardLabel: {
+  statCircleInner: {
+    flex: 1,
+    borderRadius: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+  },
+  statCircleValue: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#9B6B9E',
+  },
+  statCircleLabel: {
     ...Typography.caption,
     color: Colors.textSecondary,
     fontWeight: '500' as const,
+    textAlign: 'center' as const,
   },
   editButton: {
     width: '50%',
