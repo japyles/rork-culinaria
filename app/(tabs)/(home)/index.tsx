@@ -79,7 +79,10 @@ export default function HomeScreen() {
             >
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
                 <View>
-                	Good Morning!
+                  <Text>
+                    Good Morning!
+                  </Text>
+                	
                 </View>
                 <Pressable
                   style={styles.heroAvatarContainer}
