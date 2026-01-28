@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255,255,255,0.9)',
     lineHeight: 22,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   mainContent: {
     backgroundColor: Colors.background,
