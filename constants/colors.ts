@@ -22,6 +22,8 @@ const Colors = {
   success: '#10B981',
   warning: '#F59E0B',
   error: '#EF4444',
+
+  skyblue: '#87CEEB',
   
   gradient: {
     warm: ['#F48C06', '#E85D04', '#D00000'],
