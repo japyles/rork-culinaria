@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)',
   },
   heroTextTop: {
-		fontSize: 35,
+		fontSize: 28,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -1,
