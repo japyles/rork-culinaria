@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -1,
-    textTranform: 'upper',
+    textTransform: 'upper',
   },
   heroAvatar: {
     width: 40,
