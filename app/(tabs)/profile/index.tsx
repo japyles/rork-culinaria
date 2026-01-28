@@ -228,13 +228,12 @@ export default function ProfileScreen() {
                 onPress={() => triggerShake(shakeAnim1, () => router.push('/recipes-modal'))}
               >
                 <Animated.View style={[styles.statCircle, styles.statCircle1, { transform: [{ scale: shakeAnim1.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1.05] }) }] }]}>
-                  <LinearGradient
-                    colors={Colors.glass.background}
+                  <View
                     style={styles.statCircleInner}
                   >
                     <ChefHat size={28} color="#9B6B9E" />
                     <Text style={styles.statCircleValue}>{customRecipes.length}</Text>
-                  </LinearGradient>
+                  </View>
                 </Animated.View>
                 <Text style={styles.statCircleLabel}>Recipes</Text>
               </Pressable>
@@ -506,6 +505,7 @@ const styles = StyleSheet.create({
   },
   statCircleInner: {
     flex: 1,
+    backgroundColor: Colors.glass.background,
     borderRadius: 35,
     alignItems: 'center',
     justifyContent: 'center',
