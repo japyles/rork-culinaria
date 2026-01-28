@@ -81,6 +81,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface,
   },
+  grabberContainer: {
+    alignItems: 'center',
+    paddingTop: Spacing.sm,
+  },
+  grabber: {
+    width: 36,
+    height: 4,
+    backgroundColor: Colors.textSecondary,
+    borderRadius: 2,
+    opacity: 0.4,
+  },
   sheetHeader: {
     flexDirection: 'row',
     alignItems: 'center',
