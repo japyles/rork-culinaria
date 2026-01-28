@@ -871,7 +871,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
               </View>
             ) : (
               <View style={styles.noReviewsContainer}>
-                <MessageSquare size={40} color={skyblue} />
+                <MessageSquare size={40} color={Colors.skyblue} />
                 <Text style={styles.noReviewsText}>No reviews yet</Text>
                 <Text style={styles.noReviewsSubtext}>Be the first to share your experience!</Text>
               </View>
