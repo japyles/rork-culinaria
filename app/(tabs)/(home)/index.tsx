@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   },
   heroHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'end',
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
   },
