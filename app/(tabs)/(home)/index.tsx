@@ -264,10 +264,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)',
   },
   heroTextTop: {
-		fontSize: 42,
+		fontSize: 35,
     fontWeight: '800' as const,
     color: '#fff',
     letterSpacing: -1,
+    textTranform: 'upper',
   },
   heroAvatar: {
     width: 40,
