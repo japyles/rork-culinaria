@@ -65,6 +65,7 @@ function RootLayoutNav() {
           sheetAllowedDetents: [0.46, 0.82],
           sheetCornerRadius: 24,
           sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: false,
         }}
       />
       <Stack.Screen
@@ -75,6 +76,7 @@ function RootLayoutNav() {
           sheetAllowedDetents: [0.46, 0.82],
           sheetCornerRadius: 24,
           sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: false,
         }}
       />
       <Stack.Screen
@@ -85,6 +87,7 @@ function RootLayoutNav() {
           sheetAllowedDetents: [0.46, 0.82],
           sheetCornerRadius: 24,
           sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: false,
         }}
       />
       <Stack.Screen
@@ -95,6 +98,7 @@ function RootLayoutNav() {
           sheetAllowedDetents: [0.46, 0.82],
           sheetCornerRadius: 24,
           sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: false,
         }}
       />
     </Stack>
