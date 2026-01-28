@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Colors, { BorderRadius, Spacing, Shadow, Typography } from '@/constants/colors';
 import { Recipe } from '@/types/recipe';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useSocial } from '@/contexts/SocialContext';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -25,6 +26,8 @@ interface RecipeCardProps {
 export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardProps) {
   const router = useRouter();
   const { toggleFavorite, addRecentlyViewed, addToShoppingList } = useRecipes();
+  const { getUserById } = useSocial();
+  const author = recipe.authorId ? getUserById(recipe.authorId) : null;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const heartAnim = useRef(new Animated.Value(1)).current;
   const [showIngredientModal, setShowIngredientModal] = useState(false);
@@ -56,6 +59,12 @@ export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardPr
       Animated.spring(heartAnim, { toValue: 1, friction: 3, useNativeDriver: true }),
     ]).start();
     toggleFavorite(recipe.id);
+  };
+
+  const handleAuthorPress = () => {
+    if (recipe.authorId) {
+      router.push(`/user/${recipe.authorId}`);
+    }
   };
 
   const handleOpenIngredientModal = () => {
@@ -185,6 +194,11 @@ export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardPr
           <Image source={{ uri: recipe.imageUrl }} style={styles.compactImage} />
           <View style={styles.compactInfo}>
             <Text style={styles.compactTitle} numberOfLines={2}>{recipe.title}</Text>
+            {author && (
+              <Pressable onPress={handleAuthorPress}>
+                <Text style={styles.compactAuthor} numberOfLines={1}>by {author.displayName}</Text>
+              </Pressable>
+            )}
             <View style={styles.compactMeta}>
               <Clock size={12} color={Colors.textSecondary} />
               <Text style={styles.compactMetaText}>{totalTime} min</Text>
@@ -231,6 +245,11 @@ export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardPr
                 <Text style={styles.featuredBadgeText}>{recipe.cuisine}</Text>
               </View>
               <Text style={styles.featuredTitle} numberOfLines={2}>{recipe.title}</Text>
+              {author && (
+                <Pressable onPress={handleAuthorPress}>
+                  <Text style={styles.featuredAuthor}>by {author.displayName}</Text>
+                </Pressable>
+              )}
               <View style={styles.featuredMeta}>
                 <View style={styles.metaItem}>
                   <Clock size={14} color={Colors.textOnPrimary} />
@@ -279,6 +298,11 @@ export default function RecipeCard({ recipe, variant = 'default' }: RecipeCardPr
           <View style={styles.content}>
             <Text style={styles.cuisine}>{recipe.cuisine}</Text>
             <Text style={styles.title} numberOfLines={2}>{recipe.title}</Text>
+            {author && (
+              <Pressable onPress={handleAuthorPress} style={styles.authorRow}>
+                <Text style={styles.authorText}>by {author.displayName}</Text>
+              </Pressable>
+            )}
             <View style={styles.meta}>
               <View style={styles.metaItem}>
                 <Clock size={14} color={Colors.textSecondary} />
@@ -489,7 +513,15 @@ const styles = StyleSheet.create({
   title: {
     ...Typography.h3,
     color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  authorRow: {
     marginBottom: Spacing.sm,
+  },
+  authorText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '500' as const,
   },
   meta: {
     flexDirection: 'row',
@@ -549,6 +581,11 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.textSecondary,
     marginLeft: Spacing.xs,
+  },
+  compactAuthor: {
+    ...Typography.caption,
+    color: Colors.primary,
+    marginBottom: Spacing.xs,
   },
   featuredCard: {
     borderRadius: BorderRadius.xl,
@@ -622,6 +659,12 @@ const styles = StyleSheet.create({
   featuredTitle: {
     ...Typography.h3,
     color: Colors.textOnPrimary,
+    marginBottom: 2,
+  },
+  featuredAuthor: {
+    ...Typography.caption,
+    color: Colors.textOnPrimary,
+    opacity: 0.9,
     marginBottom: Spacing.xs,
   },
   featuredMeta: {
