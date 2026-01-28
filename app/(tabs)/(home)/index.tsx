@@ -78,7 +78,7 @@ export default function HomeScreen() {
               style={styles.heroOverlay}
             >
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
-                <View style={styles.textTop} >
+                <View style={styles.heroTextTop} >
                   <Text>
                     Good Morning!
                   </Text>
@@ -264,7 +264,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.8)',
   },
   heroTextTop: {
-		color: '#000',
+		color: Color.background,
+    fontSize: 12,
   },
   heroAvatar: {
     width: 40,
