@@ -564,15 +564,15 @@ const styles = StyleSheet.create({
   },
   circleContentContainer: {
     flex: 1,
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 8,
-    paddingBottom: 6,
+    position: 'relative',
   },
   circleIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    marginTop: -6,
   },
   countBadge: {
     position: 'absolute',
@@ -592,11 +592,14 @@ const styles = StyleSheet.create({
     color: Colors.textOnPrimary,
   },
   circleLabel: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '600' as const,
     color: Colors.text,
     textAlign: 'center' as const,
-    marginTop: 2,
+    position: 'absolute',
+    bottom: 8,
+    left: 0,
+    right: 0,
   },
   editButton: {
     width: '50%',
