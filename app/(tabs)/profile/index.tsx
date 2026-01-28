@@ -556,6 +556,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    backgroundColor: Colors.skyblue,
   },
   glassSvg: {
     position: 'absolute',
