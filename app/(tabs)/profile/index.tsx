@@ -51,7 +51,7 @@ export default function ProfileScreen() {
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
   const { isPremium, hasProAccess } = useSubscription();
-  const { isLoading: isAuthLoading, updateProfile, profile: currentUser, isAuthenticated } = useAuth();
+  const { isLoading: isAuthLoading, isProfileLoading, updateProfile, profile: currentUser, isAuthenticated } = useAuth();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -201,14 +201,14 @@ export default function ProfileScreen() {
       <View style={styles.container}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>Loading profile...</Text>
+            <Text style={styles.loadingText}>Loading...</Text>
           </View>
         </SafeAreaView>
       </View>
     );
   }
 
-  if (!isAuthenticated || !currentUser) {
+  if (!isAuthenticated) {
     return (
       <View style={styles.container}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
@@ -219,6 +219,18 @@ export default function ProfileScreen() {
               onPress={() => router.push('/login')}
               style={{ marginTop: Spacing.lg }}
             />
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  if (isProfileLoading || !currentUser) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading profile...</Text>
           </View>
         </SafeAreaView>
       </View>

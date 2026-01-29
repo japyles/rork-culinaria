@@ -60,6 +60,22 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (error) {
         console.error('[Auth] Error fetching profile:', error);
+        // If user not found in users table, return a default profile
+        if (error.code === 'PGRST116') {
+          console.log('[Auth] User not found in users table, returning default profile');
+          return {
+            id: user.id,
+            username: user.email?.split('@')[0] || 'user',
+            displayName: user.email?.split('@')[0] || 'User',
+            avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop',
+            bio: '',
+            recipesCount: 0,
+            followersCount: 0,
+            followingCount: 0,
+            isVerified: false,
+            joinedAt: new Date().toISOString(),
+          } as User;
+        }
         throw error;
       }
 
@@ -234,7 +250,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     [resetPasswordAsync]
   );
 
-  const isLoading = isInitializing || profileQuery.isLoading;
+  // Only show loading during initial auth check, not during profile fetch
+  // This prevents the profile page from being stuck on "Loading..."
+  const isLoading = isInitializing;
+  const isProfileLoading = profileQuery.isLoading;
   const isAuthenticated = !!session && !!user;
 
   return {
@@ -242,11 +261,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     user,
     profile: profileQuery.data ?? null,
     isLoading,
+    isProfileLoading,
     isAuthenticated,
     isSigningIn: signInMutation.isPending,
     isSigningUp: signUpMutation.isPending,
     isSigningOut: signOutMutation.isPending,
     isUpdatingProfile: updateProfileMutation.isPending,
+    profileError: profileQuery.error,
     signIn,
     signUp,
     signOut,
