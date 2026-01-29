@@ -37,7 +37,9 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { User } from '@/types/recipe';
 import Button from '@/components/Button';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { ActivityIndicator } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
+
+
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -45,15 +47,12 @@ export default function ProfileScreen() {
     currentUser,
     following,
     followers,
-    getFollowingUsers,
-    getFollowersUsers,
     getSuggestedUsers,
     toggleFollow,
-    isFollowing,
-    updateProfile,
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
   const { isPremium, hasBasicAccess, hasProAccess } = useSubscription();
+  const { isLoading: isAuthLoading, updateProfile } = useAuth();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -205,12 +204,11 @@ export default function ProfileScreen() {
     [toggleFollow, router]
   );
 
-  if (!currentUser) {
+  if (isAuthLoading || !currentUser) {
     return (
       <View style={styles.container}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
             <Text style={styles.loadingText}>Loading profile...</Text>
           </View>
         </SafeAreaView>
@@ -533,7 +531,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: Spacing.md,
   },
   loadingText: {
     ...Typography.body,
