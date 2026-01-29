@@ -194,7 +194,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         throw error;
       }
 
-      return (data || []).map(r => r.recipe_id);
+      return (data || []).map((r: { recipe_id: string }) => r.recipe_id);
     },
     enabled: !!user?.id,
   });
@@ -335,7 +335,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         console.log('[Recipes] Adding favorite:', recipeId);
         const { error } = await supabase
           .from('favorites')
-          .insert({ user_id: user.id, recipe_id: recipeId } as { user_id: string; recipe_id: string });
+          .insert({ user_id: user.id, recipe_id: recipeId } as any);
 
         if (error) throw error;
       }
@@ -353,7 +353,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
       const { error } = await supabase
         .from('recently_viewed')
         .upsert(
-          { user_id: user.id, recipe_id: recipeId, viewed_at: new Date().toISOString() } as { user_id: string; recipe_id: string; viewed_at: string },
+          { user_id: user.id, recipe_id: recipeId, viewed_at: new Date().toISOString() } as any,
           { onConflict: 'user_id,recipe_id' }
         );
 
@@ -379,7 +379,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           allergies: prefs.allergies,
           cuisine_preferences: prefs.cuisinePreferences,
           skill_level: prefs.skillLevel,
-        } as { user_id: string; dietary_restrictions?: string[]; allergies?: string[]; cuisine_preferences?: string[]; skill_level?: string }, { onConflict: 'user_id' });
+        } as any, { onConflict: 'user_id' });
 
       if (error) throw error;
     },
@@ -466,8 +466,8 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
 
       console.log('[Recipes] Updating recipe:', recipeId);
       
-      const { error } = await supabase
-        .from('recipes')
+      const { error } = await (supabase
+        .from('recipes') as any)
         .update({
           title: updates.title,
           description: updates.description,
@@ -485,7 +485,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           nutrition_fiber: updates.nutrition?.fiber,
           tags: updates.tags,
           source_url: updates.sourceUrl,
-        } as any)
+        })
         .eq('id', recipeId)
         .eq('author_id', user.id);
 
@@ -615,8 +615,8 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
       const currentItem = shoppingListQuery.data?.find(i => i.id === itemId);
       if (!currentItem) throw new Error('Item not found');
 
-      const { error } = await supabase
-        .from('shopping_list_items')
+      const { error } = await (supabase
+        .from('shopping_list_items') as any)
         .update({ is_checked: !currentItem.isChecked })
         .eq('id', itemId)
         .eq('user_id', user.id);
@@ -810,8 +810,8 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     return mealPlanEntriesQuery.data?.filter(e => e.date === date) || [];
   }, [mealPlanEntriesQuery.data]);
 
-  const favorites = favoritesQuery.data || [];
-  const recentlyViewed = recentlyViewedQuery.data || [];
+  const favorites = useMemo(() => favoritesQuery.data || [], [favoritesQuery.data]);
+  const recentlyViewed = useMemo(() => recentlyViewedQuery.data || [], [recentlyViewedQuery.data]);
 
   const allRecipes = useMemo(() => {
     return (recipesQuery.data || []).map((recipe) => ({

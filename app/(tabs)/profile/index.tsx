@@ -51,7 +51,7 @@ export default function ProfileScreen() {
     toggleFollow,
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
-  const { isPremium, hasBasicAccess, hasProAccess } = useSubscription();
+  const { isPremium, hasProAccess } = useSubscription();
   const { isLoading: isAuthLoading, updateProfile } = useAuth();
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -84,13 +84,6 @@ export default function ProfileScreen() {
       Animated.timing(anim, { toValue: 0, duration: 50, useNativeDriver: true }),
     ]).start(() => callback());
   }, []);
-
-  const getShakeRotation = (anim: Animated.Value) => {
-    return anim.interpolate({
-      inputRange: [-1, 0, 1],
-      outputRange: ['-8deg', '0deg', '8deg'],
-    });
-  };
 
   const handleSaveProfile = useCallback(() => {
     updateProfile({
@@ -384,7 +377,7 @@ export default function ProfileScreen() {
               contentContainerStyle={styles.suggestedList}
               ListEmptyComponent={
                 <Text style={styles.emptyText}>
-                  You're following everyone! Check back later.
+                  You&apos;re following everyone! Check back later.
                 </Text>
               }
             />
@@ -411,7 +404,7 @@ export default function ProfileScreen() {
                 <Users size={24} color={Colors.secondary} />
                 <Text style={styles.actionTitle}>My Network</Text>
                 <Text style={styles.actionDesc}>
-                  See who you're connected with
+                  See who you&apos;re connected with
                 </Text>
               </Pressable>
             </View>

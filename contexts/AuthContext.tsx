@@ -171,14 +171,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (!user?.id) throw new Error('Not authenticated');
 
       console.log('[Auth] Updating profile:', updates);
-      const { error } = await supabase
-        .from('users')
+      const { error } = await (supabase
+        .from('users') as any)
         .update({
           display_name: updates.displayName,
           username: updates.username,
           avatar_url: updates.avatarUrl,
           bio: updates.bio,
-        } as { display_name?: string; username?: string; avatar_url?: string; bio?: string })
+        })
         .eq('id', user.id);
 
       if (error) {

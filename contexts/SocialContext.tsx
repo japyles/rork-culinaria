@@ -87,7 +87,7 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
         throw error;
       }
 
-      return (data || []).map(f => f.following_id);
+      return (data || []).map((f: { following_id: string }) => f.following_id);
     },
     enabled: !!user?.id,
   });
@@ -108,7 +108,7 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
         throw error;
       }
 
-      return (data || []).map(f => f.follower_id);
+      return (data || []).map((f: { follower_id: string }) => f.follower_id);
     },
     enabled: !!user?.id,
   });
@@ -162,7 +162,7 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
         console.log('[Social] Following user:', userId);
         const { error } = await supabase
           .from('follows')
-          .insert({ follower_id: user.id, following_id: userId });
+          .insert({ follower_id: user.id, following_id: userId } as any);
 
         if (error) throw error;
       }
@@ -192,7 +192,7 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
             from_user_id: user.id,
             to_user_id: toUserId,
             message,
-          }))
+          })) as any
         );
 
       if (error) throw error;
