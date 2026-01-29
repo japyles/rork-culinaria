@@ -269,7 +269,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
       .slice(0, 5);
   }, [allUsers, followingQuery.data]);
 
-  const isLoading = usersQuery.isLoading || followingQuery.isLoading || 
+  const isLoading = usersQuery.isLoading;
+  const isLoadingUserData = followingQuery.isLoading || 
     followersQuery.isLoading || sharedRecipesQuery.isLoading;
 
   return {
@@ -279,6 +280,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
     sharedRecipes: sharedRecipesQuery.data || [],
     allUsers,
     isLoading,
+    isLoadingUserData,
+    isLoadingUsers: usersQuery.isLoading,
     toggleFollow,
     isFollowing,
     shareRecipe,

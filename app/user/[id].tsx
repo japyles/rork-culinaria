@@ -25,7 +25,7 @@ import RecipeCard from '@/components/RecipeCard';
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { getUserById, isFollowing, toggleFollow, isLoading } = useSocial();
+  const { getUserById, isFollowing, toggleFollow, isLoadingUsers } = useSocial();
   const { allRecipes } = useRecipes();
 
   const user = useMemo(() => getUserById(id), [id, getUserById]);
@@ -40,7 +40,7 @@ export default function UserProfileScreen() {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }, []);
 
-  if (isLoading) {
+  if (isLoadingUsers) {
     return (
       <View style={styles.container}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
