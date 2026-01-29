@@ -184,10 +184,12 @@ export default function LoginScreen() {
                 </Text>
               </TouchableOpacity>
 
-              <View style={styles.testCredentials}>
-                <Text style={styles.testTitle}>Test Credentials:</Text>
-                <Text style={styles.testText}>Email: maria@test.com</Text>
-                <Text style={styles.testText}>Password: Test123!</Text>
+              <View style={styles.infoSection}>
+                <Text style={styles.infoText}>
+                  {isLoginMode 
+                    ? 'New here? Create an account to get started!' 
+                    : 'Password must be at least 6 characters'}
+                </Text>
               </View>
             </View>
           </ScrollView>
@@ -305,21 +307,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500' as const,
   },
-  testCredentials: {
+  infoSection: {
     marginTop: 24,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     alignItems: 'center',
   },
-  testTitle: {
-    fontSize: 12,
-    fontWeight: '600' as const,
+  infoText: {
+    fontSize: 13,
     color: Colors.textSecondary,
-    marginBottom: 4,
-  },
-  testText: {
-    fontSize: 12,
-    color: Colors.textTertiary,
+    textAlign: 'center',
   },
 });
