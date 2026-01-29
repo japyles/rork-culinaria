@@ -34,7 +34,6 @@ import {
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
 import { useRecipes } from '@/contexts/RecipeContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types/recipe';
 import Button from '@/components/Button';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -52,16 +51,16 @@ export default function ProfileScreen() {
     getSuggestedUsers,
     toggleFollow,
     isFollowing,
+    updateProfile,
   } = useSocial();
-  const { updateProfile } = useAuth();
   const { customRecipes, favorites } = useRecipes();
   const { isPremium, hasBasicAccess, hasProAccess } = useSubscription();
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editName, setEditName] = useState(currentUser?.displayName ?? '');
-  const [editUsername, setEditUsername] = useState(currentUser?.username ?? '');
-  const [editBio, setEditBio] = useState(currentUser?.bio ?? '');
-  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser?.avatarUrl ?? '');
+  const [editName, setEditName] = useState(currentUser.display_Name);
+  const [editUsername, setEditUsername] = useState(currentUser.username);
+  const [editBio, setEditBio] = useState(currentUser.bio);
+  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser.avatarUrl);
 
   const shakeAnim1 = useRef(new Animated.Value(0)).current;
   const shakeAnim2 = useRef(new Animated.Value(0)).current;
@@ -88,7 +87,7 @@ export default function ProfileScreen() {
 
   const handleSaveProfile = useCallback(() => {
     updateProfile({
-      displayName: editName,
+      display_Name: editName,
       username: editUsername,
       bio: editBio,
       avatarUrl: editAvatarUrl,
@@ -212,7 +211,7 @@ export default function ProfileScreen() {
           <View style={styles.profileSection}>
             <View style={styles.avatarContainer}>
               <Image
-                source={{ uri: currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop' }}
+                source={{ uri: currentUser.avatarUrl }}
                 style={styles.avatar}
               />
               <Pressable
@@ -223,9 +222,9 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
 
-            <Text style={styles.displayName}>{currentUser?.displayName ?? 'Guest'}</Text>
-            <Text style={styles.username}>@{currentUser?.username ?? 'guest'}</Text>
-            <Text style={styles.bio}>{currentUser?.bio ?? ''}</Text>
+            <Text style={styles.displayName}>{currentUser.displayName}</Text>
+            <Text style={styles.username}>@{currentUser.username}</Text>
+            <Text style={styles.bio}>{currentUser.bio}</Text>
 
             <View style={styles.statsCircleContainer}>
               <Pressable
