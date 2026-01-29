@@ -30,10 +30,9 @@ export default function UserProfileScreen() {
   const { allRecipes } = useRecipes();
 
   const user = useMemo(() => getUserById(id), [id, getUserById]);
-  const userRecipeIds = useMemo(() => getUserRecipes(id), [id, getUserRecipes]);
   const userRecipes = useMemo(
-    () => allRecipes.filter((r) => userRecipeIds.includes(r.id)),
-    [allRecipes, userRecipeIds]
+    () => allRecipes.filter((r) => r.authorId === id),
+    [allRecipes, id]
   );
   const following = isFollowing(id);
 

@@ -178,7 +178,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           username: updates.username,
           avatar_url: updates.avatarUrl,
           bio: updates.bio,
-        })
+        } as { display_name?: string; username?: string; avatar_url?: string; bio?: string })
         .eq('id', user.id);
 
       if (error) {

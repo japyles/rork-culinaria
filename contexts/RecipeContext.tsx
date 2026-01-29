@@ -171,7 +171,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         throw error;
       }
 
-      return (data || []).map(f => f.recipe_id);
+      return (data || []).map((f: { recipe_id: string }) => f.recipe_id);
     },
     enabled: !!user?.id,
   });
@@ -335,7 +335,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         console.log('[Recipes] Adding favorite:', recipeId);
         const { error } = await supabase
           .from('favorites')
-          .insert({ user_id: user.id, recipe_id: recipeId });
+          .insert({ user_id: user.id, recipe_id: recipeId } as { user_id: string; recipe_id: string });
 
         if (error) throw error;
       }
@@ -353,7 +353,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
       const { error } = await supabase
         .from('recently_viewed')
         .upsert(
-          { user_id: user.id, recipe_id: recipeId, viewed_at: new Date().toISOString() },
+          { user_id: user.id, recipe_id: recipeId, viewed_at: new Date().toISOString() } as { user_id: string; recipe_id: string; viewed_at: string },
           { onConflict: 'user_id,recipe_id' }
         );
 
@@ -379,7 +379,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           allergies: prefs.allergies,
           cuisine_preferences: prefs.cuisinePreferences,
           skill_level: prefs.skillLevel,
-        }, { onConflict: 'user_id' });
+        } as { user_id: string; dietary_restrictions?: string[]; allergies?: string[]; cuisine_preferences?: string[]; skill_level?: string }, { onConflict: 'user_id' });
 
       if (error) throw error;
     },
@@ -414,7 +414,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           tags: recipe.tags,
           source_url: recipe.sourceUrl,
           author_id: user.id,
-        })
+        } as any)
         .select()
         .single();
 
@@ -425,12 +425,12 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           .from('recipe_ingredients')
           .insert(
             recipe.ingredients.map((ing, index) => ({
-              recipe_id: newRecipe.id,
+              recipe_id: (newRecipe as any).id,
               name: ing.name,
               amount: ing.amount,
               unit: ing.unit,
               order_index: index,
-            }))
+            })) as any
           );
 
         if (ingError) throw ingError;
@@ -441,18 +441,18 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           .from('recipe_steps')
           .insert(
             recipe.steps.map((step) => ({
-              recipe_id: newRecipe.id,
+              recipe_id: (newRecipe as any).id,
               order_index: step.order,
               instruction: step.instruction,
               duration: step.duration,
               tip: step.tip,
-            }))
+            })) as any
           );
 
         if (stepError) throw stepError;
       }
 
-      console.log('[Recipes] Recipe added successfully:', newRecipe.id);
+      console.log('[Recipes] Recipe added successfully:', (newRecipe as any).id);
       return newRecipe;
     },
     onSuccess: () => {
@@ -485,7 +485,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           nutrition_fiber: updates.nutrition?.fiber,
           tags: updates.tags,
           source_url: updates.sourceUrl,
-        })
+        } as any)
         .eq('id', recipeId)
         .eq('author_id', user.id);
 
@@ -503,7 +503,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
               amount: ing.amount,
               unit: ing.unit,
               order_index: index,
-            }))
+            })) as any
           );
 
         if (ingError) throw ingError;
@@ -521,7 +521,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
               instruction: step.instruction,
               duration: step.duration,
               tip: step.tip,
-            }))
+            })) as any
           );
 
         if (stepError) throw stepError;
@@ -567,7 +567,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           user_id: user.id,
           rating: review.rating,
           comment: review.comment,
-        });
+        } as any);
 
       if (error) throw error;
       console.log('[Recipes] Review added successfully');
@@ -597,7 +597,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
             unit: ing.unit,
             recipe_id: recipeId,
             recipe_name: recipeName,
-          }))
+          })) as any
         );
 
       if (error) throw error;
@@ -690,7 +690,7 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
           date: entry.date,
           meal_type: entry.mealType,
           recipe_id: entry.recipeId,
-        });
+        } as any);
 
       if (error) throw error;
     },

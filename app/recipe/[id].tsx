@@ -379,7 +379,6 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
       recipeId: recipe.id,
       rating: reviewRating,
       comment: reviewComment.trim(),
-      authorName: reviewAuthor.trim(),
     });
     setShowReviewModal(false);
     setReviewRating(5);
