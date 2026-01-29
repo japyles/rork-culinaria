@@ -44,7 +44,6 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function ProfileScreen() {
   const router = useRouter();
   const {
-    currentUser,
     following,
     followers,
     getSuggestedUsers,
@@ -52,7 +51,7 @@ export default function ProfileScreen() {
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
   const { isPremium, hasProAccess } = useSubscription();
-  const { isLoading: isAuthLoading, updateProfile } = useAuth();
+  const { isLoading: isAuthLoading, updateProfile, profile: currentUser, isAuthenticated } = useAuth();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -197,12 +196,29 @@ export default function ProfileScreen() {
     [toggleFollow, router]
   );
 
-  if (isAuthLoading || !currentUser) {
+  if (isAuthLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Please sign in to view your profile</Text>
+            <Button
+              title="Sign In"
+              onPress={() => router.push('/login')}
+              style={{ marginTop: Spacing.lg }}
+            />
           </View>
         </SafeAreaView>
       </View>
