@@ -22,7 +22,6 @@ import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/c
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSocial } from '@/contexts/SocialContext';
 import { categories } from '@/mocks/recipes';
-import { mockUsers } from '@/mocks/users';
 import RecipeCard from '@/components/RecipeCard';
 import SectionHeader from '@/components/SectionHeader';
 import CategoryChip from '@/components/CategoryChip';
@@ -69,10 +68,12 @@ export default function HomeScreen() {
     return allRecipes[index];
   }, [allRecipes]);
 
+  const { getUserById } = useSocial();
+
   const featuredAuthor = useMemo(() => {
     if (!featuredRecipe?.authorId) return null;
-    return mockUsers.find(user => user.id === featuredRecipe.authorId);
-  }, [featuredRecipe]);
+    return getUserById(featuredRecipe.authorId) ?? null;
+  }, [featuredRecipe, getUserById]);
   const trendingRecipes = allRecipes.slice(1, 5);
 
   const handleCategoryPress = (categoryId: string) => {
