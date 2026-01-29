@@ -57,10 +57,10 @@ export default function ProfileScreen() {
   const { isPremium, hasBasicAccess, hasProAccess } = useSubscription();
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editName, setEditName] = useState(currentUser.display_Name);
-  const [editUsername, setEditUsername] = useState(currentUser.username);
-  const [editBio, setEditBio] = useState(currentUser.bio);
-  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser.avatarUrl);
+  const [editName, setEditName] = useState(currentUser?.displayName || '');
+  const [editUsername, setEditUsername] = useState(currentUser?.username || '');
+  const [editBio, setEditBio] = useState(currentUser?.bio || '');
+  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser?.avatarUrl || '');
 
   const shakeAnim1 = useRef(new Animated.Value(0)).current;
   const shakeAnim2 = useRef(new Animated.Value(0)).current;
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
 
   const handleSaveProfile = useCallback(() => {
     updateProfile({
-      display_Name: editName,
+      displayName: editName,
       username: editUsername,
       bio: editBio,
       avatarUrl: editAvatarUrl,
