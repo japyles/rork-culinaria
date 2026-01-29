@@ -225,7 +225,7 @@ export default function ProfileScreen() {
 
             <Text style={styles.displayName}>{currentUser?.displayName ?? 'Guest'}</Text>
             <Text style={styles.username}>@{currentUser?.username ?? 'guest'}</Text>
-            <Text style={styles.bio}>{currentUser?.bio ?? ''}
+            <Text style={styles.bio}>{currentUser?.bio ?? ''}</Text>
 
             <View style={styles.statsCircleContainer}>
               <Pressable
