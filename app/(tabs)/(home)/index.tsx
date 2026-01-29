@@ -103,7 +103,7 @@ export default function HomeScreen() {
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
                 <View >
                   <Text style={styles.heroTextTop} >
-                    Good {timeOfDayGreeting},{"\n"}{currentUser.displayName}!
+                    Good {timeOfDayGreeting},{"\n"}{currentUser?.displayName || 'Chef'}!
                   </Text>
                 	
                 </View>
@@ -112,7 +112,7 @@ export default function HomeScreen() {
                   onPress={() => router.push('/profile')}
                 >
                   <Image
-                    source={{ uri: currentUser.avatarUrl }}
+                    source={{ uri: currentUser?.avatarUrl || 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&fit=crop' }}
                     style={styles.heroAvatar}
                   />
                 </Pressable>
