@@ -81,7 +81,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          href: null,
+          href: '/profile',
           title: "Profile",
           tabBarIcon: ({ color, focused }) => (
             <View style={focused && styles.activeIconContainer}>
