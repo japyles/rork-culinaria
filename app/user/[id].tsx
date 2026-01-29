@@ -6,7 +6,6 @@ import {
   ScrollView,
   Image,
   Pressable,
-  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -26,7 +25,7 @@ import RecipeCard from '@/components/RecipeCard';
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { getUserById, getUserRecipes, isFollowing, toggleFollow } = useSocial();
+  const { getUserById, isFollowing, toggleFollow, isLoading } = useSocial();
   const { allRecipes } = useRecipes();
 
   const user = useMemo(() => getUserById(id), [id, getUserById]);
@@ -40,6 +39,18 @@ export default function UserProfileScreen() {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }, []);
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   if (!user) {
     return (
@@ -310,5 +321,14 @@ const styles = StyleSheet.create({
   backLink: {
     ...Typography.body,
     color: Colors.primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
   },
 });
