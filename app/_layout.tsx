@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { RecipeProvider } from "@/contexts/RecipeContext";
 import { SocialProvider } from "@/contexts/SocialContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
@@ -109,6 +110,13 @@ function RootLayoutNav() {
           presentation: "modal",
         }}
       />
+      <Stack.Screen
+        name="login"
+        options={{
+          headerShown: false,
+          presentation: "fullScreenModal",
+        }}
+      />
     </Stack>
   );
 }
@@ -121,13 +129,15 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <RecipeProvider>
-          <SocialProvider>
-            <SubscriptionProvider>
-              <RootLayoutNav />
-            </SubscriptionProvider>
-          </SocialProvider>
-        </RecipeProvider>
+        <AuthProvider>
+          <RecipeProvider>
+            <SocialProvider>
+              <SubscriptionProvider>
+                <RootLayoutNav />
+              </SubscriptionProvider>
+            </SocialProvider>
+          </RecipeProvider>
+        </AuthProvider>
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

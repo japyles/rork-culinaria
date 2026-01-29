@@ -1,219 +1,282 @@
 import createContextHook from '@nkzw/create-context-hook';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { mockUsers, userRecipes, CURRENT_USER_ID } from '@/mocks/users';
+import { useCallback, useMemo } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 import { User, SharedRecipe } from '@/types/recipe';
 
-const FOLLOWING_KEY = 'culinaria_following';
-const FOLLOWERS_KEY = 'culinaria_followers';
-const SHARED_RECIPES_KEY = 'culinaria_shared_recipes';
-const USER_PROFILE_KEY = 'culinaria_user_profile';
+interface DbUser {
+  id: string;
+  email: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  bio: string | null;
+  is_verified: boolean;
+  joined_at: string;
+}
+
+interface DbSharedRecipe {
+  id: string;
+  recipe_id: string;
+  from_user_id: string;
+  to_user_id: string;
+  message: string | null;
+  shared_at: string;
+}
 
 export const [SocialProvider, useSocial] = createContextHook(() => {
   const queryClient = useQueryClient();
-  const [following, setFollowing] = useState<string[]>([]);
-  const [followers, setFollowers] = useState<string[]>([]);
-  const [sharedRecipes, setSharedRecipes] = useState<SharedRecipe[]>([]);
-  const [currentUserProfile, setCurrentUserProfile] = useState<User>(mockUsers[0]);
+  const { user, profile } = useAuth();
+
+  const usersQuery = useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      console.log('[Social] Fetching all users...');
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('display_name');
+
+      if (error) {
+        console.error('[Social] Error fetching users:', error);
+        throw error;
+      }
+
+      const usersWithCounts = await Promise.all(
+        ((data || []) as DbUser[]).map(async (u) => {
+          const [recipesCount, followersCount, followingCount] = await Promise.all([
+            supabase.from('recipes').select('id', { count: 'exact', head: true }).eq('author_id', u.id),
+            supabase.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', u.id),
+            supabase.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', u.id),
+          ]);
+
+          return {
+            id: u.id,
+            username: u.username,
+            displayName: u.display_name,
+            avatarUrl: u.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop',
+            bio: u.bio || '',
+            recipesCount: recipesCount.count || 0,
+            followersCount: followersCount.count || 0,
+            followingCount: followingCount.count || 0,
+            isVerified: u.is_verified,
+            joinedAt: u.joined_at,
+          } as User;
+        })
+      );
+
+      console.log('[Social] Fetched', usersWithCounts.length, 'users');
+      return usersWithCounts;
+    },
+  });
 
   const followingQuery = useQuery({
-    queryKey: ['following'],
+    queryKey: ['following', user?.id],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(FOLLOWING_KEY);
-      return stored ? JSON.parse(stored) : [];
+      if (!user?.id) return [];
+      
+      console.log('[Social] Fetching following for user:', user.id);
+      const { data, error } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
+
+      if (error) {
+        console.error('[Social] Error fetching following:', error);
+        throw error;
+      }
+
+      return (data || []).map(f => f.following_id);
     },
+    enabled: !!user?.id,
   });
 
   const followersQuery = useQuery({
-    queryKey: ['followers'],
+    queryKey: ['followers', user?.id],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(FOLLOWERS_KEY);
-      return stored ? JSON.parse(stored) : ['user_1', 'user_3'];
+      if (!user?.id) return [];
+      
+      console.log('[Social] Fetching followers for user:', user.id);
+      const { data, error } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('following_id', user.id);
+
+      if (error) {
+        console.error('[Social] Error fetching followers:', error);
+        throw error;
+      }
+
+      return (data || []).map(f => f.follower_id);
     },
+    enabled: !!user?.id,
   });
 
   const sharedRecipesQuery = useQuery({
-    queryKey: ['sharedRecipes'],
+    queryKey: ['sharedRecipes', user?.id],
     queryFn: async () => {
-      const stored = await AsyncStorage.getItem(SHARED_RECIPES_KEY);
-      return stored ? JSON.parse(stored) : [];
+      if (!user?.id) return [];
+      
+      console.log('[Social] Fetching shared recipes for user:', user.id);
+      const { data, error } = await supabase
+        .from('shared_recipes')
+        .select('*')
+        .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`)
+        .order('shared_at', { ascending: false });
+
+      if (error) {
+        console.error('[Social] Error fetching shared recipes:', error);
+        throw error;
+      }
+
+      return ((data || []) as DbSharedRecipe[]).map((s): SharedRecipe => ({
+        id: s.id,
+        recipeId: s.recipe_id,
+        fromUserId: s.from_user_id,
+        toUserId: s.to_user_id,
+        message: s.message || undefined,
+        sharedAt: s.shared_at,
+      }));
     },
+    enabled: !!user?.id,
   });
 
-  const userProfileQuery = useQuery({
-    queryKey: ['userProfile'],
-    queryFn: async () => {
-      const stored = await AsyncStorage.getItem(USER_PROFILE_KEY);
-      return stored ? JSON.parse(stored) : mockUsers[0];
-    },
-  });
+  const toggleFollowMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!user?.id) throw new Error('Not authenticated');
 
-  useEffect(() => {
-    if (followingQuery.data) setFollowing(followingQuery.data);
-  }, [followingQuery.data]);
+      const currentFollowing = followingQuery.data || [];
+      const isCurrentlyFollowing = currentFollowing.includes(userId);
 
-  useEffect(() => {
-    if (followersQuery.data) setFollowers(followersQuery.data);
-  }, [followersQuery.data]);
+      if (isCurrentlyFollowing) {
+        console.log('[Social] Unfollowing user:', userId);
+        const { error } = await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', userId);
 
-  useEffect(() => {
-    if (sharedRecipesQuery.data) setSharedRecipes(sharedRecipesQuery.data);
-  }, [sharedRecipesQuery.data]);
+        if (error) throw error;
+      } else {
+        console.log('[Social] Following user:', userId);
+        const { error } = await supabase
+          .from('follows')
+          .insert({ follower_id: user.id, following_id: userId });
 
-  useEffect(() => {
-    if (userProfileQuery.data) setCurrentUserProfile(userProfileQuery.data);
-  }, [userProfileQuery.data]);
-
-  const saveFollowingMutation = useMutation({
-    mutationFn: async (newFollowing: string[]) => {
-      await AsyncStorage.setItem(FOLLOWING_KEY, JSON.stringify(newFollowing));
-      return newFollowing;
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['following'] });
-    },
-  });
-
-  const saveFollowersMutation = useMutation({
-    mutationFn: async (newFollowers: string[]) => {
-      await AsyncStorage.setItem(FOLLOWERS_KEY, JSON.stringify(newFollowers));
-      return newFollowers;
-    },
-    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['following', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['followers'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
     },
   });
 
-  const saveSharedRecipesMutation = useMutation({
-    mutationFn: async (recipes: SharedRecipe[]) => {
-      await AsyncStorage.setItem(SHARED_RECIPES_KEY, JSON.stringify(recipes));
-      return recipes;
+  const shareRecipeMutation = useMutation({
+    mutationFn: async ({ recipeId, toUserIds, message }: { 
+      recipeId: string; 
+      toUserIds: string[]; 
+      message?: string;
+    }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      console.log('[Social] Sharing recipe:', recipeId, 'to', toUserIds.length, 'users');
+      const { error } = await supabase
+        .from('shared_recipes')
+        .insert(
+          toUserIds.map((toUserId) => ({
+            recipe_id: recipeId,
+            from_user_id: user.id,
+            to_user_id: toUserId,
+            message,
+          }))
+        );
+
+      if (error) throw error;
+      console.log('[Social] Recipe shared successfully');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sharedRecipes'] });
+      queryClient.invalidateQueries({ queryKey: ['sharedRecipes', user?.id] });
     },
   });
 
-  const saveUserProfileMutation = useMutation({
-    mutationFn: async (profile: User) => {
-      await AsyncStorage.setItem(USER_PROFILE_KEY, JSON.stringify(profile));
-      return profile;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    },
-  });
+  const { mutate: toggleFollowMutate } = toggleFollowMutation;
+  const { mutate: shareRecipeMutate } = shareRecipeMutation;
 
   const toggleFollow = useCallback((userId: string) => {
-    setFollowing((prev) => {
-      const isFollowing = prev.includes(userId);
-      const newFollowing = isFollowing
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId];
-      saveFollowingMutation.mutate(newFollowing);
-      
-      setCurrentUserProfile((profile) => {
-        const updatedProfile = {
-          ...profile,
-          followingCount: newFollowing.length,
-        };
-        saveUserProfileMutation.mutate(updatedProfile);
-        return updatedProfile;
-      });
-      
-      return newFollowing;
-    });
-  }, []);
+    toggleFollowMutate(userId);
+  }, [toggleFollowMutate]);
 
   const isFollowing = useCallback((userId: string) => {
-    return following.includes(userId);
-  }, [following]);
+    return followingQuery.data?.includes(userId) || false;
+  }, [followingQuery.data]);
 
   const shareRecipe = useCallback((recipeId: string, toUserIds: string[], message?: string) => {
-    const newShares: SharedRecipe[] = toUserIds.map((toUserId) => ({
-      id: `share_${Date.now()}_${toUserId}`,
-      recipeId,
-      fromUserId: CURRENT_USER_ID,
-      toUserId,
-      message,
-      sharedAt: new Date().toISOString(),
-    }));
-    
-    setSharedRecipes((prev) => {
-      const updated = [...newShares, ...prev];
-      saveSharedRecipesMutation.mutate(updated);
-      return updated;
-    });
-    
-    return newShares;
-  }, []);
+    shareRecipeMutate({ recipeId, toUserIds, message });
+    return [];
+  }, [shareRecipeMutate]);
 
   const getReceivedShares = useCallback(() => {
-    return sharedRecipes.filter((share) => share.toUserId === CURRENT_USER_ID);
-  }, [sharedRecipes]);
+    return sharedRecipesQuery.data?.filter((share) => share.toUserId === user?.id) || [];
+  }, [sharedRecipesQuery.data, user?.id]);
 
   const getSentShares = useCallback(() => {
-    return sharedRecipes.filter((share) => share.fromUserId === CURRENT_USER_ID);
-  }, [sharedRecipes]);
-
-  const updateProfile = useCallback((updates: Partial<User>) => {
-    setCurrentUserProfile((prev) => {
-      const updated = { ...prev, ...updates };
-      saveUserProfileMutation.mutate(updated);
-      return updated;
-    });
-  }, []);
-
-  const allUsers = useMemo(() => {
-    return mockUsers.filter((user) => user.id !== CURRENT_USER_ID);
-  }, []);
+    return sharedRecipesQuery.data?.filter((share) => share.fromUserId === user?.id) || [];
+  }, [sharedRecipesQuery.data, user?.id]);
 
   const getUserById = useCallback((userId: string) => {
-    if (userId === CURRENT_USER_ID) return currentUserProfile;
-    return mockUsers.find((user) => user.id === userId);
-  }, [currentUserProfile]);
+    if (userId === user?.id) return profile;
+    return usersQuery.data?.find((u) => u.id === userId);
+  }, [usersQuery.data, user?.id, profile]);
 
-  const getUserRecipes = useCallback((userId: string) => {
-    return userRecipes[userId] || [];
+  const getUserRecipes = useCallback((_userId: string) => {
+    return [];
   }, []);
 
   const searchUsers = useCallback((query: string) => {
     if (!query.trim()) return [];
     const lowerQuery = query.toLowerCase();
-    return allUsers.filter(
-      (user) =>
-        user.username.toLowerCase().includes(lowerQuery) ||
-        user.displayName.toLowerCase().includes(lowerQuery)
+    return (usersQuery.data || []).filter(
+      (u) =>
+        u.id !== user?.id &&
+        (u.username.toLowerCase().includes(lowerQuery) ||
+          u.displayName.toLowerCase().includes(lowerQuery))
     );
-  }, [allUsers]);
+  }, [usersQuery.data, user?.id]);
+
+  const allUsers = useMemo(() => {
+    return (usersQuery.data || []).filter((u) => u.id !== user?.id);
+  }, [usersQuery.data, user?.id]);
 
   const getFollowingUsers = useMemo(() => {
-    return following
-      .map((id) => mockUsers.find((user) => user.id === id))
-      .filter(Boolean) as User[];
-  }, [following]);
+    const followingIds = followingQuery.data || [];
+    return (usersQuery.data || []).filter((u) => followingIds.includes(u.id));
+  }, [usersQuery.data, followingQuery.data]);
 
   const getFollowersUsers = useMemo(() => {
-    return followers
-      .map((id) => mockUsers.find((user) => user.id === id))
-      .filter(Boolean) as User[];
-  }, [followers]);
+    const followerIds = followersQuery.data || [];
+    return (usersQuery.data || []).filter((u) => followerIds.includes(u.id));
+  }, [usersQuery.data, followersQuery.data]);
 
   const getSuggestedUsers = useMemo(() => {
+    const followingIds = followingQuery.data || [];
     return allUsers
-      .filter((user) => !following.includes(user.id))
+      .filter((u) => !followingIds.includes(u.id))
       .sort((a, b) => b.followersCount - a.followersCount)
       .slice(0, 5);
-  }, [allUsers, following]);
+  }, [allUsers, followingQuery.data]);
 
-  const isLoading = followingQuery.isLoading || followersQuery.isLoading || sharedRecipesQuery.isLoading;
+  const isLoading = usersQuery.isLoading || followingQuery.isLoading || 
+    followersQuery.isLoading || sharedRecipesQuery.isLoading;
 
   return {
-    currentUser: currentUserProfile,
-    following,
-    followers,
-    sharedRecipes,
+    currentUser: profile,
+    following: followingQuery.data || [],
+    followers: followersQuery.data || [],
+    sharedRecipes: sharedRecipesQuery.data || [],
     allUsers,
     isLoading,
     toggleFollow,
@@ -221,7 +284,7 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
     shareRecipe,
     getReceivedShares,
     getSentShares,
-    updateProfile,
+    updateProfile: () => {},
     getUserById,
     getUserRecipes,
     searchUsers,

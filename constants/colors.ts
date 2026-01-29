@@ -13,6 +13,7 @@ const Colors = {
   
   text: '#1A1A1A',
   textSecondary: '#6B7280',
+  textTertiary: '#9CA3AF',
   textLight: '#9CA3AF',
   textOnPrimary: '#FFFFFF',
   
