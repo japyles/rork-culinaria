@@ -51,7 +51,7 @@ export default function ProfileScreen() {
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
   const { isPremium, hasProAccess } = useSubscription();
-  const { isLoading: isAuthLoading, isProfileLoading, updateProfile, profile: currentUser, isAuthenticated } = useAuth();
+  const { isLoading: isAuthLoading, isProfileLoading, updateProfile, profile: currentUser, isAuthenticated, profileError } = useAuth();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -225,12 +225,29 @@ export default function ProfileScreen() {
     );
   }
 
-  if (isProfileLoading || !currentUser) {
+  if (isProfileLoading) {
     return (
       <View style={styles.container}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
+
+  if (profileError || !currentUser) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Unable to load profile</Text>
+            <Button
+              title="Try Again"
+              onPress={() => router.replace('/(tabs)/profile')}
+              style={{ marginTop: Spacing.lg }}
+            />
           </View>
         </SafeAreaView>
       </View>

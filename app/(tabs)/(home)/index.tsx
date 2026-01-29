@@ -110,7 +110,7 @@ export default function HomeScreen() {
                 </View>
                 <Pressable
                   style={styles.heroAvatarContainer}
-                  onPress={() => router.push('/profile')}
+                  onPress={() => router.push('/(tabs)/profile')}
                 >
                   <Image
                     source={{ uri: currentUser?.avatarUrl ?? 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&fit=crop' }}
