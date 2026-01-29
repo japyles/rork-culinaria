@@ -37,8 +37,7 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { User } from '@/types/recipe';
 import Button from '@/components/Button';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-
-
+import { ActivityIndicator } from 'react-native';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -57,10 +56,19 @@ export default function ProfileScreen() {
   const { isPremium, hasBasicAccess, hasProAccess } = useSubscription();
 
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editName, setEditName] = useState(currentUser?.displayName || '');
-  const [editUsername, setEditUsername] = useState(currentUser?.username || '');
-  const [editBio, setEditBio] = useState(currentUser?.bio || '');
-  const [editAvatarUrl, setEditAvatarUrl] = useState(currentUser?.avatarUrl || '');
+  const [editName, setEditName] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [editAvatarUrl, setEditAvatarUrl] = useState('');
+
+  React.useEffect(() => {
+    if (currentUser) {
+      setEditName(currentUser.displayName || '');
+      setEditUsername(currentUser.username || '');
+      setEditBio(currentUser.bio || '');
+      setEditAvatarUrl(currentUser.avatarUrl || '');
+    }
+  }, [currentUser]);
 
   const shakeAnim1 = useRef(new Animated.Value(0)).current;
   const shakeAnim2 = useRef(new Animated.Value(0)).current;
@@ -196,6 +204,19 @@ export default function ProfileScreen() {
     },
     [toggleFollow, router]
   );
+
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </SafeAreaView>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -507,6 +528,16 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  loadingText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
