@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 20,
   },
   aiButton: {
     backgroundColor: Colors.text,
