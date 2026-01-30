@@ -10,10 +10,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { Mail, Lock, User, Eye, EyeOff, ChefHat } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
@@ -58,10 +59,12 @@ export default function LoginScreen() {
   const isLoading = isSigningIn || isSigningUp;
 
   return (
-    <LinearGradient
-      colors={[Colors.primary, Colors.primaryDark, '#1a1a2e']}
-      style={styles.gradient}
+    <ImageBackground
+      source={{ uri: 'https://images.unsplash.com/photo-1769326541248-5e09a8ace25b?q=80&w=2516&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' }}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
+      <View style={styles.overlay} />
       <SafeAreaView style={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -191,13 +194,17 @@ export default function LoginScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
+  backgroundImage: {
     flex: 1,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   container: {
     flex: 1,
