@@ -118,7 +118,7 @@ export default function FloatingBottomBar() {
 
   return (
     <>
-      <View style={[styles.container]}>
+      <View style={[styles.container], { bottom: insets.bottom + 16 }}>
         <Pressable
           style={styles.avatarButton}
           onPress={handleAvatarPress}
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   avatarButton: {
     width: 52,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
