@@ -349,16 +349,33 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
     mutationFn: async (recipeId: string) => {
       if (!user?.id) return;
 
+      // Check if recipe exists in database first
+      const { data: recipeExists } = await supabase
+        .from('recipes')
+        .select('id')
+        .eq('id', recipeId)
+        .single();
+
+      if (!recipeExists) {
+        console.log('[Recipes] Recipe not in database, skipping recently viewed:', recipeId);
+        return;
+      }
+
       console.log('[Recipes] Adding recently viewed:', recipeId);
+      
+      // First try to delete existing entry, then insert new one
+      await supabase
+        .from('recently_viewed')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('recipe_id', recipeId);
+
       const { error } = await supabase
         .from('recently_viewed')
-        .upsert(
-          { user_id: user.id, recipe_id: recipeId, viewed_at: new Date().toISOString() } as any,
-          { onConflict: 'user_id,recipe_id' }
-        );
+        .insert({ user_id: user.id, recipe_id: recipeId, viewed_at: new Date().toISOString() } as any);
 
       if (error) {
-        console.error('[Recipes] Error adding recently viewed:', error);
+        console.log('[Recipes] Could not add recently viewed (non-critical):', error.message);
       }
     },
     onSuccess: () => {
