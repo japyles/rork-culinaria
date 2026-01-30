@@ -95,11 +95,11 @@ export default function LoginScreen() {
                 {!isLoginMode && (
                   <>
                     <View style={styles.inputContainer}>
-                      <User size={20} color="rgba(0, 0, 0, 0.5)" />
+                      <User size={20} color="rgba(255, 255, 255, 0.5)" />
                       <TextInput
                         style={styles.input}
                         placeholder="Username"
-                        placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
                         value={username}
                         onChangeText={setUsername}
                         autoCapitalize="none"
@@ -108,11 +108,11 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.inputContainer}>
-                      <User size={20} color="rgba(0, 0, 0, 0.5)" />
+                      <User size={20} color="rgba(255, 255, 255, 0.5)" />
                       <TextInput
                         style={styles.input}
                         placeholder="Display Name"
-                        placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
                         value={displayName}
                         onChangeText={setDisplayName}
                         autoCorrect={false}
@@ -122,11 +122,11 @@ export default function LoginScreen() {
                 )}
 
                 <View style={styles.inputContainer}>
-                  <Mail size={20} color="rgba(0, 0, 0, 0.5)" />
+                  <Mail size={20} color="rgba(255, 255, 255, 0.5)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Email"
-                    placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -136,11 +136,11 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Lock size={20} color="rgba(0, 0, 0, 0.5)" />
+                  <Lock size={20} color="rgba(255, 255, 255, 0.5)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Password"
-                    placeholderTextColor="rgba(0, 0, 0, 0.5)"
+                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
