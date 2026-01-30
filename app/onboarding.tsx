@@ -15,7 +15,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Camera, Check, ChevronRight, Sparkles } from 'lucide-react-native';
+import { Camera, Check, ChevronRight, Sparkles, ImagePlus } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 
@@ -33,20 +34,83 @@ const AVATAR_OPTIONS = [
 export default function OnboardingScreen() {
   const { updateProfile, isUpdatingProfile, profile } = useAuth();
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
-  const [customAvatarUrl, setCustomAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
   const [step, setStep] = useState(1);
+  const [isUploadedPhoto, setIsUploadedPhoto] = useState(false);
 
   const handleAvatarSelect = (url: string) => {
     setSelectedAvatar(url);
-    setCustomAvatarUrl('');
+    setIsUploadedPhoto(false);
   };
 
-  const handleCustomAvatarChange = (url: string) => {
-    setCustomAvatarUrl(url);
-    if (url.trim()) {
-      setSelectedAvatar(url.trim());
+  const pickImageFromLibrary = async () => {
+    try {
+      console.log('[Onboarding] Opening image library...');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      console.log('[Onboarding] Image picker result:', result.canceled ? 'canceled' : 'selected');
+
+      if (!result.canceled && result.assets[0]) {
+        const uri = result.assets[0].uri;
+        console.log('[Onboarding] Selected image URI:', uri);
+        setSelectedAvatar(uri);
+        setIsUploadedPhoto(true);
+      }
+    } catch (error) {
+      console.error('[Onboarding] Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
+  };
+
+  const takePhoto = async () => {
+    try {
+      console.log('[Onboarding] Requesting camera permissions...');
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (permissionResult.status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Camera permission is needed to take a photo.'
+        );
+        return;
+      }
+
+      console.log('[Onboarding] Opening camera...');
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      console.log('[Onboarding] Camera result:', result.canceled ? 'canceled' : 'captured');
+
+      if (!result.canceled && result.assets[0]) {
+        const uri = result.assets[0].uri;
+        console.log('[Onboarding] Captured image URI:', uri);
+        setSelectedAvatar(uri);
+        setIsUploadedPhoto(true);
+      }
+    } catch (error) {
+      console.error('[Onboarding] Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  const showPhotoOptions = () => {
+    Alert.alert(
+      'Choose Photo',
+      'How would you like to add your photo?',
+      [
+        { text: 'Take Photo', onPress: takePhoto },
+        { text: 'Choose from Library', onPress: pickImageFromLibrary },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
   };
 
   const handleNext = () => {
@@ -118,7 +182,12 @@ export default function OnboardingScreen() {
                     Select a photo that represents you
                   </Text>
 
-                  <View style={styles.selectedAvatarContainer}>
+                  <TouchableOpacity 
+                    style={styles.selectedAvatarContainer}
+                    onPress={showPhotoOptions}
+                    activeOpacity={0.8}
+                    testID="avatar-upload-button"
+                  >
                     <Image
                       source={{ uri: selectedAvatar }}
                       style={styles.selectedAvatar}
@@ -126,7 +195,14 @@ export default function OnboardingScreen() {
                     <View style={styles.avatarBadge}>
                       <Camera size={16} color="#fff" />
                     </View>
-                  </View>
+                    {isUploadedPhoto && (
+                      <View style={styles.uploadedBadge}>
+                        <Check size={12} color="#fff" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.tapToChangeText}>Tap to upload your photo</Text>
 
                   <View style={styles.avatarGrid}>
                     {AVATAR_OPTIONS.map((url, index) => (
@@ -149,18 +225,34 @@ export default function OnboardingScreen() {
                     ))}
                   </View>
 
-                  <View style={styles.customUrlContainer}>
-                    <Text style={styles.orText}>or use a custom URL</Text>
-                    <TextInput
-                      style={styles.urlInput}
-                      placeholder="https://example.com/your-photo.jpg"
-                      placeholderTextColor={Colors.textSecondary}
-                      value={customAvatarUrl}
-                      onChangeText={handleCustomAvatarChange}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      keyboardType="url"
-                    />
+                  <View style={styles.uploadOptionsContainer}>
+                    <TouchableOpacity
+                      style={styles.uploadOption}
+                      onPress={pickImageFromLibrary}
+                      testID="pick-from-library-button"
+                    >
+                      <View style={styles.uploadOptionIcon}>
+                        <ImagePlus size={20} color={Colors.primary} />
+                      </View>
+                      <Text style={styles.uploadOptionText}>Choose from Library</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.uploadOption}
+                      onPress={takePhoto}
+                      testID="take-photo-button"
+                    >
+                      <View style={styles.uploadOptionIcon}>
+                        <Camera size={20} color={Colors.primary} />
+                      </View>
+                      <Text style={styles.uploadOptionText}>Take a Photo</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.dividerContainer}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>or select a preset</Text>
+                    <View style={styles.dividerLine} />
                   </View>
 
                   <TouchableOpacity
@@ -375,6 +467,70 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 3,
     borderColor: Colors.surface,
+  },
+  uploadedBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.success,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.surface,
+  },
+  tapToChangeText: {
+    fontSize: 13,
+    color: Colors.primary,
+    marginBottom: 20,
+    fontWeight: '500' as const,
+  },
+  uploadOptionsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  uploadOption: {
+    flex: 1,
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderStyle: 'dashed',
+  },
+  uploadOptionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: `${Colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  uploadOptionText: {
+    fontSize: 12,
+    color: Colors.text,
+    fontWeight: '500' as const,
+    textAlign: 'center',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+  dividerText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginHorizontal: 12,
   },
   avatarGrid: {
     flexDirection: 'row',
