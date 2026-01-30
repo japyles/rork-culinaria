@@ -30,6 +30,7 @@ import {
   Search,
   Heart,
   Crown,
+  LogOut,
 } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
@@ -51,7 +52,7 @@ export default function ProfileScreen() {
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
   const { isPremium, hasProAccess } = useSubscription();
-  const { isLoading: isAuthLoading, isProfileLoading, updateProfile, profile: currentUser, isAuthenticated, profileError } = useAuth();
+  const { isLoading: isAuthLoading, isProfileLoading, updateProfile, profile: currentUser, isAuthenticated, profileError, signOut, isSigningOut } = useAuth();
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -549,6 +550,34 @@ export default function ProfileScreen() {
                 onPress={handleSaveProfile}
                 style={styles.saveButton}
               />
+
+              <Pressable
+                style={styles.logoutButton}
+                onPress={() => {
+                  Alert.alert(
+                    'Log Out',
+                    'Are you sure you want to log out?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Log Out',
+                        style: 'destructive',
+                        onPress: async () => {
+                          setShowEditModal(false);
+                          await signOut();
+                          router.replace('/login');
+                        },
+                      },
+                    ]
+                  );
+                }}
+                disabled={isSigningOut}
+              >
+                <LogOut size={20} color={Colors.error} />
+                <Text style={styles.logoutText}>
+                  {isSigningOut ? 'Logging out...' : 'Log Out'}
+                </Text>
+              </Pressable>
             </ScrollView>
           </SafeAreaView>
         </Modal>
@@ -902,5 +931,20 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: Spacing.md,
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.xl,
+    paddingVertical: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+  },
+  logoutText: {
+    ...Typography.body,
+    color: Colors.error,
+    fontWeight: '600' as const,
   },
 });
