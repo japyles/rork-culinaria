@@ -95,11 +95,11 @@ export default function LoginScreen() {
                 {!isLoginMode && (
                   <>
                     <View style={styles.inputContainer}>
-                      <User size={20} color='rgba(0, 0, 0, 1)' />
+                      <User size={20} color='rgba(255, 255, 255, 1)' />
                       <TextInput
                         style={styles.input}
                         placeholder="Username"
-                        placeholderTextColor='rgba(0, 0, 0, 1)'
+                        placeholderTextColor='rgba(255, 255, 255, 1)'
                         value={username}
                         onChangeText={setUsername}
                         autoCapitalize="none"
