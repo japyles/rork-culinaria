@@ -25,6 +25,7 @@ import {
   User,
   X,
   LogOut,
+  Ellipsis,
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -153,7 +154,7 @@ export default function FloatingBottomBar() {
         >
           {Platform.OS === 'ios' ? (
             <BlurView intensity={80} tint="light" style={styles.blurView}>
-              <Menu size={24} color={Colors.text} />
+              <Ellipsis size={24} color={Colors.text} />
             </BlurView>
           ) : (
             <View style={styles.glassBackground}>
