@@ -39,8 +39,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
         .order('display_name');
 
       if (error) {
-        console.error('[Social] Error fetching users:', error);
-        throw error;
+        console.error('[Social] Error fetching users:', error.message || JSON.stringify(error));
+        return [];
       }
 
       const usersWithCounts = await Promise.all(

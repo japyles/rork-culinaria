@@ -104,8 +104,8 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('[Recipes] Error fetching recipes:', error);
-        throw error;
+        console.error('[Recipes] Error fetching recipes:', error.message || JSON.stringify(error));
+        return [];
       }
 
       console.log('[Recipes] Fetched', recipes?.length, 'recipes');
@@ -242,8 +242,8 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('[Recipes] Error fetching reviews:', error);
-        throw error;
+        console.error('[Recipes] Error fetching reviews:', error.message || JSON.stringify(error));
+        return [];
       }
 
       return ((data || []) as DbReview[]).map((r): Review => ({
