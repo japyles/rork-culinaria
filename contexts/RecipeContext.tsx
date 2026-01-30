@@ -410,6 +410,33 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
       if (!user?.id) throw new Error('Not authenticated');
 
       console.log('[Recipes] Adding new recipe:', recipe.title);
+      console.log('[Recipes] Author ID:', user.id);
+      
+      // First verify the user exists in the users table
+      const { data: userExists, error: userCheckError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (userCheckError || !userExists) {
+        console.error('[Recipes] User not found in users table:', userCheckError);
+        // Try to create the user record
+        const { error: createUserError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email || `${user.id}@placeholder.com`,
+            username: user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`,
+            display_name: user.email?.split('@')[0] || 'User',
+          } as any);
+        
+        if (createUserError) {
+          console.error('[Recipes] Failed to create user record:', createUserError);
+          throw new Error('Unable to create recipe: User profile not found. Please complete your profile setup first.');
+        }
+        console.log('[Recipes] Created user record for:', user.id);
+      }
       
       const { data: newRecipe, error: recipeError } = await supabase
         .from('recipes')
@@ -435,9 +462,13 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         .select()
         .single();
 
-      if (recipeError) throw recipeError;
+      if (recipeError) {
+        console.error('[Recipes] Error inserting recipe:', recipeError);
+        throw recipeError;
+      }
 
       if (recipe.ingredients.length > 0) {
+        console.log('[Recipes] Adding', recipe.ingredients.length, 'ingredients for recipe:', (newRecipe as any).id);
         const { error: ingError } = await supabase
           .from('recipe_ingredients')
           .insert(
@@ -450,10 +481,14 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
             })) as any
           );
 
-        if (ingError) throw ingError;
+        if (ingError) {
+          console.error('[Recipes] Error inserting ingredients:', ingError);
+          throw ingError;
+        }
       }
 
       if (recipe.steps.length > 0) {
+        console.log('[Recipes] Adding', recipe.steps.length, 'steps for recipe:', (newRecipe as any).id);
         const { error: stepError } = await supabase
           .from('recipe_steps')
           .insert(
@@ -466,7 +501,10 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
             })) as any
           );
 
-        if (stepError) throw stepError;
+        if (stepError) {
+          console.error('[Recipes] Error inserting steps:', stepError);
+          throw stepError;
+        }
       }
 
       console.log('[Recipes] Recipe added successfully:', (newRecipe as any).id);
