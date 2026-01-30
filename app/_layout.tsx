@@ -17,43 +17,119 @@ const queryClient = new QueryClient();
 function AnimatedSplash({ onAnimationComplete }: { onAnimationComplete: () => void }) {
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const tiltXAnim = useRef(new Animated.Value(0)).current;
+  const tiltYAnim = useRef(new Animated.Value(0)).current;
   const fadeOutAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.parallel([
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          tension: 50,
-          friction: 7,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacityAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.timing(rotateAnim, {
+    const tiltAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(tiltXAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(tiltYAnim, {
+            toValue: 0.5,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(tiltXAnim, {
+            toValue: -0.5,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(tiltYAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(tiltXAnim, {
+            toValue: 0.7,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(tiltYAnim, {
+            toValue: -0.7,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(tiltXAnim, {
+            toValue: -1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(tiltYAnim, {
+            toValue: -0.5,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.parallel([
+          Animated.timing(tiltXAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(tiltYAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    );
+
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
         toValue: 1,
-        duration: 600,
+        tension: 50,
+        friction: 7,
         useNativeDriver: true,
       }),
-      Animated.delay(300),
-      Animated.timing(fadeOutAnim, {
-        toValue: 0,
+      Animated.timing(opacityAnim, {
+        toValue: 1,
         duration: 400,
         useNativeDriver: true,
       }),
     ]).start(() => {
-      onAnimationComplete();
+      tiltAnimation.start();
     });
+
+    const timeout = setTimeout(() => {
+      tiltAnimation.stop();
+      Animated.timing(fadeOutAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }).start(() => {
+        onAnimationComplete();
+      });
+    }, 2000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
-  const rotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
+  const rotateX = tiltXAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-25deg', '0deg', '25deg'],
+  });
+
+  const rotateY = tiltYAnim.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-25deg', '0deg', '25deg'],
+  });
+
+  const rotateZ = Animated.add(tiltXAnim, tiltYAnim).interpolate({
+    inputRange: [-2, 0, 2],
+    outputRange: ['-15deg', '0deg', '15deg'],
   });
 
   return (
@@ -65,7 +141,10 @@ function AnimatedSplash({ onAnimationComplete }: { onAnimationComplete: () => vo
             opacity: opacityAnim,
             transform: [
               { scale: scaleAnim },
-              { rotate },
+              { perspective: 800 },
+              { rotateX },
+              { rotateY },
+              { rotateZ },
             ],
           },
         ]}
