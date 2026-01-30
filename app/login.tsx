@@ -46,11 +46,7 @@ export default function LoginScreen() {
       } else {
         await signUp(email.trim(), password, username.trim(), displayName.trim());
         console.log('[Login] Sign up successful');
-        Alert.alert(
-          'Account Created',
-          'Please check your email to verify your account before signing in.',
-          [{ text: 'OK', onPress: () => setIsLoginMode(true) }]
-        );
+        router.replace('/onboarding');
       }
     } catch (error: unknown) {
       console.error('[Login] Auth error:', error);
