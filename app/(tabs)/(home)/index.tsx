@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Sparkles, Video, TrendingUp, Camera, PenLine } from 'lucide-react-native';
+import { Sparkles, Video, TrendingUp, Camera, PenLine, User, LogOut } from 'lucide-react-native';
+import { useAuth } from '@/contexts/AuthContext';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;
@@ -32,6 +33,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { allRecipes, recentRecipes, favoriteRecipes } = useRecipes();
   const { currentUser } = useSocial();
+  const { signOut } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -80,6 +83,25 @@ export default function HomeScreen() {
     router.push(`/discover?category=${categoryId}`);
   };
 
+  const handleAvatarPress = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleProfilePress = () => {
+    setShowDropdown(false);
+    router.push('/(tabs)/profile');
+  };
+
+  const handleLogout = async () => {
+    setShowDropdown(false);
+    try {
+      await signOut();
+      router.replace('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Animated.ScrollView
@@ -108,15 +130,30 @@ export default function HomeScreen() {
                   </Text>
                 	
                 </View>
-                <Pressable
-                  style={styles.heroAvatarContainer}
-                  onPress={() => router.push('/(tabs)/profile')}
-                >
-                  <Image
-                    source={{ uri: currentUser?.avatarUrl ?? 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&fit=crop' }}
-                    style={styles.heroAvatar}
-                  />
-                </Pressable>
+                <View>
+                  <Pressable
+                    style={styles.heroAvatarContainer}
+                    onPress={handleAvatarPress}
+                  >
+                    <Image
+                      source={{ uri: currentUser?.avatarUrl ?? 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&fit=crop' }}
+                      style={styles.heroAvatar}
+                    />
+                  </Pressable>
+                  {showDropdown && (
+                    <View style={styles.dropdownMenu}>
+                      <Pressable style={styles.dropdownItem} onPress={handleProfilePress}>
+                        <User size={18} color={Colors.text} />
+                        <Text style={styles.dropdownText}>Profile</Text>
+                      </Pressable>
+                      <View style={styles.dropdownDivider} />
+                      <Pressable style={styles.dropdownItem} onPress={handleLogout}>
+                        <LogOut size={18} color={Colors.error} />
+                        <Text style={[styles.dropdownText, { color: Colors.error }]}>Log Out</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </View>
               </View>
               <View style={styles.heroContent}>
                 <Text style={styles.heroGreeting}>HEY,</Text>
@@ -309,6 +346,32 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: BorderRadius.full,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 54,
+    right: 0,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    minWidth: 150,
+    ...Shadow.md,
+    zIndex: 100,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  dropdownText: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: Colors.text,
+  },
+  dropdownDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
   },
   heroContent: {
     paddingHorizontal: Spacing.lg,
