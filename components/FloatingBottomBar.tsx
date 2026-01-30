@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -45,7 +45,7 @@ export default function FloatingBottomBar() {
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
   
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const menuAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -60,13 +60,24 @@ export default function FloatingBottomBar() {
     { id: 'profile', label: 'Profile', icon: User, route: '/(tabs)/profile' },
   ];
 
-  useEffect(() => {
+  const openMenu = () => {
+    setMenuVisible(true);
     Animated.timing(menuAnim, {
-      toValue: menuOpen ? 1 : 0,
-      duration: 250,
+      toValue: 1,
+      duration: 300,
       useNativeDriver: true,
     }).start();
-  }, [menuOpen, menuAnim]);
+  };
+
+  const closeMenu = () => {
+    Animated.timing(menuAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setMenuVisible(false);
+    });
+  };
 
   const handleHomePress = () => {
     router.push('/(tabs)/(home)');
@@ -89,22 +100,26 @@ export default function FloatingBottomBar() {
   };
 
   const handleMenuPress = () => {
-    setMenuOpen(true);
+    openMenu();
   };
 
   const handleMenuItemPress = (route: string) => {
-    setMenuOpen(false);
-    router.push(route as any);
+    closeMenu();
+    setTimeout(() => {
+      router.push(route as any);
+    }, 250);
   };
 
   const handleLogout = async () => {
-    setMenuOpen(false);
-    try {
-      await signOut();
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
+    closeMenu();
+    setTimeout(async () => {
+      try {
+        await signOut();
+        router.replace('/login');
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    }, 250);
   };
 
   const menuTranslateX = menuAnim.interpolate({
@@ -164,16 +179,16 @@ export default function FloatingBottomBar() {
       </View>
 
       <Modal
-        visible={menuOpen}
+        visible={menuVisible}
         transparent
         animationType="none"
-        onRequestClose={() => setMenuOpen(false)}
+        onRequestClose={closeMenu}
       >
         <View style={styles.modalContainer}>
           <Animated.View
             style={[styles.backdrop, { opacity: backdropOpacity }]}
           >
-            <Pressable style={styles.backdropPressable} onPress={() => setMenuOpen(false)} />
+            <Pressable style={styles.backdropPressable} onPress={closeMenu} />
           </Animated.View>
 
           <Animated.View
@@ -188,7 +203,7 @@ export default function FloatingBottomBar() {
                 <Text style={styles.menuTitle}>Menu</Text>
                 <Pressable
                   style={styles.closeButton}
-                  onPress={() => setMenuOpen(false)}
+                  onPress={closeMenu}
                 >
                   <X size={24} color={Colors.text} />
                 </Pressable>
@@ -230,7 +245,7 @@ export default function FloatingBottomBar() {
                 <Text style={styles.menuTitle}>Menu</Text>
                 <Pressable
                   style={styles.closeButton}
-                  onPress={() => setMenuOpen(false)}
+                  onPress={closeMenu}
                 >
                   <X size={24} color={Colors.text} />
                 </Pressable>
