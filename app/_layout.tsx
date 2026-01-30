@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { StyleSheet, Animated, Image } from "react-native";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { RecipeProvider } from "@/contexts/RecipeContext";
 import { SocialProvider } from "@/contexts/SocialContext";
@@ -12,6 +13,92 @@ import Colors from "@/constants/colors";
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+function AnimatedSplash({ onAnimationComplete }: { onAnimationComplete: () => void }) {
+  const scaleAnim = useRef(new Animated.Value(0.3)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const fadeOutAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.delay(300),
+      Animated.timing(fadeOutAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onAnimationComplete();
+    });
+  }, []);
+
+  const rotate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  return (
+    <Animated.View style={[splashStyles.container, { opacity: fadeOutAnim }]}>
+      <Animated.View
+        style={[
+          splashStyles.iconContainer,
+          {
+            opacity: opacityAnim,
+            transform: [
+              { scale: scaleAnim },
+              { rotate },
+            ],
+          },
+        ]}
+      >
+        <Image
+          source={require('../assets/images/splash-icon.png')}
+          style={splashStyles.icon}
+          resizeMode="contain"
+        />
+      </Animated.View>
+    </Animated.View>
+  );
+}
+
+const splashStyles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  iconContainer: {
+    width: 150,
+    height: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  icon: {
+    width: 150,
+    height: 150,
+  },
+});
 
 function RootLayoutNav() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -162,9 +249,15 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [showSplash, setShowSplash] = useState(true);
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
+
+  const handleAnimationComplete = () => {
+    setShowSplash(false);
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -174,6 +267,7 @@ export default function RootLayout() {
             <SocialProvider>
               <SubscriptionProvider>
                 <RootLayoutNav />
+                {showSplash && <AnimatedSplash onAnimationComplete={handleAnimationComplete} />}
               </SubscriptionProvider>
             </SocialProvider>
           </RecipeProvider>
