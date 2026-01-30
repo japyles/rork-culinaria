@@ -183,7 +183,8 @@ export default function FloatingBottomBar() {
               { transform: [{ translateY: menuTranslateY }] },
             ]}
           >
-            <View style={[styles.menuContent, { paddingBottom: insets.bottom + 20 }]}>
+            {Platform.OS === 'ios' ? (
+              <BlurView intensity={80} tint="light" style={[styles.menuContent, { paddingBottom: insets.bottom + 20 }]}>
               <View style={styles.menuHeader}>
                 <Text style={styles.menuTitle}>Menu</Text>
                 <Pressable
@@ -223,7 +224,50 @@ export default function FloatingBottomBar() {
                 <LogOut size={22} color={Colors.error} />
                 <Text style={styles.logoutText}>Log Out</Text>
               </Pressable>
-            </View>
+              </BlurView>
+            ) : (
+              <View style={[styles.menuContent, styles.menuContentAndroid, { paddingBottom: insets.bottom + 20 }]}>
+              <View style={styles.menuHeader}>
+                <Text style={styles.menuTitle}>Menu</Text>
+                <Pressable
+                  style={styles.closeButton}
+                  onPress={() => setMenuOpen(false)}
+                >
+                  <X size={24} color={Colors.text} />
+                </Pressable>
+              </View>
+
+              <View style={styles.menuItems}>
+                {menuItems.map((item) => {
+                  const isActive = pathname.includes(item.id) || 
+                    (item.id === 'home' && (pathname === '/' || pathname === '/(tabs)/(home)'));
+                  
+                  const IconComponent = item.icon;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      style={[styles.menuItem, isActive && styles.menuItemActive]}
+                      onPress={() => handleMenuItemPress(item.route)}
+                    >
+                      <View style={[styles.menuItemIcon, isActive && styles.menuItemIconActive]}>
+                        <IconComponent size={22} color={isActive ? Colors.primary : Colors.text} />
+                      </View>
+                      <Text style={[styles.menuItemLabel, isActive && styles.menuItemLabelActive]}>
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={styles.menuDivider} />
+
+              <Pressable style={styles.logoutButton} onPress={handleLogout}>
+                <LogOut size={22} color={Colors.error} />
+                <Text style={styles.logoutText}>Log Out</Text>
+              </Pressable>
+              </View>
+            )}
           </Animated.View>
         </View>
       </Modal>
@@ -293,10 +337,16 @@ const styles = StyleSheet.create({
     right: 0,
   },
   menuContent: {
-    backgroundColor: Colors.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingTop: 8,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+  },
+  menuContentAndroid: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
   menuHeader: {
     flexDirection: 'row',
