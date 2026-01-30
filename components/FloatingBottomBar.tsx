@@ -7,7 +7,9 @@ import {
   Animated,
   Modal,
   Dimensions,
+  Platform,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
 import {
@@ -119,10 +121,18 @@ export default function FloatingBottomBar() {
     <>
       <View style={[styles.container, { bottom: insets.bottom + 16 }]}>
         <Pressable
-          style={styles.homeButton}
+          style={styles.circleButton}
           onPress={handleHomePress}
         >
-          <Home size={24} color={Colors.text} />
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={80} tint="light" style={styles.blurView}>
+              <Home size={24} color={Colors.text} />
+            </BlurView>
+          ) : (
+            <View style={styles.glassBackground}>
+              <Home size={24} color={Colors.text} />
+            </View>
+          )}
         </Pressable>
 
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
@@ -138,10 +148,18 @@ export default function FloatingBottomBar() {
         </Animated.View>
 
         <Pressable
-          style={styles.menuButton}
+          style={styles.circleButton}
           onPress={handleMenuPress}
         >
-          <Menu size={24} color={Colors.text} />
+          {Platform.OS === 'ios' ? (
+            <BlurView intensity={80} tint="light" style={styles.blurView}>
+              <Menu size={24} color={Colors.text} />
+            </BlurView>
+          ) : (
+            <View style={styles.glassBackground}>
+              <Menu size={24} color={Colors.text} />
+            </View>
+          )}
         </Pressable>
       </View>
 
@@ -222,14 +240,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 100,
   },
-  homeButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: Colors.surface,
+  circleButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    overflow: 'hidden',
+    ...Shadow.md,
+  },
+  blurView: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadow.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  glassBackground: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderRadius: 28,
   },
   aiButton: {
     backgroundColor: Colors.text,
@@ -243,15 +274,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  menuButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: Colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.md,
-  },
+
   modalContainer: {
     flex: 1,
   },
