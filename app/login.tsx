@@ -12,7 +12,6 @@ import {
   Alert,
   ImageBackground,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
@@ -83,8 +82,7 @@ export default function LoginScreen() {
               <Text style={styles.tagline}>Your Personal Recipe Companion</Text>
             </View>
 
-            <BlurView intensity={60} tint="extralight" style={styles.formContainer}>
-              <View style={styles.formContent}>
+            <View style={styles.glassContainer}>
                 <Text style={styles.formTitle}>
                   {isLoginMode ? 'Welcome Back' : 'Create Account'}
                 </Text>
@@ -192,8 +190,7 @@ export default function LoginScreen() {
                       : 'Password must be at least 6 characters'}
                   </Text>
                 </View>
-              </View>
-            </BlurView>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -248,15 +245,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
   },
-  formContainer: {
+  glassContainer: {
     borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  formContent: {
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     padding: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   formTitle: {
     fontSize: 24,
