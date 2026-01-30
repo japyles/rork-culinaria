@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   Pressable,
-  Image,
   Text,
   Animated,
   Modal,
@@ -26,7 +25,7 @@ import {
   LogOut,
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSocial } from '@/contexts/SocialContext';
+
 import Colors, { Shadow } from '@/constants/colors';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -43,7 +42,7 @@ export default function FloatingBottomBar() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
-  const { currentUser } = useSocial();
+  
   const [menuOpen, setMenuOpen] = useState(false);
   const menuAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -67,8 +66,8 @@ export default function FloatingBottomBar() {
     }).start();
   }, [menuOpen, menuAnim]);
 
-  const handleAvatarPress = () => {
-    router.push('/(tabs)/profile');
+  const handleHomePress = () => {
+    router.push('/(tabs)/(home)');
   };
 
   const handleAIPress = () => {
@@ -120,13 +119,10 @@ export default function FloatingBottomBar() {
     <>
       <View style={[styles.container, { bottom: insets.bottom + 16 }]}>
         <Pressable
-          style={styles.avatarButton}
-          onPress={handleAvatarPress}
+          style={styles.homeButton}
+          onPress={handleHomePress}
         >
-          <Image
-            source={{ uri: currentUser?.avatarUrl ?? 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=100&h=100&fit=crop' }}
-            style={styles.avatar}
-          />
+          <Home size={24} color={Colors.text} />
         </Pressable>
 
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
@@ -226,19 +222,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 100,
   },
-  avatarButton: {
+  homeButton: {
     width: 52,
     height: 52,
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadow.md,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 20,
   },
   aiButton: {
     backgroundColor: Colors.text,
