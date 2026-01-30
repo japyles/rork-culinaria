@@ -467,6 +467,34 @@ export default function ProfileScreen() {
                   Convert ingredient amounts
                 </Text>
               </Pressable>
+
+              <Pressable
+                style={styles.actionCard}
+                onPress={() => {
+                  Alert.alert(
+                    'Log Out',
+                    'Are you sure you want to log out?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Log Out',
+                        style: 'destructive',
+                        onPress: async () => {
+                          await signOut();
+                          router.replace('/login');
+                        },
+                      },
+                    ]
+                  );
+                }}
+                disabled={isSigningOut}
+              >
+                <LogOut size={24} color={Colors.error} />
+                <Text style={styles.actionTitle}>{isSigningOut ? 'Logging out...' : 'Log Out'}</Text>
+                <Text style={styles.actionDesc}>
+                  Sign out of your account
+                </Text>
+              </Pressable>
             </View>
 
             <Pressable
