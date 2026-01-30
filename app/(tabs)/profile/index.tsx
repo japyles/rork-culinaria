@@ -31,6 +31,7 @@ import {
   Heart,
   Crown,
   LogOut,
+  Scale,
 } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
@@ -451,6 +452,19 @@ export default function ProfileScreen() {
                 <Text style={styles.actionTitle}>My Network</Text>
                 <Text style={styles.actionDesc}>
                   See who you&apos;re connected with
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.actionsGrid}>
+              <Pressable
+                style={styles.actionCard}
+                onPress={() => router.push('/conversion-calculator')}
+              >
+                <Scale size={24} color={Colors.accent} />
+                <Text style={styles.actionTitle}>Converter</Text>
+                <Text style={styles.actionDesc}>
+                  Convert ingredient amounts
                 </Text>
               </Pressable>
             </View>
