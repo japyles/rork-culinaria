@@ -136,6 +136,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="conversion-calculator"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
         name="login"
         options={{
           headerShown: false,
