@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: '#fff',
+    color: '#000',
   },
   submitButton: {
     backgroundColor: Colors.primary,
