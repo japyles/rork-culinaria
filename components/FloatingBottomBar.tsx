@@ -158,7 +158,7 @@ export default function FloatingBottomBar() {
             </BlurView>
           ) : (
             <View style={styles.glassBackground}>
-              <Menu size={24} color={Colors.text} />
+              <Ellipsis size={24} color={Colors.text} />
             </View>
           )}
         </Pressable>
