@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Search, ChefHat, CalendarDays, User, ShoppingCart, Scale } from "lucide-react-native";
+import { Home, Search, ChefHat, CalendarDays, User, ShoppingCart, Calculator } from "lucide-react-native";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import Colors from "@/constants/colors";
@@ -44,7 +44,7 @@ export default function TabLayout() {
           title: "Convert",
           tabBarIcon: ({ color, focused }) => (
             <View style={focused && styles.activeIconContainer}>
-              <Scale size={22} color={color} />
+              <Calculator size={22} color={color} />
             </View>
           ),
         }}
