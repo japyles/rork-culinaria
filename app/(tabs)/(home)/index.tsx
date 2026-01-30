@@ -14,7 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Sparkles, Video, TrendingUp, Camera, Menu } from 'lucide-react-native';
+import { Sparkles, Video, TrendingUp, Camera, PenLine } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;
@@ -166,6 +166,17 @@ export default function HomeScreen() {
                   <Video size={22} color={Colors.secondary} />
                 </View>
                 <Text style={styles.quickActionText}>From Video</Text>
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.quickAction}
+              onPress={() => router.push('/add-recipe')}
+            >
+              <View style={styles.quickActionCard}>
+                <View style={[styles.quickActionIcon, { backgroundColor: Colors.success + '15' }]}>
+                  <PenLine size={22} color={Colors.success} />
+                </View>
+                <Text style={styles.quickActionText}>Add Manual</Text>
               </View>
             </Pressable>
           </Animated.View>

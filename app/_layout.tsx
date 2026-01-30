@@ -64,6 +64,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="add-recipe"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
         name="scan-recipe"
         options={{
           headerShown: false,
