@@ -28,7 +28,7 @@ function RootLayoutNav() {
       router.replace('/login');
     } else if (isAuthenticated && segments[0] === 'login') {
       console.log('[Navigation] User authenticated, redirecting to home');
-      router.replace('/(tabs)');
+      router.replace('/(tabs)/(home)');
     }
   }, [isAuthenticated, isLoading, segments, router]);
 
