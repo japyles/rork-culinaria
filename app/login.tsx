@@ -83,7 +83,7 @@ export default function LoginScreen() {
               <Text style={styles.tagline}>Your Personal Recipe Companion</Text>
             </View>
 
-            <BlurView intensity={60} tint="light" style={styles.formContainer}>
+            <BlurView intensity={60} tint="extralight" style={styles.formContainer}>
               <View style={styles.formContent}>
                 <Text style={styles.formTitle}>
                   {isLoginMode ? 'Welcome Back' : 'Create Account'}
