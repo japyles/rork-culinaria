@@ -32,7 +32,7 @@ import { generateObject } from '@rork-ai/toolkit-sdk';
 import { z } from 'zod';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
-import { Recipe, RecipeCategory } from '@/types/recipe';
+import { RecipeCategory } from '@/types/recipe';
 
 const RecipeSchema = z.object({
   title: z.string().describe('The title of the recipe'),
@@ -248,11 +248,14 @@ export default function ScanRecipeScreen() {
     }
   };
 
-  const handleSaveRecipe = () => {
-    if (!extractedRecipe) return;
+  const [isSaving, setIsSaving] = useState(false);
 
-    const newRecipe: Recipe = {
-      id: `scanned-${Date.now()}`,
+  const handleSaveRecipe = async () => {
+    if (!extractedRecipe || isSaving) return;
+
+    setIsSaving(true);
+    
+    const recipeData = {
       title: extractedRecipe.title,
       description: extractedRecipe.description,
       imageUrl: capturedImage || 'https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=800',
@@ -276,28 +279,41 @@ export default function ScanRecipeScreen() {
         tip: step.tip,
       })),
       tags: extractedRecipe.tags,
-      rating: 0,
-      reviewCount: 0,
-      createdAt: new Date().toISOString(),
     };
 
-    console.log('Saving recipe:', newRecipe);
-    addRecipe(newRecipe);
-    
-    Alert.alert(
-      'Recipe Saved!',
-      `"${newRecipe.title}" has been added to your recipes.`,
-      [
-        {
-          text: 'View Recipe',
-          onPress: () => router.replace(`/recipe/${newRecipe.id}`),
-        },
-        {
-          text: 'Done',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    try {
+      console.log('Saving recipe:', recipeData);
+      const savedRecipe = await addRecipe(recipeData);
+      const recipeId = (savedRecipe as any)?.id;
+      
+      console.log('Recipe saved with ID:', recipeId);
+      
+      Alert.alert(
+        'Recipe Saved!',
+        `"${extractedRecipe.title}" has been added to your recipes.`,
+        [
+          {
+            text: 'View Recipe',
+            onPress: () => {
+              if (recipeId) {
+                router.replace(`/recipe/${recipeId}`);
+              } else {
+                router.back();
+              }
+            },
+          },
+          {
+            text: 'Done',
+            onPress: () => router.back(),
+          },
+        ]
+      );
+    } catch (err) {
+      console.error('Error saving recipe:', err);
+      Alert.alert('Error', 'Failed to save recipe. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleRetake = () => {
