@@ -95,11 +95,11 @@ export default function LoginScreen() {
                 {!isLoginMode && (
                   <>
                     <View style={styles.inputContainer}>
-                      <User size={20} color={Colors.primary} />
+                      <User size={20} color='rgba(0, 0, 0, 1)' />
                       <TextInput
                         style={styles.input}
                         placeholder="Username"
-                        placeholderTextColor={Colors.primary}
+                        placeholderTextColor='rgba(0, 0, 0, 1)'
                         value={username}
                         onChangeText={setUsername}
                         autoCapitalize="none"
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 20,
-    color: Colors.primary,
+    color: '#fff',
     height: 46,
   },
   submitButton: {
