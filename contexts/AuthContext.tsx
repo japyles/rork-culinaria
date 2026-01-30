@@ -59,10 +59,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         .single();
 
       if (error) {
-        console.error('[Auth] Error fetching profile:', error);
-        // If user not found in users table, return a default profile
+        // If user not found in users table, return a default profile (expected for new signups)
         if (error.code === 'PGRST116') {
-          console.log('[Auth] User not found in users table, returning default profile');
+          console.log('[Auth] User not found in users table, returning default profile for new user');
           return {
             id: user.id,
             username: user.email?.split('@')[0] || 'user',
