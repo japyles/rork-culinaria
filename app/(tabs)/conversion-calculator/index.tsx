@@ -7,9 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { X, Scale, Thermometer, Droplets, ArrowLeftRight, ChevronDown } from 'lucide-react-native';
+import { Scale, Thermometer, Droplets, ArrowLeftRight, ChevronDown } from 'lucide-react-native';
 import Colors, { Spacing, BorderRadius, Shadow, Typography } from '@/constants/colors';
 
 type ConversionCategory = 'volume' | 'weight' | 'temperature';
@@ -64,7 +62,6 @@ const quickConversions = [
 ];
 
 export default function ConversionCalculatorScreen() {
-  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<ConversionCategory>('volume');
   const [inputValue, setInputValue] = useState('');
   const [fromUnit, setFromUnit] = useState<string>('cup');
@@ -124,204 +121,192 @@ export default function ConversionCalculatorScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Conversion Calculator</Text>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => router.back()}
-          testID="close-button"
-        >
-          <X size={24} color={Colors.text} />
-        </TouchableOpacity>
+    <ScrollView 
+      style={styles.container} 
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.categorySelector}>
+        {categories.map((category) => (
+          <TouchableOpacity
+            key={category.id}
+            style={[
+              styles.categoryButton,
+              selectedCategory === category.id && {
+                backgroundColor: getCategoryColor(category.id),
+              },
+            ]}
+            onPress={() => handleCategoryChange(category.id)}
+            testID={`category-${category.id}`}
+          >
+            {category.id === 'volume' && (
+              <Droplets size={20} color={selectedCategory === category.id ? Colors.textOnPrimary : Colors.textSecondary} />
+            )}
+            {category.id === 'weight' && (
+              <Scale size={20} color={selectedCategory === category.id ? Colors.textOnPrimary : Colors.textSecondary} />
+            )}
+            {category.id === 'temperature' && (
+              <Thermometer size={20} color={selectedCategory === category.id ? Colors.textOnPrimary : Colors.textSecondary} />
+            )}
+            <Text
+              style={[
+                styles.categoryButtonText,
+                selectedCategory === category.id && styles.categoryButtonTextActive,
+              ]}
+            >
+              {category.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <ScrollView 
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.categorySelector}>
-          {categories.map((category) => (
+      <View style={styles.converterCard}>
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>From</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.valueInput}
+              value={inputValue}
+              onChangeText={setInputValue}
+              placeholder="0"
+              placeholderTextColor={Colors.textTertiary}
+              keyboardType="decimal-pad"
+              testID="from-input"
+            />
             <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryButton,
-                selectedCategory === category.id && {
-                  backgroundColor: getCategoryColor(category.id),
-                },
-              ]}
-              onPress={() => handleCategoryChange(category.id)}
-              testID={`category-${category.id}`}
+              style={styles.unitSelector}
+              onPress={() => setShowFromPicker(!showFromPicker)}
+              testID="from-unit-selector"
             >
-              {category.id === 'volume' && (
-                <Droplets size={20} color={selectedCategory === category.id ? Colors.textOnPrimary : Colors.textSecondary} />
-              )}
-              {category.id === 'weight' && (
-                <Scale size={20} color={selectedCategory === category.id ? Colors.textOnPrimary : Colors.textSecondary} />
-              )}
-              {category.id === 'temperature' && (
-                <Thermometer size={20} color={selectedCategory === category.id ? Colors.textOnPrimary : Colors.textSecondary} />
-              )}
-              <Text
-                style={[
-                  styles.categoryButtonText,
-                  selectedCategory === category.id && styles.categoryButtonTextActive,
-                ]}
-              >
-                {category.name}
-              </Text>
+              <Text style={styles.unitText}>{fromUnitData.shortName}</Text>
+              <ChevronDown size={16} color={Colors.textSecondary} />
             </TouchableOpacity>
+          </View>
+          {showFromPicker && (
+            <View style={styles.unitPicker}>
+              {currentUnits.map((unit) => (
+                <TouchableOpacity
+                  key={unit.id}
+                  style={[
+                    styles.unitOption,
+                    fromUnit === unit.id && styles.unitOptionActive,
+                  ]}
+                  onPress={() => {
+                    setFromUnit(unit.id);
+                    setShowFromPicker(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.unitOptionText,
+                      fromUnit === unit.id && styles.unitOptionTextActive,
+                    ]}
+                  >
+                    {unit.name} ({unit.shortName})
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        <TouchableOpacity
+          style={styles.swapButton}
+          onPress={swapUnits}
+          testID="swap-button"
+        >
+          <ArrowLeftRight size={20} color={Colors.textOnPrimary} />
+        </TouchableOpacity>
+
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>To</Text>
+          <View style={styles.inputRow}>
+            <View style={styles.resultContainer}>
+              <Text 
+                style={[
+                  styles.resultText,
+                  !convertedValue && styles.resultTextPlaceholder,
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {convertedValue || '0'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.unitSelector}
+              onPress={() => setShowToPicker(!showToPicker)}
+              testID="to-unit-selector"
+            >
+              <Text style={styles.unitText}>{toUnitData.shortName}</Text>
+              <ChevronDown size={16} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+          {showToPicker && (
+            <View style={styles.unitPicker}>
+              {currentUnits.map((unit) => (
+                <TouchableOpacity
+                  key={unit.id}
+                  style={[
+                    styles.unitOption,
+                    toUnit === unit.id && styles.unitOptionActive,
+                  ]}
+                  onPress={() => {
+                    setToUnit(unit.id);
+                    setShowToPicker(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.unitOptionText,
+                      toUnit === unit.id && styles.unitOptionTextActive,
+                    ]}
+                  >
+                    {unit.name} ({unit.shortName})
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+      </View>
+
+      <View style={styles.quickSection}>
+        <Text style={styles.sectionTitle}>Quick Reference</Text>
+        <View style={styles.quickGrid}>
+          {quickConversions.map((item, index) => (
+            <View
+              key={index}
+              style={[
+                styles.quickCard,
+                { borderLeftColor: getCategoryColor(item.category) },
+              ]}
+            >
+              <Text style={styles.quickFrom}>{item.from}</Text>
+              <Text style={styles.quickEquals}>=</Text>
+              <Text style={styles.quickTo}>{item.to}</Text>
+            </View>
           ))}
         </View>
+      </View>
 
-        <View style={styles.converterCard}>
-          <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>From</Text>
-            <View style={styles.inputRow}>
-              <TextInput
-                style={styles.valueInput}
-                value={inputValue}
-                onChangeText={setInputValue}
-                placeholder="0"
-                placeholderTextColor={Colors.textTertiary}
-                keyboardType="decimal-pad"
-                testID="from-input"
-              />
-              <TouchableOpacity
-                style={styles.unitSelector}
-                onPress={() => setShowFromPicker(!showFromPicker)}
-                testID="from-unit-selector"
-              >
-                <Text style={styles.unitText}>{fromUnitData.shortName}</Text>
-                <ChevronDown size={16} color={Colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            {showFromPicker && (
-              <View style={styles.unitPicker}>
-                {currentUnits.map((unit) => (
-                  <TouchableOpacity
-                    key={unit.id}
-                    style={[
-                      styles.unitOption,
-                      fromUnit === unit.id && styles.unitOptionActive,
-                    ]}
-                    onPress={() => {
-                      setFromUnit(unit.id);
-                      setShowFromPicker(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.unitOptionText,
-                        fromUnit === unit.id && styles.unitOptionTextActive,
-                      ]}
-                    >
-                      {unit.name} ({unit.shortName})
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-
-          <TouchableOpacity
-            style={styles.swapButton}
-            onPress={swapUnits}
-            testID="swap-button"
-          >
-            <ArrowLeftRight size={20} color={Colors.textOnPrimary} />
-          </TouchableOpacity>
-
-          <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>To</Text>
-            <View style={styles.inputRow}>
-              <View style={styles.resultContainer}>
-                <Text 
-                  style={[
-                    styles.resultText,
-                    !convertedValue && styles.resultTextPlaceholder,
-                  ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                >
-                  {convertedValue || '0'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.unitSelector}
-                onPress={() => setShowToPicker(!showToPicker)}
-                testID="to-unit-selector"
-              >
-                <Text style={styles.unitText}>{toUnitData.shortName}</Text>
-                <ChevronDown size={16} color={Colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            {showToPicker && (
-              <View style={styles.unitPicker}>
-                {currentUnits.map((unit) => (
-                  <TouchableOpacity
-                    key={unit.id}
-                    style={[
-                      styles.unitOption,
-                      toUnit === unit.id && styles.unitOptionActive,
-                    ]}
-                    onPress={() => {
-                      setToUnit(unit.id);
-                      setShowToPicker(false);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.unitOptionText,
-                        toUnit === unit.id && styles.unitOptionTextActive,
-                      ]}
-                    >
-                      {unit.name} ({unit.shortName})
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
+      <View style={styles.tipsSection}>
+        <Text style={styles.sectionTitle}>Cooking Tips</Text>
+        <View style={styles.tipCard}>
+          <Text style={styles.tipTitle}>Common Butter Measurements</Text>
+          <Text style={styles.tipText}>1 stick = ½ cup = 8 tbsp = 113g</Text>
         </View>
-
-        <View style={styles.quickSection}>
-          <Text style={styles.sectionTitle}>Quick Reference</Text>
-          <View style={styles.quickGrid}>
-            {quickConversions.map((item, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.quickCard,
-                  { borderLeftColor: getCategoryColor(item.category) },
-                ]}
-              >
-                <Text style={styles.quickFrom}>{item.from}</Text>
-                <Text style={styles.quickEquals}>=</Text>
-                <Text style={styles.quickTo}>{item.to}</Text>
-              </View>
-            ))}
-          </View>
+        <View style={styles.tipCard}>
+          <Text style={styles.tipTitle}>Oven Temperature Guide</Text>
+          <Text style={styles.tipText}>Low: 250-300°F (120-150°C){'\n'}Medium: 350-375°F (175-190°C){'\n'}High: 400-450°F (200-230°C)</Text>
         </View>
-
-        <View style={styles.tipsSection}>
-          <Text style={styles.sectionTitle}>Cooking Tips</Text>
-          <View style={styles.tipCard}>
-            <Text style={styles.tipTitle}>Common Butter Measurements</Text>
-            <Text style={styles.tipText}>1 stick = ½ cup = 8 tbsp = 113g</Text>
-          </View>
-          <View style={styles.tipCard}>
-            <Text style={styles.tipTitle}>Oven Temperature Guide</Text>
-            <Text style={styles.tipText}>Low: 250-300°F (120-150°C){'\n'}Medium: 350-375°F (175-190°C){'\n'}High: 400-450°F (200-230°C)</Text>
-          </View>
-          <View style={styles.tipCard}>
-            <Text style={styles.tipTitle}>Flour Conversions</Text>
-            <Text style={styles.tipText}>1 cup all-purpose flour ≈ 125g{'\n'}1 cup bread flour ≈ 130g</Text>
-          </View>
+        <View style={styles.tipCard}>
+          <Text style={styles.tipTitle}>Flour Conversions</Text>
+          <Text style={styles.tipText}>1 cup all-purpose flour ≈ 125g{'\n'}1 cup bread flour ≈ 130g</Text>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -330,28 +315,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-  title: {
-    ...Typography.h3,
-    color: Colors.text,
-  },
-  closeButton: {
-    position: 'absolute',
-    right: Spacing.lg,
-    padding: Spacing.xs,
-  },
   content: {
-    flex: 1,
     padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
   },
   categorySelector: {
     flexDirection: 'row',
