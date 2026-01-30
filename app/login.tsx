@@ -95,7 +95,7 @@ export default function LoginScreen() {
                 {!isLoginMode && (
                   <>
                     <View style={styles.inputContainer}>
-                      <User size={20} color="rgba(255, 255, 255, 0.5)" />
+                      <User size={20} color="rgba(135, 206, 235, 1)" />
                       <TextInput
                         style={styles.input}
                         placeholder="Username"
@@ -108,11 +108,11 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.inputContainer}>
-                      <User size={20} color="rgba(255, 255, 255, 0.5)" />
+                      <User size={20} color="rgba(135, 206, 235, 1)" />
                       <TextInput
                         style={styles.input}
                         placeholder="Display Name"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        placeholderTextColor="rgba(135, 206, 235, 1)"
                         value={displayName}
                         onChangeText={setDisplayName}
                         autoCorrect={false}
