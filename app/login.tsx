@@ -108,11 +108,11 @@ export default function LoginScreen() {
                     </View>
 
                     <View style={styles.inputContainer}>
-                      <User size={20} color="rgba(135, 206, 235, 1)" />
+                      <User size={20} color="rgba(255, 255, 255, 1)" />
                       <TextInput
                         style={styles.input}
                         placeholder="Display Name"
-                        placeholderTextColor="rgba(135, 206, 235, 1)"
+                        placeholderTextColor="rgba(255, 255, 255, 1)"
                         value={displayName}
                         onChangeText={setDisplayName}
                         autoCorrect={false}
@@ -122,11 +122,11 @@ export default function LoginScreen() {
                 )}
 
                 <View style={styles.inputContainer}>
-                  <Mail size={20} color="rgba(135, 206, 235, 1)" />
+                  <Mail size={20} color="rgba(255, 255, 255, 1)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Email"
-                    placeholderTextColor="rgba(135, 206, 235, 1)"
+                    placeholderTextColor="rgba(255, 255, 255, 1)"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -136,11 +136,11 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Lock size={25} color="rgba(135, 206, 235, 1)" />
+                  <Lock size={25} color="rgba(255, 255, 255, 1)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Password"
-                    placeholderTextColor="rgba(135, 206, 235, 1)"
+                    placeholderTextColor="rgba(255, 255, 255, 1)"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -151,9 +151,9 @@ export default function LoginScreen() {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
                     {showPassword ? (
-                      <EyeOff size={20} color="rgba(255,255,255,0.7)" />
+                      <EyeOff size={20} color="rgba(255,255,255,1)" />
                     ) : (
-                      <Eye size={20} color="rgba(255,255,255,0.7)" />
+                      <Eye size={20} color="rgba(255,255,255,1)" />
                     )}
                   </TouchableOpacity>
                 </View>
