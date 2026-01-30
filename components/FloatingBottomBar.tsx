@@ -118,7 +118,7 @@ export default function FloatingBottomBar() {
 
   return (
     <>
-      <View style={[styles.container], { bottom: insets.bottom + 16 }}>
+      <View style={[styles.container, { bottom: insets.bottom + 16 }]}>
         <Pressable
           style={styles.avatarButton}
           onPress={handleAvatarPress}
