@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: '#000',
+    color: '#fff',
     marginBottom: 8,
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   formSubtitle: {
     fontSize: 14,
-    color: 'rgba(0, 0, 0, 1)',
+    color: 'rgba(255, 255, 255, 1)',
     textAlign: 'center',
     marginBottom: 24,
   },
