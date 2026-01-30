@@ -4,6 +4,9 @@ import { useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, SharedRecipe } from '@/types/recipe';
+import { mockUsers } from '@/mocks/users';
+
+const isSupabaseConfigured = !!(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 interface DbUser {
   id: string;
@@ -32,42 +35,59 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   const usersQuery = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      console.log('[Social] Fetching all users...');
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('display_name');
-
-      if (error) {
-        console.error('[Social] Error fetching users:', error.message || JSON.stringify(error));
-        return [];
+      if (!isSupabaseConfigured) {
+        console.log('[Social] Supabase not configured, using mock users');
+        return mockUsers.filter(u => u.id !== 'user_current');
       }
 
-      const usersWithCounts = await Promise.all(
-        ((data || []) as DbUser[]).map(async (u) => {
-          const [recipesCount, followersCount, followingCount] = await Promise.all([
-            supabase.from('recipes').select('id', { count: 'exact', head: true }).eq('author_id', u.id),
-            supabase.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', u.id),
-            supabase.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', u.id),
-          ]);
+      try {
+        console.log('[Social] Fetching all users...');
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .order('display_name');
 
-          return {
-            id: u.id,
-            username: u.username,
-            displayName: u.display_name,
-            avatarUrl: u.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop',
-            bio: u.bio || '',
-            recipesCount: recipesCount.count || 0,
-            followersCount: followersCount.count || 0,
-            followingCount: followingCount.count || 0,
-            isVerified: u.is_verified,
-            joinedAt: u.joined_at,
-          } as User;
-        })
-      );
+        if (error) {
+          console.error('[Social] Error fetching users:', error.message || JSON.stringify(error));
+          console.log('[Social] Falling back to mock users');
+          return mockUsers.filter(u => u.id !== 'user_current');
+        }
 
-      console.log('[Social] Fetched', usersWithCounts.length, 'users');
-      return usersWithCounts;
+        if (!data || data.length === 0) {
+          console.log('[Social] No users found, using mock users');
+          return mockUsers.filter(u => u.id !== 'user_current');
+        }
+
+        const usersWithCounts = await Promise.all(
+          ((data || []) as DbUser[]).map(async (u) => {
+            const [recipesCount, followersCount, followingCount] = await Promise.all([
+              supabase.from('recipes').select('id', { count: 'exact', head: true }).eq('author_id', u.id),
+              supabase.from('follows').select('id', { count: 'exact', head: true }).eq('following_id', u.id),
+              supabase.from('follows').select('id', { count: 'exact', head: true }).eq('follower_id', u.id),
+            ]);
+
+            return {
+              id: u.id,
+              username: u.username,
+              displayName: u.display_name,
+              avatarUrl: u.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop',
+              bio: u.bio || '',
+              recipesCount: recipesCount.count || 0,
+              followersCount: followersCount.count || 0,
+              followingCount: followingCount.count || 0,
+              isVerified: u.is_verified,
+              joinedAt: u.joined_at,
+            } as User;
+          })
+        );
+
+        console.log('[Social] Fetched', usersWithCounts.length, 'users');
+        return usersWithCounts;
+      } catch (err) {
+        console.error('[Social] Network error fetching users:', err);
+        console.log('[Social] Falling back to mock users');
+        return mockUsers.filter(u => u.id !== 'user_current');
+      }
     },
   });
 
