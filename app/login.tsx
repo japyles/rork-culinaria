@@ -12,6 +12,7 @@ import {
   Alert,
   ImageBackground,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
@@ -82,115 +83,117 @@ export default function LoginScreen() {
               <Text style={styles.tagline}>Your Personal Recipe Companion</Text>
             </View>
 
-            <View style={styles.formContainer}>
-              <Text style={styles.formTitle}>
-                {isLoginMode ? 'Welcome Back' : 'Create Account'}
-              </Text>
-              <Text style={styles.formSubtitle}>
-                {isLoginMode
-                  ? 'Sign in to access your recipes'
-                  : 'Join our community of food lovers'}
-              </Text>
+            <BlurView intensity={60} tint="light" style={styles.formContainer}>
+              <View style={styles.formContent}>
+                <Text style={styles.formTitle}>
+                  {isLoginMode ? 'Welcome Back' : 'Create Account'}
+                </Text>
+                <Text style={styles.formSubtitle}>
+                  {isLoginMode
+                    ? 'Sign in to access your recipes'
+                    : 'Join our community of food lovers'}
+                </Text>
 
-              {!isLoginMode && (
-                <>
-                  <View style={styles.inputContainer}>
-                    <User size={20} color={Colors.textSecondary} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Username"
-                      placeholderTextColor={Colors.textSecondary}
-                      value={username}
-                      onChangeText={setUsername}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                  </View>
+                {!isLoginMode && (
+                  <>
+                    <View style={styles.inputContainer}>
+                      <User size={20} color="rgba(255,255,255,0.7)" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Username"
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        value={username}
+                        onChangeText={setUsername}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                    </View>
 
-                  <View style={styles.inputContainer}>
-                    <User size={20} color={Colors.textSecondary} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Display Name"
-                      placeholderTextColor={Colors.textSecondary}
-                      value={displayName}
-                      onChangeText={setDisplayName}
-                      autoCorrect={false}
-                    />
-                  </View>
-                </>
-              )}
+                    <View style={styles.inputContainer}>
+                      <User size={20} color="rgba(255,255,255,0.7)" />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Display Name"
+                        placeholderTextColor="rgba(255,255,255,0.5)"
+                        value={displayName}
+                        onChangeText={setDisplayName}
+                        autoCorrect={false}
+                      />
+                    </View>
+                  </>
+                )}
 
-              <View style={styles.inputContainer}>
-                <Mail size={20} color={Colors.textSecondary} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Email"
-                  placeholderTextColor={Colors.textSecondary}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
+                <View style={styles.inputContainer}>
+                  <Mail size={20} color="rgba(255,255,255,0.7)" />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
 
-              <View style={styles.inputContainer}>
-                <Lock size={20} color={Colors.textSecondary} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Password"
-                  placeholderTextColor={Colors.textSecondary}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
+                <View style={styles.inputContainer}>
+                  <Lock size={20} color="rgba(255,255,255,0.7)" />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="rgba(255,255,255,0.7)" />
+                    ) : (
+                      <Eye size={20} color="rgba(255,255,255,0.7)" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+
                 <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
+                  onPress={handleSubmit}
+                  disabled={isLoading}
                 >
-                  {showPassword ? (
-                    <EyeOff size={20} color={Colors.textSecondary} />
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
                   ) : (
-                    <Eye size={20} color={Colors.textSecondary} />
+                    <Text style={styles.submitButtonText}>
+                      {isLoginMode ? 'Sign In' : 'Create Account'}
+                    </Text>
                   )}
                 </TouchableOpacity>
-              </View>
 
-              <TouchableOpacity
-                style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-                onPress={handleSubmit}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitButtonText}>
-                    {isLoginMode ? 'Sign In' : 'Create Account'}
+                <TouchableOpacity
+                  style={styles.switchModeButton}
+                  onPress={() => setIsLoginMode(!isLoginMode)}
+                >
+                  <Text style={styles.switchModeText}>
+                    {isLoginMode
+                      ? "Don't have an account? Sign Up"
+                      : 'Already have an account? Sign In'}
                   </Text>
-                )}
-              </TouchableOpacity>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.switchModeButton}
-                onPress={() => setIsLoginMode(!isLoginMode)}
-              >
-                <Text style={styles.switchModeText}>
-                  {isLoginMode
-                    ? "Don't have an account? Sign Up"
-                    : 'Already have an account? Sign In'}
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.infoSection}>
-                <Text style={styles.infoText}>
-                  {isLoginMode 
-                    ? 'New here? Create an account to get started!' 
-                    : 'Password must be at least 6 characters'}
-                </Text>
+                <View style={styles.infoSection}>
+                  <Text style={styles.infoText}>
+                    {isLoginMode 
+                      ? 'New here? Create an account to get started!' 
+                      : 'Password must be at least 6 characters'}
+                  </Text>
+                </View>
               </View>
-            </View>
+            </BlurView>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -204,7 +207,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   container: {
     flex: 1,
@@ -246,44 +249,47 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
   },
   formContainer: {
-    backgroundColor: Colors.surface,
     borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  formContent: {
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   formTitle: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: '#fff',
     marginBottom: 8,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   formSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
     marginBottom: 24,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
     height: 56,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   input: {
     flex: 1,
     marginLeft: 12,
     fontSize: 16,
-    color: Colors.text,
+    color: '#fff',
   },
   submitButton: {
     backgroundColor: Colors.primary,
@@ -306,7 +312,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   switchModeText: {
-    color: Colors.primary,
+    color: '#fff',
     fontSize: 14,
     fontWeight: '500' as const,
   },
@@ -314,12 +320,12 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
   },
   infoText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
   },
 });
