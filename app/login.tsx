@@ -122,11 +122,11 @@ export default function LoginScreen() {
                 )}
 
                 <View style={styles.inputContainer}>
-                  <Mail size={20} color="rgba(255, 255, 255, 0.5)" />
+                  <Mail size={20} color="rgba(135, 206, 235, 1)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Email"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    placeholderTextColor="rgba(135, 206, 235, 1)"
                     value={email}
                     onChangeText={setEmail}
                     keyboardType="email-address"
@@ -136,11 +136,11 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Lock size={20} color="rgba(255, 255, 255, 0.5)" />
+                  <Lock size={20} color="rgba(135, 206, 235, 1)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Password"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    placeholderTextColor="rgba(135, 206, 235, 1)"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -290,6 +290,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 20,
     color: '#000',
+    height: 56,
   },
   submitButton: {
     backgroundColor: Colors.primary,
