@@ -13,7 +13,6 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
 import {
-  Menu,
   ChefHat,
   Sparkles,
   Home,
@@ -31,7 +30,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 import Colors, { Shadow } from '@/constants/colors';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface MenuItem {
   id: string;
@@ -108,9 +107,9 @@ export default function FloatingBottomBar() {
     }
   };
 
-  const menuTranslateY = menuAnim.interpolate({
+  const menuTranslateX = menuAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [SCREEN_HEIGHT, 0],
+    outputRange: [SCREEN_WIDTH, 0],
   });
 
   const backdropOpacity = menuAnim.interpolate({
@@ -180,11 +179,11 @@ export default function FloatingBottomBar() {
           <Animated.View
             style={[
               styles.menuContainer,
-              { transform: [{ translateY: menuTranslateY }] },
+              { transform: [{ translateX: menuTranslateX }], paddingTop: insets.top },
             ]}
           >
             {Platform.OS === 'ios' ? (
-              <BlurView intensity={80} tint="light" style={[styles.menuContent, { paddingBottom: insets.bottom + 20 }]}>
+              <BlurView intensity={90} tint="light" style={[styles.menuContent, { paddingBottom: insets.bottom + 20 }]}>
               <View style={styles.menuHeader}>
                 <Text style={styles.menuTitle}>Menu</Text>
                 <Pressable
@@ -332,19 +331,22 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     position: 'absolute',
+    top: 0,
     bottom: 0,
-    left: 0,
     right: 0,
+    width: SCREEN_WIDTH * 0.8,
+    maxWidth: 320,
   },
   menuContent: {
+    flex: 1,
     borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: 8,
+    borderBottomLeftRadius: 28,
+    paddingTop: 16,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
   },
   menuContentAndroid: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.5)',
   },
