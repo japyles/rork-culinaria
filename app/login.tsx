@@ -99,7 +99,7 @@ export default function LoginScreen() {
                       <TextInput
                         style={styles.input}
                         placeholder="Username"
-                        placeholderTextColor=Colors.primary
+                        placeholderTextColor={Colors.primary}
                         value={username}
                         onChangeText={setUsername}
                         autoCapitalize="none"
