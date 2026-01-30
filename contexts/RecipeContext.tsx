@@ -417,25 +417,42 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
         .from('users')
         .select('id')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (userCheckError || !userExists) {
-        console.error('[Recipes] User not found in users table:', userCheckError);
-        // Try to create the user record
+      // PGRST116 means no rows found - expected for new users
+      const userNotFound = !userExists || (userCheckError && userCheckError.code === 'PGRST116');
+      
+      if (userNotFound) {
+        console.log('[Recipes] User not found in users table, creating record for:', user.id);
+        
+        // Generate a unique username with timestamp to avoid conflicts
+        const baseUsername = user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`;
+        const uniqueUsername = `${baseUsername}_${Date.now().toString(36)}`;
+        
         const { error: createUserError } = await supabase
           .from('users')
           .insert({
             id: user.id,
             email: user.email || `${user.id}@placeholder.com`,
-            username: user.email?.split('@')[0] || `user_${user.id.substring(0, 8)}`,
+            username: uniqueUsername,
             display_name: user.email?.split('@')[0] || 'User',
           } as any);
         
         if (createUserError) {
-          console.error('[Recipes] Failed to create user record:', createUserError);
-          throw new Error('Unable to create recipe: User profile not found. Please complete your profile setup first.');
+          // If it's a duplicate key error, the user might already exist (race condition)
+          if (createUserError.code === '23505') {
+            console.log('[Recipes] User record already exists (race condition), continuing...');
+          } else {
+            console.error('[Recipes] Failed to create user record:', createUserError);
+            throw new Error('Unable to create recipe: Could not set up user profile. Please try again.');
+          }
+        } else {
+          console.log('[Recipes] Created user record for:', user.id);
         }
-        console.log('[Recipes] Created user record for:', user.id);
+      } else if (userCheckError) {
+        // Real error, not just "not found"
+        console.error('[Recipes] Error checking user:', userCheckError);
+        throw new Error('Unable to verify user profile. Please try again.');
       }
       
       const { data: newRecipe, error: recipeError } = await supabase
