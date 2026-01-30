@@ -39,6 +39,17 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="conversion-calculator"
+        options={{
+          title: "Convert",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={focused && styles.activeIconContainer}>
+              <Search size={22} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="ai-chef"
         options={{
           title: "AI Chef",
