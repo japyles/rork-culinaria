@@ -136,7 +136,7 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.inputContainer}>
-                  <Lock size={20} color="rgba(135, 206, 235, 1)" />
+                  <Lock size={25} color="rgba(135, 206, 235, 1)" />
                   <TextInput
                     style={styles.input}
                     placeholder="Password"
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 35,
   },
   logoCircle: {
     width: 96,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 20,
     color: '#000',
-    height: 56,
+    height: 46,
   },
   submitButton: {
     backgroundColor: Colors.primary,
