@@ -16,9 +16,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Sparkles, Video, TrendingUp, Camera, PenLine, User, LogOut } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSocial } from '@/contexts/SocialContext';
@@ -26,12 +23,14 @@ import { categories } from '@/mocks/recipes';
 import RecipeCard from '@/components/RecipeCard';
 import SectionHeader from '@/components/SectionHeader';
 import CategoryChip from '@/components/CategoryChip';
-import GlassCard from '@/components/GlassCard';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const HERO_HEIGHT = SCREEN_HEIGHT * 0.55;
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { allRecipes, recentRecipes, favoriteRecipes } = useRecipes();
+  const { allRecipes, recentRecipes } = useRecipes();
   const { currentUser } = useSocial();
   const { signOut } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -52,7 +51,7 @@ export default function HomeScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideAnim]);
 
   const timeOfDayGreeting = useMemo(() => {
     const hour = new Date().getHours();
