@@ -22,6 +22,8 @@ import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/c
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useAICache } from '@/contexts/AICacheContext';
+import { useAIUsage } from '@/contexts/AIUsageContext';
 import { Recipe, RecipeCategory } from '@/types/recipe';
 import { categories, cuisines } from '@/mocks/recipes';
 
@@ -89,7 +91,10 @@ const abbreviateUnit = (unit: string): string => {
 export default function VideoExtractScreen() {
   const router = useRouter();
   const { addRecipe } = useRecipes();
+  const { getCachedExtraction, addToCache } = useAICache();
+  const { recordUsage, canUseAI } = useAIUsage();
   const [videoUrl, setVideoUrl] = useState('');
+  const [usedCache, setUsedCache] = useState(false);
   const [extractedRecipe, setExtractedRecipe] = useState<ExtractedRecipe | null>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory>('dinner');
@@ -121,7 +126,17 @@ export default function VideoExtractScreen() {
   };
 
   const extractMutation = useMutation({
-    mutationFn: async (url: string) => {
+    mutationFn: async (url: string): Promise<{ data: ExtractedRecipe; fromCache: boolean }> => {
+      const cached = getCachedExtraction<ExtractedRecipe>(url);
+      if (cached) {
+        console.log('[VideoExtract] Using cached extraction for:', url);
+        return { data: cached, fromCache: true };
+      }
+
+      if (!canUseAI) {
+        throw new Error('AI usage limit reached');
+      }
+
       const prompt = `Extract a complete recipe from this cooking video URL: ${url}
         
         Please provide:
@@ -139,10 +154,15 @@ export default function VideoExtractScreen() {
         schema: VideoRecipeSchema,
       });
 
-      return result;
+      await recordUsage();
+      await addToCache(url, result);
+      console.log('[VideoExtract] New extraction cached for:', url);
+
+      return { data: result, fromCache: false };
     },
-    onSuccess: (data) => {
+    onSuccess: ({ data, fromCache }) => {
       setExtractedRecipe(data);
+      setUsedCache(fromCache);
     },
     onError: (error) => {
       console.log('Error extracting recipe:', error);
@@ -172,6 +192,7 @@ export default function VideoExtractScreen() {
     setVideoUrl('');
     setExtractedRecipe(null);
     setRecipeSaved(false);
+    setUsedCache(false);
     setTags([]);
     setSelectedCategory('dinner');
     setSelectedCuisine('American');
@@ -331,6 +352,12 @@ export default function VideoExtractScreen() {
                 </View>
                 <Text style={styles.successText}>Recipe extracted successfully!</Text>
               </View>
+
+              {usedCache && (
+                <View style={styles.cacheBadge}>
+                  <Text style={styles.cacheBadgeText}>📦 Loaded from cache (no AI credits used)</Text>
+                </View>
+              )}
 
               <GlassCard style={styles.recipeCard}>
                 <Text style={styles.recipeTitle}>{extractedRecipe.title}</Text>
@@ -797,6 +824,20 @@ const styles = StyleSheet.create({
   savedText: {
     ...Typography.label,
     color: Colors.success,
+  },
+  cacheBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.accent + '20',
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+  },
+  cacheBadgeText: {
+    ...Typography.caption,
+    color: Colors.accent,
+    fontWeight: '500' as const,
   },
   modalOverlay: {
     flex: 1,
