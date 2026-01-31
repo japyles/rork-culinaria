@@ -403,7 +403,7 @@ export default function MealPlanScreen() {
                     <Text style={styles.optionText}>Add to Shopping List</Text>
                   </Pressable>
                   
-                  <Pressable style={[styles.optionButton, styles.deleteOption]} onPress={handleDeleteMeal}
+                  <Pressable style={[styles.optionButton, styles.deleteOption]} onPress={handleDeleteMeal}>
                     <Trash2 size={22} color={Colors.error} />
                     <Text style={[styles.optionText, styles.deleteText]}>Remove from Meal Plan</Text>
                   </Pressable>
