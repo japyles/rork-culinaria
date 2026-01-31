@@ -43,7 +43,7 @@ import {
   MessageSquare,
   User as UserIcon,
 } from 'lucide-react-native';
-import { Ingredient, User } from '@/types/recipe';
+import { Ingredient } from '@/types/recipe';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes, } from '@/contexts/RecipeContext';
 import * as Haptics from 'expo-haptics';
@@ -58,7 +58,7 @@ export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe, addReview, getReviewsForRecipe, getAverageRating, addToShoppingList } = useRecipes();
-  const { getFollowingUsers, getFollowersUsers, shareRecipe, isFollowing: isFollowingUser } = useSocial();
+  const { getFollowingUsers, getFollowersUsers, shareRecipe } = useSocial();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
   const [showMenu, setShowMenu] = useState(false);
@@ -96,7 +96,7 @@ export default function RecipeDetailScreen() {
       duration: 400,
       useNativeDriver: true,
     }).start();
-  }, [id]);
+  }, [id, addRecentlyViewed, fadeAnim]);
 
   useEffect(() => {
     return () => {
@@ -157,7 +157,7 @@ export default function RecipeDetailScreen() {
     } else {
       pulseAnim.setValue(1);
     }
-  }, [isTimerFinished]);
+  }, [isTimerFinished, pulseAnim]);
 
   const playAlarm = async () => {
     try {
