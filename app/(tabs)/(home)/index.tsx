@@ -415,17 +415,14 @@ const styles = StyleSheet.create({
   quickActionCard: {
     alignItems: 'center',
     paddingVertical: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    ...Shadow.sm,
   },
   quickActionIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: BorderRadius.md,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   quickActionText: {
     ...Typography.label,
