@@ -224,19 +224,11 @@ export default function RecipeDetailScreen() {
   };
 
   const openTimer = useCallback(() => {
-    if (recipe && typeof recipe.cookTime === 'number' && recipe.cookTime > 0) {
-      const cookTimeInSeconds = recipe.cookTime * 60;
-      setTimerSeconds(cookTimeInSeconds);
-      setIsTimerRunning(false);
-      setIsTimerFinished(false);
-      setShowTimer(true);
-    } else {
-      setTimerSeconds(60);
-      setIsTimerRunning(false);
-      setIsTimerFinished(false);
-      setShowTimer(true);
-    }
-  }, [recipe]);
+    setTimerSeconds(0);
+    setIsTimerRunning(false);
+    setIsTimerFinished(false);
+    setShowTimer(true);
+  }, []);
 
   const startTimer = () => {
     if (timerSeconds > 0) {
@@ -256,26 +248,23 @@ export default function RecipeDetailScreen() {
     setIsTimerRunning(false);
     setIsTimerFinished(false);
     stopAlarm();
-    const defaultTime = recipe && typeof recipe.cookTime === 'number' && recipe.cookTime > 0 
-      ? recipe.cookTime * 60 
-      : 60;
-    setTimerSeconds(defaultTime);
+    setTimerSeconds(0);
   };
 
-  const addOneMinute = () => {
+  const addTime = (minutes: number) => {
     if (isTimerFinished) {
       stopAlarm();
       setIsTimerFinished(false);
     }
-    setTimerSeconds((prev) => prev + 60);
+    setTimerSeconds((prev) => prev + minutes * 60);
   };
 
-  const subtractOneMinute = () => {
+  const subtractTime = (minutes: number) => {
     if (isTimerFinished) {
       stopAlarm();
       setIsTimerFinished(false);
     }
-    setTimerSeconds((prev) => Math.max(0, prev - 60));
+    setTimerSeconds((prev) => Math.max(0, prev - minutes * 60));
   };
 
   const closeTimer = () => {
@@ -677,7 +666,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                 <Clock size={20} color={Colors.primary} />
                 <Text style={styles.metaValue}>{totalTime}</Text>
                 <Text style={styles.metaLabel}>minutes</Text>
-                <Text style={styles.metaHint} numberOfLines={1} adjustsFontSizeToFit>Tap to start timer</Text>
+                <Text style={styles.metaHint}>Set timer</Text>
               </GlassCard>
             </Pressable>
             <Pressable onPress={openServingAdjuster}>
@@ -1209,21 +1198,38 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
               </Pressable>
             </View>
 
-            <View style={styles.timeAdjustRow}>
-              <Pressable 
-                style={styles.subtractTimeButton} 
-                onPress={subtractOneMinute}
-              >
-                <Minus size={20} color={Colors.error} />
-                <Text style={styles.subtractTimeText}>-1 Min</Text>
-              </Pressable>
-              <Pressable 
-                style={styles.addTimeButton} 
-                onPress={addOneMinute}
-              >
-                <Plus size={20} color={Colors.primary} />
-                <Text style={styles.addTimeText}>+1 Min</Text>
-              </Pressable>
+            <View style={styles.timeAdjustSection}>
+              <View style={styles.timeAdjustRow}>
+                <Pressable 
+                  style={styles.subtractTimeButton} 
+                  onPress={() => subtractTime(10)}
+                >
+                  <Minus size={16} color={Colors.error} />
+                  <Text style={styles.subtractTimeText}>10</Text>
+                </Pressable>
+                <Pressable 
+                  style={styles.subtractTimeButton} 
+                  onPress={() => subtractTime(5)}
+                >
+                  <Minus size={16} color={Colors.error} />
+                  <Text style={styles.subtractTimeText}>5</Text>
+                </Pressable>
+                <Pressable 
+                  style={styles.addTimeButton} 
+                  onPress={() => addTime(5)}
+                >
+                  <Plus size={16} color={Colors.primary} />
+                  <Text style={styles.addTimeText}>5</Text>
+                </Pressable>
+                <Pressable 
+                  style={styles.addTimeButton} 
+                  onPress={() => addTime(10)}
+                >
+                  <Plus size={16} color={Colors.primary} />
+                  <Text style={styles.addTimeText}>10</Text>
+                </Pressable>
+              </View>
+              <Text style={styles.timeAdjustLabel}>minutes</Text>
             </View>
           </View>
         </View>
@@ -1751,44 +1757,56 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 16,
   },
+  timeAdjustSection: {
+    width: '100%',
+    alignItems: 'center',
+  },
   timeAdjustRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Spacing.sm,
     width: '100%',
+    justifyContent: 'center',
+  },
+  timeAdjustLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: Spacing.xs,
   },
   addTimeButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.primary,
     backgroundColor: Colors.primary + '10',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
+    minWidth: 64,
   },
   addTimeText: {
     ...Typography.label,
     color: Colors.primary,
+    fontSize: 14,
   },
   subtractTimeButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.error,
     backgroundColor: Colors.error + '10',
-    gap: Spacing.sm,
+    gap: Spacing.xs,
+    minWidth: 64,
   },
   subtractTimeText: {
     ...Typography.label,
     color: Colors.error,
+    fontSize: 14,
   },
   metaCardAdjusted: {
     borderWidth: 1,
