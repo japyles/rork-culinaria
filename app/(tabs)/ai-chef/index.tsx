@@ -7,7 +7,6 @@ import {
   Animated,
   TextInput,
   Pressable,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Modal,
@@ -27,7 +26,9 @@ import Button from '@/components/Button';
 import GlassCard from '@/components/GlassCard';
 import { Recipe, RecipeCategory } from '@/types/recipe';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useAIUsage } from '@/contexts/AIUsageContext';
 import { categories, cuisines } from '@/mocks/recipes';
+import { useRouter } from 'expo-router';
 
 const RecipeSchema = z.object({
   title: z.string().describe('Creative recipe title'),
@@ -94,6 +95,16 @@ const abbreviateUnit = (unit: string): string => {
 
 export default function AIChefScreen() {
   const { addRecipe } = useRecipes();
+  const router = useRouter();
+  const {
+    canUseAI,
+    usageLimit,
+    currentUsage,
+    usagePercentage,
+    generationsRemaining,
+    subscriptionTier,
+    recordUsage,
+  } = useAIUsage();
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [additionalNotes, setAdditionalNotes] = useState('');
@@ -140,6 +151,8 @@ export default function AIChefScreen() {
         schema: RecipeSchema,
       });
 
+      await recordUsage();
+
       return result;
     },
     onSuccess: (data) => {
@@ -168,6 +181,9 @@ export default function AIChefScreen() {
 
   const handleGenerate = () => {
     if (ingredients.length === 0) return;
+    if (!canUseAI) {
+      return;
+    }
     setGeneratedRecipe(null);
     generateMutation.mutate();
   };
@@ -281,9 +297,67 @@ export default function AIChefScreen() {
               </Animated.View>
               <Text style={styles.title}>AI Chef</Text>
               <Text style={styles.subtitle}>
-                Tell me what ingredients you have, and I'll create a delicious recipe for you
+                Tell me what ingredients you have, and I&apos;ll create a delicious recipe for you
               </Text>
             </Animated.View>
+
+            <GlassCard style={styles.usageCard}>
+              <View style={styles.usageHeader}>
+                <View style={styles.usageTierBadge}>
+                  <Text style={styles.usageTierText}>
+                    {subscriptionTier === 'pro' ? 'Pro' : subscriptionTier === 'basic' ? 'Basic' : 'Free'}
+                  </Text>
+                </View>
+                <Text style={styles.usageTitle}>AI Usage This Month</Text>
+              </View>
+              
+              <View style={styles.usageBarContainer}>
+                <View style={styles.usageBarBackground}>
+                  <View 
+                    style={[
+                      styles.usageBarFill, 
+                      { 
+                        width: `${Math.min(usagePercentage, 100)}%`,
+                        backgroundColor: usagePercentage > 80 ? Colors.error : usagePercentage > 50 ? Colors.warning : Colors.primary,
+                      }
+                    ]} 
+                  />
+                </View>
+                <Text style={styles.usagePercentText}>{Math.round(usagePercentage)}%</Text>
+              </View>
+              
+              <View style={styles.usageDetails}>
+                <View style={styles.usageDetailItem}>
+                  <Text style={styles.usageDetailLabel}>Used</Text>
+                  <Text style={styles.usageDetailValue}>${currentUsage.toFixed(2)}</Text>
+                </View>
+                <View style={styles.usageDetailItem}>
+                  <Text style={styles.usageDetailLabel}>Limit</Text>
+                  <Text style={styles.usageDetailValue}>${usageLimit.toFixed(2)}</Text>
+                </View>
+                <View style={styles.usageDetailItem}>
+                  <Text style={styles.usageDetailLabel}>Remaining</Text>
+                  <Text style={[styles.usageDetailValue, { color: canUseAI ? Colors.success : Colors.error }]}>
+                    {generationsRemaining} gen{generationsRemaining !== 1 ? "s" : ""}
+                  </Text>
+                </View>
+              </View>
+
+              {!canUseAI && (
+                <Pressable style={styles.upgradePrompt} onPress={() => router.push('/paywall')}>
+                  <Text style={styles.upgradePromptText}>
+                    {subscriptionTier === 'free' 
+                      ? 'Upgrade to Basic for $1.10/mo AI or Pro for $4.00/mo AI'
+                      : subscriptionTier === 'basic'
+                        ? 'Upgrade to Pro for $4.00/mo AI budget'
+                        : 'Monthly limit reached. Resets next month.'}
+                  </Text>
+                  {subscriptionTier !== 'pro' && (
+                    <Sparkles size={16} color={Colors.primary} />
+                  )}
+                </Pressable>
+              )}
+            </GlassCard>
 
             {!generatedRecipe ? (
               <Animated.View style={{ opacity: fadeAnim }}>
@@ -340,12 +414,19 @@ export default function AIChefScreen() {
                     title={generateMutation.isPending ? 'Creating magic...' : 'Generate Recipe'}
                     onPress={handleGenerate}
                     loading={generateMutation.isPending}
-                    disabled={ingredients.length === 0}
+                    disabled={ingredients.length === 0 || !canUseAI}
                     size="lg"
                     icon={<Sparkles size={20} color={Colors.textOnPrimary} />}
                   />
                   {ingredients.length === 0 && (
                     <Text style={styles.hintText}>Add at least one ingredient to get started</Text>
+                  )}
+                  {!canUseAI && ingredients.length > 0 && (
+                    <Pressable onPress={() => router.push('/paywall')}>
+                      <Text style={styles.limitReachedText}>
+                        Monthly AI limit reached. {subscriptionTier !== 'pro' ? 'Tap to upgrade!' : 'Resets next month.'}
+                      </Text>
+                    </Pressable>
                   )}
                 </View>
               </Animated.View>
@@ -771,6 +852,92 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: Spacing.xxxl,
+  },
+  usageCard: {
+    marginBottom: Spacing.md,
+  },
+  usageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  usageTierBadge: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  usageTierText: {
+    ...Typography.caption,
+    color: Colors.textOnPrimary,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+  },
+  usageTitle: {
+    ...Typography.label,
+    color: Colors.text,
+  },
+  usageBarContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  usageBarBackground: {
+    flex: 1,
+    height: 8,
+    backgroundColor: Colors.borderLight,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden' as const,
+  },
+  usageBarFill: {
+    height: '100%',
+    borderRadius: BorderRadius.full,
+  },
+  usagePercentText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    width: 36,
+    textAlign: 'right' as const,
+  },
+  usageDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  usageDetailItem: {
+    alignItems: 'center',
+  },
+  usageDetailLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginBottom: 2,
+  },
+  usageDetailValue: {
+    ...Typography.label,
+    color: Colors.text,
+  },
+  upgradePrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary + '15',
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.md,
+    gap: Spacing.xs,
+  },
+  upgradePromptText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '600' as const,
+    textAlign: 'center' as const,
+  },
+  limitReachedText: {
+    ...Typography.caption,
+    color: Colors.error,
+    marginTop: Spacing.sm,
+    textAlign: 'center' as const,
   },
   saveToRecipesContainer: {
     marginTop: Spacing.lg,

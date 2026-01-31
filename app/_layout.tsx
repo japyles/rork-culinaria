@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { RecipeProvider } from "@/contexts/RecipeContext";
 import { SocialProvider } from "@/contexts/SocialContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { AIUsageProvider } from "@/contexts/AIUsageContext";
 import Colors from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -345,8 +346,10 @@ export default function RootLayout() {
           <RecipeProvider>
             <SocialProvider>
               <SubscriptionProvider>
-                <RootLayoutNav />
-                {showSplash && <AnimatedSplash onAnimationComplete={handleAnimationComplete} />}
+                <AIUsageProvider>
+                  <RootLayoutNav />
+                  {showSplash && <AnimatedSplash onAnimationComplete={handleAnimationComplete} />}
+                </AIUsageProvider>
               </SubscriptionProvider>
             </SocialProvider>
           </RecipeProvider>
