@@ -4,6 +4,9 @@ import { useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Recipe, MealPlan, UserPreferences, Review, ShoppingListItem, MealPlanEntry, Ingredient } from '@/types/recipe';
+import { mockRecipes } from '@/mocks/recipes';
+
+const isSupabaseConfigured = !!(process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY);
 
 interface DbRecipe {
   id: string;
@@ -93,65 +96,82 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
   const recipesQuery = useQuery({
     queryKey: ['recipes'],
     queryFn: async () => {
-      console.log('[Recipes] Fetching all recipes...');
-      const { data: recipes, error } = await supabase
-        .from('recipes')
-        .select(`
-          *,
-          recipe_ingredients(*),
-          recipe_steps(*)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('[Recipes] Error fetching recipes:', error.message || JSON.stringify(error));
-        return [];
+      if (!isSupabaseConfigured) {
+        console.log('[Recipes] Supabase not configured, using mock recipes');
+        return mockRecipes;
       }
 
-      console.log('[Recipes] Fetched', recipes?.length, 'recipes');
-      
-      return ((recipes || []) as DbRecipe[]).map((r): Recipe => ({
-        id: r.id,
-        title: r.title,
-        description: r.description,
-        imageUrl: r.image_url,
-        category: r.category as Recipe['category'],
-        cuisine: r.cuisine,
-        difficulty: r.difficulty as Recipe['difficulty'],
-        prepTime: r.prep_time,
-        cookTime: r.cook_time,
-        servings: r.servings,
-        ingredients: (r.recipe_ingredients || [])
-          .sort((a, b) => a.order_index - b.order_index)
-          .map((ing) => ({
-            id: ing.id,
-            name: ing.name,
-            amount: ing.amount,
-            unit: ing.unit,
-          })),
-        steps: (r.recipe_steps || [])
-          .sort((a, b) => a.order_index - b.order_index)
-          .map((step) => ({
-            id: step.id,
-            order: step.order_index,
-            instruction: step.instruction,
-            duration: step.duration || undefined,
-            tip: step.tip || undefined,
-          })),
-        nutrition: r.nutrition_calories ? {
-          calories: r.nutrition_calories,
-          protein: r.nutrition_protein || 0,
-          carbs: r.nutrition_carbs || 0,
-          fat: r.nutrition_fat || 0,
-          fiber: r.nutrition_fiber || undefined,
-        } : undefined,
-        tags: r.tags || [],
-        rating: Number(r.rating) || 0,
-        reviewCount: r.review_count || 0,
-        createdAt: r.created_at,
-        sourceUrl: r.source_url || undefined,
-        authorId: r.author_id,
-      }));
+      try {
+        console.log('[Recipes] Fetching all recipes...');
+        const { data: recipes, error } = await supabase
+          .from('recipes')
+          .select(`
+            *,
+            recipe_ingredients(*),
+            recipe_steps(*)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('[Recipes] Error fetching recipes:', error.message || JSON.stringify(error));
+          console.log('[Recipes] Falling back to mock recipes');
+          return mockRecipes;
+        }
+
+        if (!recipes || recipes.length === 0) {
+          console.log('[Recipes] No recipes found, using mock recipes');
+          return mockRecipes;
+        }
+
+        console.log('[Recipes] Fetched', recipes?.length, 'recipes');
+        
+        return ((recipes || []) as DbRecipe[]).map((r): Recipe => ({
+          id: r.id,
+          title: r.title,
+          description: r.description,
+          imageUrl: r.image_url,
+          category: r.category as Recipe['category'],
+          cuisine: r.cuisine,
+          difficulty: r.difficulty as Recipe['difficulty'],
+          prepTime: r.prep_time,
+          cookTime: r.cook_time,
+          servings: r.servings,
+          ingredients: (r.recipe_ingredients || [])
+            .sort((a, b) => a.order_index - b.order_index)
+            .map((ing) => ({
+              id: ing.id,
+              name: ing.name,
+              amount: ing.amount,
+              unit: ing.unit,
+            })),
+          steps: (r.recipe_steps || [])
+            .sort((a, b) => a.order_index - b.order_index)
+            .map((step) => ({
+              id: step.id,
+              order: step.order_index,
+              instruction: step.instruction,
+              duration: step.duration || undefined,
+              tip: step.tip || undefined,
+            })),
+          nutrition: r.nutrition_calories ? {
+            calories: r.nutrition_calories,
+            protein: r.nutrition_protein || 0,
+            carbs: r.nutrition_carbs || 0,
+            fat: r.nutrition_fat || 0,
+            fiber: r.nutrition_fiber || undefined,
+          } : undefined,
+          tags: r.tags || [],
+          rating: Number(r.rating) || 0,
+          reviewCount: r.review_count || 0,
+          createdAt: r.created_at,
+          sourceUrl: r.source_url || undefined,
+          authorId: r.author_id,
+        }));
+      } catch (err) {
+        console.error('[Recipes] Network error fetching recipes:', err);
+        console.log('[Recipes] Falling back to mock recipes');
+        return mockRecipes;
+      }
     },
   });
 
@@ -232,28 +252,38 @@ export const [RecipeProvider, useRecipes] = createContextHook(() => {
   const reviewsQuery = useQuery({
     queryKey: ['reviews'],
     queryFn: async () => {
-      console.log('[Recipes] Fetching all reviews...');
-      const { data, error } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          users!reviews_user_id_fkey(display_name)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('[Recipes] Error fetching reviews:', error.message || JSON.stringify(error));
+      if (!isSupabaseConfigured) {
+        console.log('[Recipes] Supabase not configured, returning empty reviews');
         return [];
       }
 
-      return ((data || []) as DbReview[]).map((r): Review => ({
-        id: r.id,
-        recipeId: r.recipe_id,
-        rating: r.rating,
-        comment: r.comment,
-        authorName: r.users?.display_name || 'Anonymous',
-        createdAt: r.created_at,
-      }));
+      try {
+        console.log('[Recipes] Fetching all reviews...');
+        const { data, error } = await supabase
+          .from('reviews')
+          .select(`
+            *,
+            users!reviews_user_id_fkey(display_name)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('[Recipes] Error fetching reviews:', error.message || JSON.stringify(error));
+          return [];
+        }
+
+        return ((data || []) as DbReview[]).map((r): Review => ({
+          id: r.id,
+          recipeId: r.recipe_id,
+          rating: r.rating,
+          comment: r.comment,
+          authorName: r.users?.display_name || 'Anonymous',
+          createdAt: r.created_at,
+        }));
+      } catch (err) {
+        console.error('[Recipes] Network error fetching reviews:', err);
+        return [];
+      }
     },
   });
 
