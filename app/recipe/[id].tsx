@@ -1204,28 +1204,42 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                   style={styles.subtractTimeButton} 
                   onPress={() => subtractTime(10)}
                 >
-                  <Minus size={16} color={Colors.error} />
+                  <Minus size={14} color={Colors.error} />
                   <Text style={styles.subtractTimeText}>10</Text>
                 </Pressable>
                 <Pressable 
                   style={styles.subtractTimeButton} 
                   onPress={() => subtractTime(5)}
                 >
-                  <Minus size={16} color={Colors.error} />
+                  <Minus size={14} color={Colors.error} />
                   <Text style={styles.subtractTimeText}>5</Text>
+                </Pressable>
+                <Pressable 
+                  style={styles.subtractTimeButton} 
+                  onPress={() => subtractTime(1)}
+                >
+                  <Minus size={14} color={Colors.error} />
+                  <Text style={styles.subtractTimeText}>1</Text>
+                </Pressable>
+                <Pressable 
+                  style={styles.addTimeButton} 
+                  onPress={() => addTime(1)}
+                >
+                  <Plus size={14} color={Colors.primary} />
+                  <Text style={styles.addTimeText}>1</Text>
                 </Pressable>
                 <Pressable 
                   style={styles.addTimeButton} 
                   onPress={() => addTime(5)}
                 >
-                  <Plus size={16} color={Colors.primary} />
+                  <Plus size={14} color={Colors.primary} />
                   <Text style={styles.addTimeText}>5</Text>
                 </Pressable>
                 <Pressable 
                   style={styles.addTimeButton} 
                   onPress={() => addTime(10)}
                 >
-                  <Plus size={16} color={Colors.primary} />
+                  <Plus size={14} color={Colors.primary} />
                   <Text style={styles.addTimeText}>10</Text>
                 </Pressable>
               </View>
@@ -1408,8 +1422,9 @@ const styles = StyleSheet.create({
   metaHint: {
     ...Typography.caption,
     color: Colors.primary,
-    fontSize: 10,
+    fontSize: 11,
     marginTop: Spacing.xs,
+    fontWeight: '600' as const,
   },
   metaValue: {
     ...Typography.h3,
@@ -1777,13 +1792,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.primary,
     backgroundColor: Colors.primary + '10',
-    gap: Spacing.xs,
-    minWidth: 64,
+    gap: 2,
+    minWidth: 48,
   },
   addTimeText: {
     ...Typography.label,
@@ -1795,13 +1810,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.sm,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.error,
     backgroundColor: Colors.error + '10',
-    gap: Spacing.xs,
-    minWidth: 64,
+    gap: 2,
+    minWidth: 48,
   },
   subtractTimeText: {
     ...Typography.label,
