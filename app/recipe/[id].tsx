@@ -677,7 +677,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                 <Clock size={20} color={Colors.primary} />
                 <Text style={styles.metaValue}>{totalTime}</Text>
                 <Text style={styles.metaLabel}>minutes</Text>
-                <Text style={styles.metaHint}>Tap to start timer</Text>
+                <Text style={styles.metaHint} numberOfLines={1} adjustsFontSizeToFit>Tap to start timer</Text>
               </GlassCard>
             </Pressable>
             <Pressable onPress={openServingAdjuster}>
