@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'expo-router';
 import {
   View,
   Text,
@@ -11,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CalendarDays, Plus, ChevronLeft, ChevronRight, X, Clock, Users, Trash2, ShoppingCart, Check } from 'lucide-react-native';
+import { CalendarDays, Plus, ChevronLeft, ChevronRight, X, Clock, Users, Trash2, ShoppingCart, Check, ChefHat } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Recipe, MealPlanEntry, Ingredient } from '@/types/recipe';
@@ -26,6 +27,7 @@ interface MealItemWithRecipe {
 }
 
 export default function MealPlanScreen() {
+  const router = useRouter();
   const { 
     allRecipes, 
     getRecipeById,
@@ -132,6 +134,14 @@ export default function MealPlanScreen() {
       setSelectedIngredients(new Set(selectedMealItem.recipe.ingredients.map(i => i.id)));
       setShowMealOptionsModal(false);
       setShowIngredientModal(true);
+    }
+  };
+
+  const handleGoToRecipe = () => {
+    if (selectedMealItem) {
+      setShowMealOptionsModal(false);
+      setSelectedMealItem(null);
+      router.push(`/recipe/${selectedMealItem.recipe.id}`);
     }
   };
 
@@ -383,12 +393,17 @@ export default function MealPlanScreen() {
                   
                   <View style={styles.optionsDivider} />
                   
+                  <Pressable style={styles.optionButton} onPress={handleGoToRecipe}>
+                    <ChefHat size={22} color={Colors.primary} />
+                    <Text style={styles.optionText}>Go to Recipe</Text>
+                  </Pressable>
+                  
                   <Pressable style={styles.optionButton} onPress={handleAddToShoppingList}>
                     <ShoppingCart size={22} color={Colors.primary} />
                     <Text style={styles.optionText}>Add to Shopping List</Text>
                   </Pressable>
                   
-                  <Pressable style={[styles.optionButton, styles.deleteOption]} onPress={handleDeleteMeal}>
+                  <Pressable style={[styles.optionButton, styles.deleteOption]} onPress={handleDeleteMeal}
                     <Trash2 size={22} color={Colors.error} />
                     <Text style={[styles.optionText, styles.deleteText]}>Remove from Meal Plan</Text>
                   </Pressable>
