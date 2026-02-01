@@ -1502,7 +1502,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     minWidth: (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.sm * 2) / 3,
-    borderRadius: BorderRadius.md,
   },
   metaHint: {
     ...Typography.caption,
