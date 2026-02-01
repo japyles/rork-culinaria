@@ -262,8 +262,8 @@ export default function TimerScreen() {
             <Text style={styles.currentTimerLabel}>Current Timer</Text>
             <Text style={styles.currentTimerValue}>
               {pickerHours > 0 || pickerMinutes > 0 
-                ? `${pickerHours > 0 ? `${pickerHours} hr ` : ''}${pickerMinutes} min`
-                : '0 min'
+                ? `${pickerHours > 0 ? `${pickerHours}hr ` : ''}${pickerMinutes}min 0sec`
+                : '0min 0sec'
               }
             </Text>
           </View>
