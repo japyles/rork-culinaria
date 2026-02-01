@@ -78,12 +78,25 @@ export default function ShoppingListScreen() {
       return;
     }
     const searchTerms = items.map((item) => item.name).slice(0, 5).join(' ');
-    const url = `https://www.instacart.com/store/search_v3/search?search_term=${encodeURIComponent(searchTerms)}`;
+    const appUrl = `instacart://store/search?query=${encodeURIComponent(searchTerms)}`;
+    const webUrl = `https://www.instacart.com/store/search_v3/search?search_term=${encodeURIComponent(searchTerms)}`;
+    
     try {
-      await Linking.openURL(url);
+      if (Platform.OS !== 'web') {
+        const canOpen = await Linking.canOpenURL(appUrl);
+        if (canOpen) {
+          await Linking.openURL(appUrl);
+          return;
+        }
+      }
+      await Linking.openURL(webUrl);
     } catch (error) {
       console.log('Error opening Instacart:', error);
-      Alert.alert('Error', 'Could not open Instacart. Please try again.');
+      try {
+        await Linking.openURL(webUrl);
+      } catch {
+        Alert.alert('Error', 'Could not open Instacart. Please try again.');
+      }
     }
   };
 
@@ -95,12 +108,25 @@ export default function ShoppingListScreen() {
       return;
     }
     const searchTerms = items.map((item) => item.name).slice(0, 5).join(' ');
-    const url = `https://www.walmart.com/search?q=${encodeURIComponent(searchTerms)}`;
+    const appUrl = `walmart://search?query=${encodeURIComponent(searchTerms)}`;
+    const webUrl = `https://www.walmart.com/search?q=${encodeURIComponent(searchTerms)}`;
+    
     try {
-      await Linking.openURL(url);
+      if (Platform.OS !== 'web') {
+        const canOpen = await Linking.canOpenURL(appUrl);
+        if (canOpen) {
+          await Linking.openURL(appUrl);
+          return;
+        }
+      }
+      await Linking.openURL(webUrl);
     } catch (error) {
       console.log('Error opening Walmart:', error);
-      Alert.alert('Error', 'Could not open Walmart. Please try again.');
+      try {
+        await Linking.openURL(webUrl);
+      } catch {
+        Alert.alert('Error', 'Could not open Walmart. Please try again.');
+      }
     }
   };
 
@@ -112,12 +138,25 @@ export default function ShoppingListScreen() {
       return;
     }
     const searchTerms = items.map((item) => item.name).slice(0, 5).join(' ');
-    const url = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerms)}&i=amazonfresh`;
+    const appUrl = `amazon://amazonfresh/search?keywords=${encodeURIComponent(searchTerms)}`;
+    const webUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerms)}&i=amazonfresh`;
+    
     try {
-      await Linking.openURL(url);
+      if (Platform.OS !== 'web') {
+        const canOpen = await Linking.canOpenURL(appUrl);
+        if (canOpen) {
+          await Linking.openURL(appUrl);
+          return;
+        }
+      }
+      await Linking.openURL(webUrl);
     } catch (error) {
       console.log('Error opening Amazon:', error);
-      Alert.alert('Error', 'Could not open Amazon. Please try again.');
+      try {
+        await Linking.openURL(webUrl);
+      } catch {
+        Alert.alert('Error', 'Could not open Amazon Fresh. Please try again.');
+      }
     }
   };
 
