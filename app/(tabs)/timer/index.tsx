@@ -17,7 +17,7 @@ import { Play, Pause, Timer } from 'lucide-react-native';
 import * as ExpoAv from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Spacing } from '@/constants/colors';
+import { Spacing, BorderRadius } from '@/constants/colors';
 
 const ITEM_HEIGHT = 50;
 
@@ -367,6 +367,7 @@ export default function TimerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    borderRadius: BorderRadius.md,
   },
   content: {
     flex: 1,
