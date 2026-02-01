@@ -1195,15 +1195,16 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
         onRequestClose={closeTimer}
       >
         <View style={styles.timerModalOverlay}>
-          <LinearGradient
-            colors={['#6B8BA4', '#8FA4B8', '#B8C5D0', '#C9D1D9']}
-            style={StyleSheet.absoluteFill}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-          />
-          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+          <View style={styles.timerCardContainer}>
+            <LinearGradient
+              colors={['#6B8BA4', '#8FA4B8', '#B8C5D0', '#C9D1D9']}
+              style={[StyleSheet.absoluteFill, styles.timerCardGradient]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            />
+            <BlurView intensity={40} tint="light" style={[StyleSheet.absoluteFill, styles.timerCardGradient]} />
           
-          <View style={styles.timerGlassContainer}>
+            <View style={styles.timerGlassContainer}>
             <View style={styles.timerHeader}>
               <Pressable onPress={closeTimer} style={styles.timerCloseButton}>
                 <View style={styles.timerCloseCircle}>
@@ -1334,6 +1335,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
               </Pressable>
             </View>
           </View>
+        </View>
         </View>
       </Modal>
     </View>
@@ -1772,14 +1774,26 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    paddingVertical: '10.5%',
+  },
+  timerCardContainer: {
+    width: '92%',
+    height: '79%',
+    borderRadius: 28,
+    overflow: 'hidden',
+    ...Shadow.lg,
+  },
+  timerCardGradient: {
+    borderRadius: 28,
   },
   timerGlassContainer: {
     width: '100%',
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 30,
   },
   timerHeader: {
     flexDirection: 'row',
