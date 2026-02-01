@@ -2191,7 +2191,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
     padding: Spacing.xl,
-    width: '100%',
+    width: '82%',
     maxWidth: 400,
     ...Shadow.lg,
   },
