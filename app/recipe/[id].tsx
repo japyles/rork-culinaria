@@ -15,7 +15,6 @@ import {
   TextInput,
   PanResponder,
   GestureResponderEvent,
-  PanResponderGestureState,
 } from 'react-native';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { z } from 'zod';
@@ -260,21 +259,24 @@ export default function RecipeDetailScreen() {
 
 
 
+  const lastHapticMinuteRef = useRef(0);
+  
   const dialPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (evt: GestureResponderEvent) => {
         const { locationX, locationY } = evt.nativeEvent;
-        const centerX = 110;
-        const centerY = 110;
+        const centerX = 140;
+        const centerY = 140;
         const angle = Math.atan2(locationY - centerY, locationX - centerX);
         lastAngleRef.current = angle;
+        lastHapticMinuteRef.current = dialMinutes;
       },
-      onPanResponderMove: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+      onPanResponderMove: (evt: GestureResponderEvent) => {
         const { locationX, locationY } = evt.nativeEvent;
-        const centerX = 110;
-        const centerY = 110;
+        const centerX = 140;
+        const centerY = 140;
         const currentAngle = Math.atan2(locationY - centerY, locationX - centerX);
         
         let deltaAngle = currentAngle - lastAngleRef.current;
@@ -282,17 +284,24 @@ export default function RecipeDetailScreen() {
         if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
         if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
         
-        accumulatedRotationRef.current += deltaAngle;
-        lastAngleRef.current = currentAngle;
-        
-        const rotationDegrees = (accumulatedRotationRef.current * 180) / Math.PI;
-        const minutes = Math.max(0, Math.min(60, Math.round(rotationDegrees / 6)));
-        
-        dialRotation.setValue(minutes * 6);
-        setDialMinutes(minutes);
-        setTimerSeconds(minutes * 60);
-        
-        Haptics.selectionAsync();
+        // Apply smoothing - only update if delta is significant enough
+        if (Math.abs(deltaAngle) > 0.02) {
+          accumulatedRotationRef.current += deltaAngle;
+          lastAngleRef.current = currentAngle;
+          
+          const rotationDegrees = (accumulatedRotationRef.current * 180) / Math.PI;
+          const minutes = Math.max(0, Math.min(60, Math.round(rotationDegrees / 6)));
+          
+          dialRotation.setValue(minutes * 6);
+          setDialMinutes(minutes);
+          setTimerSeconds(minutes * 60);
+          
+          // Only trigger haptic when minute value changes
+          if (minutes !== lastHapticMinuteRef.current) {
+            lastHapticMinuteRef.current = minutes;
+            Haptics.selectionAsync();
+          }
+        }
       },
       onPanResponderRelease: () => {
         const finalMinutes = dialMinutes;
@@ -1239,12 +1248,12 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                   {[...Array(60)].map((_, i) => {
                     const angle = (i * 6 - 90) * (Math.PI / 180);
                     const isMainTick = i % 5 === 0;
-                    const outerRadius = 100;
-                    const innerRadius = isMainTick ? 85 : 92;
-                    const x1 = 110 + outerRadius * Math.cos(angle);
-                    const y1 = 110 + outerRadius * Math.sin(angle);
-                    const x2 = 110 + innerRadius * Math.cos(angle);
-                    const y2 = 110 + innerRadius * Math.sin(angle);
+                    const outerRadius = 125;
+                    const innerRadius = isMainTick ? 107 : 115;
+                    const x1 = 140 + outerRadius * Math.cos(angle);
+                    const y1 = 140 + outerRadius * Math.sin(angle);
+                    const x2 = 140 + innerRadius * Math.cos(angle);
+                    const y2 = 140 + innerRadius * Math.sin(angle);
                     
                     return (
                       <View
@@ -1267,9 +1276,9 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                   
                   {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((num) => {
                     const angle = (num * 6 - 90) * (Math.PI / 180);
-                    const radius = 70;
-                    const x = 110 + radius * Math.cos(angle) - 10;
-                    const y = 110 + radius * Math.sin(angle) - 8;
+                    const radius = 88;
+                    const x = 140 + radius * Math.cos(angle) - 12;
+                    const y = 140 + radius * Math.sin(angle) - 10;
                     
                     return (
                       <Text
@@ -1853,17 +1862,17 @@ const styles = StyleSheet.create({
     fontStyle: 'italic' as const,
   },
   dialContainer: {
-    width: 220,
-    height: 220,
+    width: 280,
+    height: 280,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dialOuter: {
-    width: 220,
-    height: 220,
-    borderRadius: 110,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     backgroundColor: '#2C2016',
-    borderWidth: 8,
+    borderWidth: 10,
     borderColor: '#8B6914',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1880,21 +1889,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
   },
   dialNumber: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700' as const,
     color: '#C9A227',
-    width: 20,
+    width: 24,
     textAlign: 'center' as const,
   },
   dialInner: {
     position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     backgroundColor: '#3D2914',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: '#6B4423',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1903,13 +1912,13 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   dialKnob: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: '#B8860B',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#DAA520',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1919,31 +1928,31 @@ const styles = StyleSheet.create({
   },
   dialKnobIndicator: {
     position: 'absolute',
-    top: 4,
-    width: 4,
-    height: 20,
+    top: 6,
+    width: 6,
+    height: 28,
     backgroundColor: '#FFD700',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   dialKnobRidges: {
     position: 'absolute',
-    width: 80,
-    height: 80,
+    width: 120,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dialKnobRidge: {
     position: 'absolute',
-    width: 76,
+    width: 114,
     height: 2,
     backgroundColor: '#8B7355',
   },
   dialKnobCenter: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#CD853F',
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#DAA520',
   },
   dialMinutesDisplay: {
