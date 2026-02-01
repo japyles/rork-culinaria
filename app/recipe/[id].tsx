@@ -13,8 +13,9 @@ import {
   Vibration,
   ActivityIndicator,
   TextInput,
-  PanResponder,
-  GestureResponderEvent,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { z } from 'zod';
@@ -37,7 +38,7 @@ import {
   X,
   Play,
   Pause,
-  RotateCcw,
+
   Plus,
   Minus,
   Sparkles,
@@ -53,6 +54,7 @@ import { useSocial } from '@/contexts/SocialContext';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
 import { mockUsers } from '@/mocks/users';
+import { BlurView } from 'expo-blur';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -82,10 +84,11 @@ export default function RecipeDetailScreen() {
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<ExpoAv.Audio.Sound | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const dialRotation = useRef(new Animated.Value(0)).current;
-  const [dialMinutes, setDialMinutes] = useState(0);
-  const lastAngleRef = useRef(0);
-  const accumulatedRotationRef = useRef(0);
+  const [pickerHours, setPickerHours] = useState(0);
+  const [pickerMinutes, setPickerMinutes] = useState(0);
+  const hoursScrollRef = useRef<ScrollView>(null);
+  const minutesScrollRef = useRef<ScrollView>(null);
+  const ITEM_HEIGHT = 50;
 
   const recipe = getRecipeById(id || '');
 
@@ -231,9 +234,15 @@ export default function RecipeDetailScreen() {
 
   const openTimer = useCallback(() => {
     setTimerSeconds(0);
+    setPickerHours(0);
+    setPickerMinutes(0);
     setIsTimerRunning(false);
     setIsTimerFinished(false);
     setShowTimer(true);
+    setTimeout(() => {
+      hoursScrollRef.current?.scrollTo({ y: 0, animated: false });
+      minutesScrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, 100);
   }, []);
 
   const startTimer = () => {
@@ -255,60 +264,55 @@ export default function RecipeDetailScreen() {
     setIsTimerFinished(false);
     stopAlarm();
     setTimerSeconds(0);
+    setPickerHours(0);
+    setPickerMinutes(0);
+    hoursScrollRef.current?.scrollTo({ y: 0, animated: true });
+    minutesScrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
 
 
-  const lastHapticMinuteRef = useRef(0);
-  
-  const dialPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt: GestureResponderEvent) => {
-        const { locationX, locationY } = evt.nativeEvent;
-        const centerX = 140;
-        const centerY = 140;
-        const angle = Math.atan2(locationY - centerY, locationX - centerX);
-        lastAngleRef.current = angle;
-        lastHapticMinuteRef.current = dialMinutes;
-      },
-      onPanResponderMove: (evt: GestureResponderEvent) => {
-        const { locationX, locationY } = evt.nativeEvent;
-        const centerX = 140;
-        const centerY = 140;
-        const currentAngle = Math.atan2(locationY - centerY, locationX - centerX);
-        
-        let deltaAngle = currentAngle - lastAngleRef.current;
-        
-        if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
-        if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
-        
-        // Apply smoothing - only update if delta is significant enough
-        if (Math.abs(deltaAngle) > 0.02) {
-          accumulatedRotationRef.current += deltaAngle;
-          lastAngleRef.current = currentAngle;
-          
-          const rotationDegrees = (accumulatedRotationRef.current * 180) / Math.PI;
-          const minutes = Math.max(0, Math.min(60, Math.round(rotationDegrees / 6)));
-          
-          dialRotation.setValue(minutes * 6);
-          setDialMinutes(minutes);
-          setTimerSeconds(minutes * 60);
-          
-          // Only trigger haptic when minute value changes
-          if (minutes !== lastHapticMinuteRef.current) {
-            lastHapticMinuteRef.current = minutes;
-            Haptics.selectionAsync();
-          }
-        }
-      },
-      onPanResponderRelease: () => {
-        const finalMinutes = dialMinutes;
-        accumulatedRotationRef.current = (finalMinutes * 6 * Math.PI) / 180;
-      },
-    })
-  ).current;
+  const handleHoursScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y;
+    const index = Math.round(y / ITEM_HEIGHT);
+    const clampedIndex = Math.max(0, Math.min(23, index));
+    if (clampedIndex !== pickerHours) {
+      setPickerHours(clampedIndex);
+      Haptics.selectionAsync();
+    }
+  }, [pickerHours, ITEM_HEIGHT]);
+
+  const handleMinutesScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y;
+    const index = Math.round(y / ITEM_HEIGHT);
+    const clampedIndex = Math.max(0, Math.min(59, index));
+    if (clampedIndex !== pickerMinutes) {
+      setPickerMinutes(clampedIndex);
+      Haptics.selectionAsync();
+    }
+  }, [pickerMinutes, ITEM_HEIGHT]);
+
+  const handleHoursScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y;
+    const index = Math.round(y / ITEM_HEIGHT);
+    const clampedIndex = Math.max(0, Math.min(23, index));
+    setPickerHours(clampedIndex);
+    const totalSeconds = clampedIndex * 3600 + pickerMinutes * 60;
+    setTimerSeconds(totalSeconds);
+    hoursScrollRef.current?.scrollTo({ y: clampedIndex * ITEM_HEIGHT, animated: true });
+  }, [pickerMinutes, ITEM_HEIGHT]);
+
+  const handleMinutesScrollEnd = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const y = event.nativeEvent.contentOffset.y;
+    const index = Math.round(y / ITEM_HEIGHT);
+    const clampedIndex = Math.max(0, Math.min(59, index));
+    setPickerMinutes(clampedIndex);
+    const totalSeconds = pickerHours * 3600 + clampedIndex * 60;
+    setTimerSeconds(totalSeconds);
+    minutesScrollRef.current?.scrollTo({ y: clampedIndex * ITEM_HEIGHT, animated: true });
+  }, [pickerHours, ITEM_HEIGHT]);
+
+
 
   const closeTimer = () => {
     setShowTimer(false);
@@ -1187,142 +1191,143 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
         onRequestClose={closeTimer}
       >
         <View style={styles.timerModalOverlay}>
-          <View style={styles.timerContainer}>
+          <LinearGradient
+            colors={['#6B8BA4', '#8FA4B8', '#B8C5D0', '#C9D1D9']}
+            style={StyleSheet.absoluteFill}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+          />
+          <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+          
+          <View style={styles.timerGlassContainer}>
             <View style={styles.timerHeader}>
-              <Text style={styles.timerTitle}>Cooking Timer</Text>
               <Pressable onPress={closeTimer} style={styles.timerCloseButton}>
-                <X size={24} color={Colors.textSecondary} />
+                <View style={styles.timerCloseCircle}>
+                  <X size={20} color="#FFFFFF" />
+                </View>
               </Pressable>
+              <Text style={styles.timerTitle}>Cooking Timer</Text>
+              <View style={styles.timerCloseButton} />
             </View>
 
-            <Animated.View 
-              style={[
-                styles.timerDisplay,
-                isTimerFinished && styles.timerDisplayFinished,
-                { transform: [{ scale: pulseAnim }] }
-              ]}
-            >
-              <Text style={[
-                styles.timerText,
-                isTimerFinished && styles.timerTextFinished
-              ]}>
-                {formatTime(timerSeconds)}
-              </Text>
-              {isTimerFinished && (
-                <Text style={styles.timerFinishedLabel}>Time is up!</Text>
-              )}
-            </Animated.View>
+            {isTimerRunning || timerSeconds > 0 ? (
+              <View style={styles.currentTimerSection}>
+                <Text style={styles.currentTimerLabel}>
+                  {isTimerFinished ? 'Timer Complete!' : 'Current Timer'}
+                </Text>
+                <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                  <Text style={[
+                    styles.currentTimerValue,
+                    isTimerFinished && styles.currentTimerValueFinished
+                  ]}>
+                    {formatTime(timerSeconds)}
+                  </Text>
+                </Animated.View>
+                {isTimerFinished && (
+                  <Text style={styles.timerFinishedSubtext}>Time is up!</Text>
+                )}
+              </View>
+            ) : (
+              <View style={styles.currentTimerSection}>
+                <Text style={styles.currentTimerLabel}>Current Timer</Text>
+                <Text style={styles.currentTimerValue}>
+                  {pickerHours > 0 || pickerMinutes > 0 
+                    ? `${pickerHours > 0 ? `${pickerHours} hr ` : ''}${pickerMinutes} min`
+                    : '0 min'
+                  }
+                </Text>
+              </View>
+            )}
 
-            <View style={styles.timerControls}>
+            <View style={styles.timerDivider} />
+
+            <Text style={styles.timerQuestion}>
+              How long do you want to{`\n`}cook for?
+            </Text>
+
+            <View style={styles.pickerContainer}>
+              <View style={styles.pickerColumn}>
+                <ScrollView
+                  ref={hoursScrollRef}
+                  showsVerticalScrollIndicator={false}
+                  snapToInterval={ITEM_HEIGHT}
+                  decelerationRate="fast"
+                  onScroll={handleHoursScroll}
+                  onMomentumScrollEnd={handleHoursScrollEnd}
+                  scrollEventThrottle={16}
+                  contentContainerStyle={styles.pickerScrollContent}
+                  style={styles.pickerScroll}
+                >
+                  {[...Array(24)].map((_, i) => (
+                    <View key={i} style={styles.pickerItem}>
+                      <Text style={[
+                        styles.pickerItemText,
+                        i === pickerHours && styles.pickerItemTextActive
+                      ]}>
+                        {i}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+                <Text style={styles.pickerLabel}>hour</Text>
+              </View>
+
+              <View style={styles.pickerColumn}>
+                <ScrollView
+                  ref={minutesScrollRef}
+                  showsVerticalScrollIndicator={false}
+                  snapToInterval={ITEM_HEIGHT}
+                  decelerationRate="fast"
+                  onScroll={handleMinutesScroll}
+                  onMomentumScrollEnd={handleMinutesScrollEnd}
+                  scrollEventThrottle={16}
+                  contentContainerStyle={styles.pickerScrollContent}
+                  style={styles.pickerScroll}
+                >
+                  {[...Array(60)].map((_, i) => (
+                    <View key={i} style={styles.pickerItem}>
+                      <Text style={[
+                        styles.pickerItemText,
+                        i === pickerMinutes && styles.pickerItemTextActive
+                      ]}>
+                        {i}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+                <Text style={styles.pickerLabel}>min</Text>
+              </View>
+            </View>
+
+            <View style={styles.timerButtonsContainer}>
               {!isTimerRunning ? (
                 <Pressable 
-                  style={[styles.timerButton, styles.timerButtonPrimary]} 
-                  onPress={startTimer}
+                  style={[styles.timerStartButton, timerSeconds === 0 && pickerHours === 0 && pickerMinutes === 0 && styles.timerStartButtonDisabled]} 
+                  onPress={() => {
+                    if (timerSeconds === 0) {
+                      const totalSeconds = pickerHours * 3600 + pickerMinutes * 60;
+                      setTimerSeconds(totalSeconds);
+                    }
+                    startTimer();
+                  }}
+                  disabled={timerSeconds === 0 && pickerHours === 0 && pickerMinutes === 0}
                 >
-                  <Play size={28} color={Colors.textOnPrimary} />
-                  <Text style={styles.timerButtonText}>Start</Text>
+                  <Play size={20} color="#5A7A8A" style={{ marginRight: 8 }} />
+                  <Text style={styles.timerStartButtonText}>Start Timer</Text>
                 </Pressable>
               ) : (
                 <Pressable 
-                  style={[styles.timerButton, styles.timerButtonPause]} 
+                  style={styles.timerStartButton} 
                   onPress={pauseTimer}
                 >
-                  <Pause size={28} color={Colors.textOnPrimary} />
-                  <Text style={styles.timerButtonText}>Pause</Text>
+                  <Pause size={20} color="#5A7A8A" style={{ marginRight: 8 }} />
+                  <Text style={styles.timerStartButtonText}>Pause</Text>
                 </Pressable>
               )}
 
-              <Pressable 
-                style={[styles.timerButton, styles.timerButtonSecondary]} 
-                onPress={resetTimer}
-              >
-                <RotateCcw size={24} color={Colors.primary} />
-                <Text style={styles.timerButtonTextSecondary}>Reset</Text>
+              <Pressable onPress={resetTimer} style={styles.timerResetButton}>
+                <Text style={styles.timerResetButtonText}>Reset Timer</Text>
               </Pressable>
-            </View>
-
-            <View style={styles.dialSection}>
-              <Text style={styles.dialLabel}>Turn dial to set time</Text>
-              <View style={styles.dialContainer} {...dialPanResponder.panHandlers}>
-                <View style={styles.dialOuter}>
-                  {[...Array(60)].map((_, i) => {
-                    const angle = (i * 6 - 90) * (Math.PI / 180);
-                    const isMainTick = i % 5 === 0;
-                    const outerRadius = 125;
-                    const innerRadius = isMainTick ? 107 : 115;
-                    const x1 = 140 + outerRadius * Math.cos(angle);
-                    const y1 = 140 + outerRadius * Math.sin(angle);
-                    const x2 = 140 + innerRadius * Math.cos(angle);
-                    const y2 = 140 + innerRadius * Math.sin(angle);
-                    
-                    return (
-                      <View
-                        key={i}
-                        style={[
-                          styles.dialTick,
-                          isMainTick && styles.dialTickMain,
-                          {
-                            position: 'absolute',
-                            left: Math.min(x1, x2) - 1,
-                            top: Math.min(y1, y2) - 1,
-                            width: isMainTick ? 3 : 2,
-                            height: Math.abs(y1 - y2) || Math.abs(x1 - x2),
-                            transform: [{ rotate: `${i * 6}deg` }],
-                          },
-                        ]}
-                      />
-                    );
-                  })}
-                  
-                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((num) => {
-                    const angle = (num * 6 - 90) * (Math.PI / 180);
-                    const radius = 88;
-                    const x = 140 + radius * Math.cos(angle) - 12;
-                    const y = 140 + radius * Math.sin(angle) - 10;
-                    
-                    return (
-                      <Text
-                        key={num}
-                        style={[
-                          styles.dialNumber,
-                          { position: 'absolute', left: x, top: y },
-                        ]}
-                      >
-                        {num}
-                      </Text>
-                    );
-                  })}
-                  
-                  <View style={styles.dialInner}>
-                    <Animated.View
-                      style={[
-                        styles.dialKnob,
-                        {
-                          transform: [{ rotate: dialRotation.interpolate({
-                            inputRange: [0, 360],
-                            outputRange: ['0deg', '360deg'],
-                          }) }],
-                        },
-                      ]}
-                    >
-                      <View style={styles.dialKnobIndicator} />
-                      <View style={styles.dialKnobRidges}>
-                        {[...Array(12)].map((_, i) => (
-                          <View
-                            key={i}
-                            style={[
-                              styles.dialKnobRidge,
-                              { transform: [{ rotate: `${i * 30}deg` }] },
-                            ]}
-                          />
-                        ))}
-                      </View>
-                      <View style={styles.dialKnobCenter} />
-                    </Animated.View>
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.dialMinutesDisplay}>{dialMinutes} min</Text>
             </View>
           </View>
         </View>
@@ -1761,19 +1766,16 @@ const styles = StyleSheet.create({
   },
   timerModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: Spacing.lg,
   },
-  timerContainer: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
+  timerGlassContainer: {
     width: '100%',
-    maxWidth: 340,
+    flex: 1,
     alignItems: 'center',
-    ...Shadow.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
   timerHeader: {
     flexDirection: 'row',
@@ -1783,183 +1785,135 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   timerTitle: {
-    ...Typography.h3,
-    color: Colors.text,
+    fontSize: 20,
+    fontWeight: '500' as const,
+    color: '#FFFFFF',
+    textAlign: 'center' as const,
+    flex: 1,
   },
   timerCloseButton: {
-    padding: Spacing.xs,
-  },
-  timerDisplay: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: Colors.background,
-    justifyContent: 'center',
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    borderWidth: 6,
-    borderColor: Colors.primary,
-    marginBottom: Spacing.xl,
+    justifyContent: 'center',
   },
-  timerDisplayFinished: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.accent + '20',
+  timerCloseCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(90, 100, 110, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  timerText: {
-    fontSize: 48,
-    fontWeight: '700' as const,
-    color: Colors.text,
-  },
-  timerTextFinished: {
-    color: Colors.accent,
-  },
-  timerFinishedLabel: {
-    ...Typography.label,
-    color: Colors.accent,
-    marginTop: Spacing.xs,
-  },
-  timerControls: {
-    flexDirection: 'row',
-    gap: Spacing.md,
+  currentTimerSection: {
+    alignItems: 'center',
     marginBottom: Spacing.lg,
   },
-  timerButton: {
+  currentTimerLabel: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginBottom: Spacing.xs,
+  },
+  currentTimerValue: {
+    fontSize: 44,
+    fontWeight: '300' as const,
+    color: '#FFFFFF',
+    letterSpacing: 2,
+  },
+  currentTimerValueFinished: {
+    color: '#FFB74D',
+  },
+  timerFinishedSubtext: {
+    fontSize: 14,
+    color: '#FFB74D',
+    marginTop: Spacing.xs,
+  },
+  timerDivider: {
+    width: '80%',
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    marginVertical: Spacing.lg,
+  },
+  timerQuestion: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center' as const,
+    marginBottom: Spacing.xl,
+    lineHeight: 26,
+  },
+  pickerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.lg,
-    gap: Spacing.sm,
-    minWidth: 120,
+    gap: 40,
+    marginBottom: Spacing.xl,
   },
-  timerButtonPrimary: {
-    backgroundColor: Colors.primary,
+  pickerColumn: {
+    alignItems: 'center',
   },
-  timerButtonPause: {
-    backgroundColor: Colors.secondary,
+  pickerScroll: {
+    height: 150,
+    width: 60,
   },
-  timerButtonSecondary: {
-    backgroundColor: Colors.borderLight,
+  pickerScrollContent: {
+    paddingVertical: 50,
   },
-  timerButtonText: {
-    ...Typography.label,
-    color: Colors.textOnPrimary,
-    fontSize: 16,
+  pickerItem: {
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  timerButtonTextSecondary: {
-    ...Typography.label,
-    color: Colors.primary,
-    fontSize: 16,
+  pickerItemText: {
+    fontSize: 24,
+    color: 'rgba(255, 255, 255, 0.35)',
+    fontWeight: '400' as const,
   },
-  dialSection: {
+  pickerItemTextActive: {
+    fontSize: 32,
+    color: '#2C3E50',
+    fontWeight: '600' as const,
+  },
+  pickerLabel: {
+    fontSize: 18,
+    color: '#2C3E50',
+    fontWeight: '500' as const,
+    marginTop: Spacing.xs,
+  },
+  timerButtonsContainer: {
     width: '100%',
     alignItems: 'center',
+    marginTop: 'auto' as const,
   },
-  dialLabel: {
-    ...Typography.caption,
-    color: Colors.textSecondary,
+  timerStartButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F0E8',
+    paddingVertical: 18,
+    paddingHorizontal: 60,
+    borderRadius: 30,
     marginBottom: Spacing.md,
-    fontStyle: 'italic' as const,
-  },
-  dialContainer: {
-    width: 280,
-    height: 280,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dialOuter: {
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: '#2C2016',
-    borderWidth: 10,
-    borderColor: '#8B6914',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  dialTick: {
-    backgroundColor: '#C9A227',
-  },
-  dialTickMain: {
-    backgroundColor: '#FFD700',
-  },
-  dialNumber: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: '#C9A227',
-    width: 24,
-    textAlign: 'center' as const,
-  },
-  dialInner: {
-    position: 'absolute',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: '#3D2914',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 4,
-    borderColor: '#6B4423',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 5,
-  },
-  dialKnob: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#B8860B',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#DAA520',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
     elevation: 3,
   },
-  dialKnobIndicator: {
-    position: 'absolute',
-    top: 6,
-    width: 6,
-    height: 28,
-    backgroundColor: '#FFD700',
-    borderRadius: 3,
+  timerStartButtonDisabled: {
+    opacity: 0.5,
   },
-  dialKnobRidges: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
+  timerStartButtonText: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: '#5A7A8A',
   },
-  dialKnobRidge: {
-    position: 'absolute',
-    width: 114,
-    height: 2,
-    backgroundColor: '#8B7355',
+  timerResetButton: {
+    padding: Spacing.md,
   },
-  dialKnobCenter: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#CD853F',
-    borderWidth: 3,
-    borderColor: '#DAA520',
-  },
-  dialMinutesDisplay: {
-    ...Typography.h3,
-    color: '#B8860B',
-    marginTop: Spacing.md,
-    fontWeight: '700' as const,
+  timerResetButtonText: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '500' as const,
   },
   metaCardAdjusted: {
     borderWidth: 1,
