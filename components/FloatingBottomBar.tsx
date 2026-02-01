@@ -25,6 +25,7 @@ import {
   X,
   LogOut,
   Ellipsis,
+  Timer,
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -57,6 +58,7 @@ export default function FloatingBottomBar() {
     { id: 'meals', label: 'Meal Plan', icon: CalendarDays, route: '/(tabs)/meal-plan' },
     { id: 'shop', label: 'Shopping List', icon: ShoppingCart, route: '/(tabs)/shopping-list' },
     { id: 'favorites', label: 'Favorites', icon: Heart, route: '/(tabs)/favorites' },
+    { id: 'timer', label: 'Timer', icon: Timer, route: '/(tabs)/timer' },
     { id: 'profile', label: 'Profile', icon: User, route: '/(tabs)/profile' },
   ];
 

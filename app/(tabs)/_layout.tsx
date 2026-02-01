@@ -19,6 +19,7 @@ export default function TabLayout() {
         <Tabs.Screen name="meal-plan" />
         <Tabs.Screen name="shopping-list" />
         <Tabs.Screen name="favorites" />
+        <Tabs.Screen name="timer" />
         <Tabs.Screen name="profile" />
       </Tabs>
       <FloatingBottomBar />
