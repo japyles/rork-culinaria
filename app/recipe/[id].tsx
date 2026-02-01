@@ -13,6 +13,9 @@ import {
   Vibration,
   ActivityIndicator,
   TextInput,
+  PanResponder,
+  GestureResponderEvent,
+  PanResponderGestureState,
 } from 'react-native';
 import { generateObject } from '@rork-ai/toolkit-sdk';
 import { z } from 'zod';
@@ -80,6 +83,10 @@ export default function RecipeDetailScreen() {
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<ExpoAv.Audio.Sound | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const dialRotation = useRef(new Animated.Value(0)).current;
+  const [dialMinutes, setDialMinutes] = useState(0);
+  const lastAngleRef = useRef(0);
+  const accumulatedRotationRef = useRef(0);
 
   const recipe = getRecipeById(id || '');
 
@@ -251,21 +258,48 @@ export default function RecipeDetailScreen() {
     setTimerSeconds(0);
   };
 
-  const addTime = (minutes: number) => {
-    if (isTimerFinished) {
-      stopAlarm();
-      setIsTimerFinished(false);
-    }
-    setTimerSeconds((prev) => prev + minutes * 60);
-  };
 
-  const subtractTime = (minutes: number) => {
-    if (isTimerFinished) {
-      stopAlarm();
-      setIsTimerFinished(false);
-    }
-    setTimerSeconds((prev) => Math.max(0, prev - minutes * 60));
-  };
+
+  const dialPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt: GestureResponderEvent) => {
+        const { locationX, locationY } = evt.nativeEvent;
+        const centerX = 110;
+        const centerY = 110;
+        const angle = Math.atan2(locationY - centerY, locationX - centerX);
+        lastAngleRef.current = angle;
+      },
+      onPanResponderMove: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+        const { locationX, locationY } = evt.nativeEvent;
+        const centerX = 110;
+        const centerY = 110;
+        const currentAngle = Math.atan2(locationY - centerY, locationX - centerX);
+        
+        let deltaAngle = currentAngle - lastAngleRef.current;
+        
+        if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
+        if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
+        
+        accumulatedRotationRef.current += deltaAngle;
+        lastAngleRef.current = currentAngle;
+        
+        const rotationDegrees = (accumulatedRotationRef.current * 180) / Math.PI;
+        const minutes = Math.max(0, Math.min(60, Math.round(rotationDegrees / 6)));
+        
+        dialRotation.setValue(minutes * 6);
+        setDialMinutes(minutes);
+        setTimerSeconds(minutes * 60);
+        
+        Haptics.selectionAsync();
+      },
+      onPanResponderRelease: () => {
+        const finalMinutes = dialMinutes;
+        accumulatedRotationRef.current = (finalMinutes * 6 * Math.PI) / 180;
+      },
+    })
+  ).current;
 
   const closeTimer = () => {
     setShowTimer(false);
@@ -1198,52 +1232,88 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
               </Pressable>
             </View>
 
-            <View style={styles.timeAdjustSection}>
-              <View style={styles.timeAdjustRow}>
-                <Pressable 
-                  style={styles.subtractTimeButton} 
-                  onPress={() => subtractTime(10)}
-                >
-                  <Minus size={14} color={Colors.error} />
-                  <Text style={styles.subtractTimeText}>10</Text>
-                </Pressable>
-                <Pressable 
-                  style={styles.subtractTimeButton} 
-                  onPress={() => subtractTime(5)}
-                >
-                  <Minus size={14} color={Colors.error} />
-                  <Text style={styles.subtractTimeText}>5</Text>
-                </Pressable>
-                <Pressable 
-                  style={styles.subtractTimeButton} 
-                  onPress={() => subtractTime(1)}
-                >
-                  <Minus size={14} color={Colors.error} />
-                  <Text style={styles.subtractTimeText}>1</Text>
-                </Pressable>
-                <Pressable 
-                  style={styles.addTimeButton} 
-                  onPress={() => addTime(1)}
-                >
-                  <Plus size={14} color={Colors.primary} />
-                  <Text style={styles.addTimeText}>1</Text>
-                </Pressable>
-                <Pressable 
-                  style={styles.addTimeButton} 
-                  onPress={() => addTime(5)}
-                >
-                  <Plus size={14} color={Colors.primary} />
-                  <Text style={styles.addTimeText}>5</Text>
-                </Pressable>
-                <Pressable 
-                  style={styles.addTimeButton} 
-                  onPress={() => addTime(10)}
-                >
-                  <Plus size={14} color={Colors.primary} />
-                  <Text style={styles.addTimeText}>10</Text>
-                </Pressable>
+            <View style={styles.dialSection}>
+              <Text style={styles.dialLabel}>Turn dial to set time</Text>
+              <View style={styles.dialContainer} {...dialPanResponder.panHandlers}>
+                <View style={styles.dialOuter}>
+                  {[...Array(60)].map((_, i) => {
+                    const angle = (i * 6 - 90) * (Math.PI / 180);
+                    const isMainTick = i % 5 === 0;
+                    const outerRadius = 100;
+                    const innerRadius = isMainTick ? 85 : 92;
+                    const x1 = 110 + outerRadius * Math.cos(angle);
+                    const y1 = 110 + outerRadius * Math.sin(angle);
+                    const x2 = 110 + innerRadius * Math.cos(angle);
+                    const y2 = 110 + innerRadius * Math.sin(angle);
+                    
+                    return (
+                      <View
+                        key={i}
+                        style={[
+                          styles.dialTick,
+                          isMainTick && styles.dialTickMain,
+                          {
+                            position: 'absolute',
+                            left: Math.min(x1, x2) - 1,
+                            top: Math.min(y1, y2) - 1,
+                            width: isMainTick ? 3 : 2,
+                            height: Math.abs(y1 - y2) || Math.abs(x1 - x2),
+                            transform: [{ rotate: `${i * 6}deg` }],
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                  
+                  {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((num) => {
+                    const angle = (num * 6 - 90) * (Math.PI / 180);
+                    const radius = 70;
+                    const x = 110 + radius * Math.cos(angle) - 10;
+                    const y = 110 + radius * Math.sin(angle) - 8;
+                    
+                    return (
+                      <Text
+                        key={num}
+                        style={[
+                          styles.dialNumber,
+                          { position: 'absolute', left: x, top: y },
+                        ]}
+                      >
+                        {num}
+                      </Text>
+                    );
+                  })}
+                  
+                  <View style={styles.dialInner}>
+                    <Animated.View
+                      style={[
+                        styles.dialKnob,
+                        {
+                          transform: [{ rotate: dialRotation.interpolate({
+                            inputRange: [0, 360],
+                            outputRange: ['0deg', '360deg'],
+                          }) }],
+                        },
+                      ]}
+                    >
+                      <View style={styles.dialKnobIndicator} />
+                      <View style={styles.dialKnobRidges}>
+                        {[...Array(12)].map((_, i) => (
+                          <View
+                            key={i}
+                            style={[
+                              styles.dialKnobRidge,
+                              { transform: [{ rotate: `${i * 30}deg` }] },
+                            ]}
+                          />
+                        ))}
+                      </View>
+                      <View style={styles.dialKnobCenter} />
+                    </Animated.View>
+                  </View>
+                </View>
               </View>
-              <Text style={styles.timeAdjustLabel}>minutes</Text>
+              <Text style={styles.dialMinutesDisplay}>{dialMinutes} min</Text>
             </View>
           </View>
         </View>
@@ -1772,56 +1842,115 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 16,
   },
-  timeAdjustSection: {
+  dialSection: {
     width: '100%',
     alignItems: 'center',
   },
-  timeAdjustRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    width: '100%',
-    justifyContent: 'center',
-  },
-  timeAdjustLabel: {
+  dialLabel: {
     ...Typography.caption,
     color: Colors.textSecondary,
-    marginTop: Spacing.xs,
+    marginBottom: Spacing.md,
+    fontStyle: 'italic' as const,
   },
-  addTimeButton: {
-    flexDirection: 'row',
+  dialContainer: {
+    width: 220,
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '10',
-    gap: 2,
-    minWidth: 48,
   },
-  addTimeText: {
-    ...Typography.label,
-    color: Colors.primary,
-    fontSize: 14,
-  },
-  subtractTimeButton: {
-    flexDirection: 'row',
+  dialOuter: {
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: '#2C2016',
+    borderWidth: 8,
+    borderColor: '#8B6914',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.error,
-    backgroundColor: Colors.error + '10',
-    gap: 2,
-    minWidth: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 10,
   },
-  subtractTimeText: {
-    ...Typography.label,
-    color: Colors.error,
-    fontSize: 14,
+  dialTick: {
+    backgroundColor: '#C9A227',
+  },
+  dialTickMain: {
+    backgroundColor: '#FFD700',
+  },
+  dialNumber: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#C9A227',
+    width: 20,
+    textAlign: 'center' as const,
+  },
+  dialInner: {
+    position: 'absolute',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#3D2914',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#6B4423',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  dialKnob: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#B8860B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#DAA520',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  dialKnobIndicator: {
+    position: 'absolute',
+    top: 4,
+    width: 4,
+    height: 20,
+    backgroundColor: '#FFD700',
+    borderRadius: 2,
+  },
+  dialKnobRidges: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dialKnobRidge: {
+    position: 'absolute',
+    width: 76,
+    height: 2,
+    backgroundColor: '#8B7355',
+  },
+  dialKnobCenter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#CD853F',
+    borderWidth: 2,
+    borderColor: '#DAA520',
+  },
+  dialMinutesDisplay: {
+    ...Typography.h3,
+    color: '#B8860B',
+    marginTop: Spacing.md,
+    fontWeight: '700' as const,
   },
   metaCardAdjusted: {
     borderWidth: 1,
