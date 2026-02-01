@@ -186,7 +186,11 @@ export default function TimerScreen() {
     setIsTimerRunning(false);
     setTimerSeconds(0);
     setIsTimerFinished(false);
+    setPickerHours(0);
+    setPickerMinutes(0);
     await stopAlarm();
+    hoursScrollRef.current?.scrollTo({ y: 0, animated: true });
+    minutesScrollRef.current?.scrollTo({ y: 0, animated: true });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
