@@ -455,17 +455,16 @@ export default function DiscoverScreen() {
             </ScrollView>
 
             <View style={styles.modalFooter}>
-              <Button
-                title="Clear all"
-                variant="ghost"
-                onPress={clearFilters}
-                style={styles.clearButton}
-              />
-              <Button
-                title="Apply filters"
-                onPress={() => setShowFilters(false)}
+              <Pressable onPress={clearFilters} style={styles.clearButton}>
+                <Text style={styles.clearButtonText}>Clear All</Text>
+              </Pressable>
+              <Pressable 
                 style={styles.applyButton}
-              />
+                onPress={() => setShowFilters(false)}
+              >
+                <Check size={20} color={Colors.textOnPrimary} />
+                <Text style={styles.applyButtonText}>Apply Filters</Text>
+              </Pressable>
             </View>
           </SafeAreaView>
         </Modal>
@@ -711,15 +710,37 @@ const styles = StyleSheet.create({
   modalFooter: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
+    paddingBottom: Spacing.xl,
     borderTopWidth: 1,
     borderTopColor: Colors.borderLight,
     gap: Spacing.md,
+    alignItems: 'center',
   },
   clearButton: {
-    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+  },
+  clearButtonText: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    fontWeight: '500' as const,
   },
   applyButton: {
-    flex: 2,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+    minHeight: 52,
+  },
+  applyButtonText: {
+    ...Typography.bodyBold,
+    color: Colors.textOnPrimary,
+    fontSize: 16,
   },
 });
