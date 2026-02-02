@@ -423,14 +423,31 @@ export default function ShoppingListScreen() {
                 </View>
               </View>
               
-              <Pressable 
-                style={styles.deliveryButton}
-                onPress={() => setShowDeliveryModal(true)}
-              >
-                <Truck size={20} color={Colors.textOnPrimary} />
-                <Text style={styles.deliveryButtonText}>Order Groceries</Text>
-                <ExternalLink size={16} color={Colors.textOnPrimary} style={{ opacity: 0.7 }} />
-              </Pressable>
+              <View style={styles.actionButtonsRow}>
+                <Pressable 
+                  style={styles.primaryActionButton}
+                  onPress={() => setShowDeliveryModal(true)}
+                >
+                  <Truck size={20} color={Colors.textOnPrimary} />
+                  <Text style={styles.primaryActionButtonText}>Order</Text>
+                </Pressable>
+
+                <Pressable 
+                  style={styles.secondaryActionButton}
+                  onPress={handleCopyList}
+                >
+                  <Copy size={20} color={Colors.primary} />
+                  <Text style={styles.secondaryActionButtonText}>Copy</Text>
+                </Pressable>
+
+                <Pressable 
+                  style={styles.secondaryActionButton}
+                  onPress={handleSaveAsPdf}
+                >
+                  <FileDown size={20} color={Colors.primary} />
+                  <Text style={styles.secondaryActionButtonText}>PDF</Text>
+                </Pressable>
+              </View>
             </>
           )}
 
@@ -745,21 +762,42 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: Spacing.xxxl,
   },
-  deliveryButton: {
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  primaryActionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.primary,
     paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
-    gap: Spacing.sm,
+    gap: Spacing.xs,
     ...Shadow.sm,
   },
-  deliveryButtonText: {
+  primaryActionButtonText: {
     ...Typography.body,
     color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
+  },
+  secondaryActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary + '15',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.xs,
+  },
+  secondaryActionButtonText: {
+    ...Typography.body,
+    color: Colors.primary,
     fontWeight: '600' as const,
   },
   modalOverlay: {
