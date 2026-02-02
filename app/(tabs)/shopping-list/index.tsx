@@ -548,27 +548,7 @@ export default function ShoppingListScreen() {
                   <ExternalLink size={18} color={Colors.textSecondary} />
                 </Pressable>
 
-                <View style={styles.divider} />
 
-                <Pressable style={styles.deliveryOption} onPress={handleCopyList}>
-                  <View style={[styles.deliveryIconContainer, { backgroundColor: Colors.primary }]}>
-                    <Copy size={20} color={Colors.textOnPrimary} />
-                  </View>
-                  <View style={styles.deliveryOptionInfo}>
-                    <Text style={styles.deliveryOptionTitle}>Copy List</Text>
-                    <Text style={styles.deliveryOptionDesc}>Copy to clipboard for any app</Text>
-                  </View>
-                </Pressable>
-
-                <Pressable style={styles.deliveryOption} onPress={handleSaveAsPdf}>
-                  <View style={[styles.deliveryIconContainer, { backgroundColor: '#4A90A4' }]}>
-                    <FileDown size={20} color={Colors.textOnPrimary} />
-                  </View>
-                  <View style={styles.deliveryOptionInfo}>
-                    <Text style={styles.deliveryOptionTitle}>Save as PDF</Text>
-                    <Text style={styles.deliveryOptionDesc}>Download or print your list</Text>
-                  </View>
-                </Pressable>
               </View>
 
               <Pressable 
