@@ -11,14 +11,12 @@ import {
   Platform,
   Modal,
   Vibration,
-  ActivityIndicator,
   TextInput,
   ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { generateObject } from '@rork-ai/toolkit-sdk';
-import { z } from 'zod';
+
 import * as ExpoAv from 'expo-av';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -73,7 +71,6 @@ export default function RecipeDetailScreen() {
   const [showServingAdjuster, setShowServingAdjuster] = useState(false);
   const [adjustedServings, setAdjustedServings] = useState<number | null>(null);
   const [adjustedIngredients, setAdjustedIngredients] = useState<Ingredient[] | null>(null);
-  const [isAdjusting, setIsAdjusting] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -327,7 +324,74 @@ export default function RecipeDetailScreen() {
     }
   };
 
-  const adjustServingsWithAI = async (newServings: number) => {
+  const parseAmount = (amount: string): number => {
+    const trimmed = amount.trim();
+    
+    // Handle mixed fractions like "1 1/2"
+    const mixedMatch = trimmed.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+    if (mixedMatch) {
+      const whole = parseInt(mixedMatch[1], 10);
+      const numerator = parseInt(mixedMatch[2], 10);
+      const denominator = parseInt(mixedMatch[3], 10);
+      return whole + numerator / denominator;
+    }
+    
+    // Handle simple fractions like "1/2"
+    const fractionMatch = trimmed.match(/^(\d+)\/(\d+)$/);
+    if (fractionMatch) {
+      const numerator = parseInt(fractionMatch[1], 10);
+      const denominator = parseInt(fractionMatch[2], 10);
+      return numerator / denominator;
+    }
+    
+    // Handle decimal or whole numbers
+    const num = parseFloat(trimmed);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const formatAmount = (value: number): string => {
+    if (value === 0) return '0';
+    
+    const tolerance = 0.01;
+    const fractions: [number, string][] = [
+      [0.125, '1/8'],
+      [0.25, '1/4'],
+      [0.333, '1/3'],
+      [0.375, '3/8'],
+      [0.5, '1/2'],
+      [0.625, '5/8'],
+      [0.666, '2/3'],
+      [0.75, '3/4'],
+      [0.875, '7/8'],
+    ];
+    
+    const whole = Math.floor(value);
+    const decimal = value - whole;
+    
+    // Check if it's close to a whole number
+    if (decimal < tolerance) {
+      return whole.toString();
+    }
+    if (decimal > 1 - tolerance) {
+      return (whole + 1).toString();
+    }
+    
+    // Find closest fraction
+    for (const [frac, str] of fractions) {
+      if (Math.abs(decimal - frac) < tolerance) {
+        return whole > 0 ? `${whole} ${str}` : str;
+      }
+    }
+    
+    // Fall back to rounded decimal
+    const rounded = Math.round(value * 100) / 100;
+    if (rounded === Math.floor(rounded)) {
+      return rounded.toString();
+    }
+    return rounded.toFixed(2).replace(/\.?0+$/, '');
+  };
+
+  const adjustServings = (newServings: number) => {
     if (!recipe || newServings === recipe.servings) {
       if (newServings === recipe?.servings) {
         setAdjustedIngredients(null);
@@ -337,49 +401,24 @@ export default function RecipeDetailScreen() {
       return;
     }
 
-    setIsAdjusting(true);
     console.log('Adjusting recipe for', newServings, 'servings');
+    const ratio = newServings / recipe.servings;
+    
+    const adjusted = recipe.ingredients.map((ing) => {
+      const originalAmount = parseAmount(ing.amount);
+      const newAmount = originalAmount * ratio;
+      const formattedAmount = formatAmount(newAmount);
+      
+      return {
+        ...ing,
+        amount: formattedAmount,
+      };
+    });
 
-    try {
-      const ingredientSchema = z.object({
-        ingredients: z.array(
-          z.object({
-            id: z.string(),
-            name: z.string(),
-            amount: z.string(),
-            unit: z.string(),
-          })
-        ),
-      });
-
-      const ingredientsList = recipe.ingredients
-        .map((ing) => `- ${ing.amount} ${ing.unit} ${ing.name}`)
-        .join('\n');
-
-      const result = await generateObject({
-        messages: [
-          {
-            role: 'user',
-            content: `I have a recipe that serves ${recipe.servings} people with these ingredients:
-
-${ingredientsList}
-
-Please adjust all ingredient amounts for ${newServings} servings. Keep the same units but adjust the amounts proportionally. Use practical measurements (e.g., "1/2" instead of "0.5", "1 1/4" instead of "1.25"). Return the adjusted ingredients with the same IDs and names.`,
-          },
-        ],
-        schema: ingredientSchema,
-      });
-
-      console.log('AI adjusted ingredients:', result);
-      setAdjustedIngredients(result.ingredients);
-      setAdjustedServings(newServings);
-      setShowServingAdjuster(false);
-    } catch (error) {
-      console.error('Error adjusting servings:', error);
-      Alert.alert('Error', 'Failed to adjust recipe. Please try again.');
-    } finally {
-      setIsAdjusting(false);
-    }
+    console.log('Adjusted ingredients:', adjusted);
+    setAdjustedIngredients(adjusted);
+    setAdjustedServings(newServings);
+    setShowServingAdjuster(false);
   };
 
   const resetServings = () => {
@@ -725,10 +764,7 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                 <Users size={20} color={Colors.secondary} />
                 <Text style={styles.metaValue}>{currentServings}</Text>
                 <Text style={styles.metaLabel}>servings</Text>
-                <View style={styles.aiHintRow}>
-                  <Sparkles size={10} color={Colors.secondary} />
-                  <Text style={[styles.metaHint, { color: Colors.secondary }]}>AI adjust</Text>
-                </View>
+                <Text style={[styles.metaHint, { color: Colors.secondary }]}>Adjust</Text>
               </GlassCard>
             </Pressable>
             <GlassCard style={styles.metaCard}>
@@ -1055,8 +1091,8 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
           <View style={styles.servingContainer}>
             <View style={styles.servingHeader}>
               <View style={styles.servingTitleRow}>
-                <Sparkles size={20} color={Colors.secondary} />
-                <Text style={styles.servingTitle}>AI Serving Adjuster</Text>
+                <Users size={20} color={Colors.secondary} />
+                <Text style={styles.servingTitle}>Adjust Servings</Text>
               </View>
               <Pressable onPress={() => setShowServingAdjuster(false)} style={styles.servingCloseButton}>
                 <X size={24} color={Colors.textSecondary} />
@@ -1064,14 +1100,13 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
             </View>
 
             <Text style={styles.servingSubtitle}>
-              Adjust servings and AI will recalculate all ingredients
+              Adjust servings to recalculate ingredient amounts
             </Text>
 
             <View style={styles.servingSelector}>
               <Pressable
                 style={styles.servingSelectorButton}
                 onPress={() => setAdjustedServings(Math.max(1, (adjustedServings ?? recipe?.servings ?? 1) - 1))}
-                disabled={isAdjusting}
               >
                 <Minus size={24} color={Colors.secondary} />
               </Pressable>
@@ -1082,7 +1117,6 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
               <Pressable
                 style={styles.servingSelectorButton}
                 onPress={() => setAdjustedServings((adjustedServings ?? recipe?.servings ?? 1) + 1)}
-                disabled={isAdjusting}
               >
                 <Plus size={24} color={Colors.secondary} />
               </Pressable>
@@ -1097,7 +1131,6 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
                     (adjustedServings ?? recipe?.servings) === num && styles.servingQuickButtonActive,
                   ]}
                   onPress={() => setAdjustedServings(num)}
-                  disabled={isAdjusting}
                 >
                   <Text
                     style={[
@@ -1112,18 +1145,10 @@ Please adjust all ingredient amounts for ${newServings} servings. Keep the same 
             </View>
 
             <Pressable
-              style={[styles.adjustButton, isAdjusting && styles.adjustButtonDisabled]}
-              onPress={() => adjustServingsWithAI(adjustedServings ?? recipe?.servings ?? 1)}
-              disabled={isAdjusting}
+              style={styles.adjustButton}
+              onPress={() => adjustServings(adjustedServings ?? recipe?.servings ?? 1)}
             >
-              {isAdjusting ? (
-                <ActivityIndicator size="small" color={Colors.textOnPrimary} />
-              ) : (
-                <>
-                  <Sparkles size={18} color={Colors.textOnPrimary} />
-                  <Text style={styles.adjustButtonText}>Adjust Recipe</Text>
-                </>
-              )}
+              <Text style={styles.adjustButtonText}>Adjust Recipe</Text>
             </Pressable>
 
             {recipe && adjustedServings !== recipe.servings && adjustedIngredients && (

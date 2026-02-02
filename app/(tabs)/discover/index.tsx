@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { X, Check, Users, BadgeCheck, ChefHat } from 'lucide-react-native';
+import { X, Check, Users, BadgeCheck, ChefHat, ArrowUp, ArrowDown } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useFilteredRecipes } from '@/contexts/RecipeContext';
 import { useSocial, useUserSearch } from '@/contexts/SocialContext';
@@ -25,6 +25,7 @@ import Button from '@/components/Button';
 
 const difficulties = ['Easy', 'Medium', 'Hard'];
 type SearchMode = 'recipes' | 'users';
+type SortOption = 'none' | 'rating_high' | 'rating_low';
 
 export default function DiscoverScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
@@ -37,6 +38,7 @@ export default function DiscoverScreen() {
   const [selectedCuisine, setSelectedCuisine] = useState<string | undefined>();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('none');
 
   const { isFollowing, toggleFollow, getSuggestedUsers } = useSocial();
   const searchedUsers = useUserSearch(search);
@@ -47,6 +49,18 @@ export default function DiscoverScreen() {
     selectedCuisine,
     selectedDifficulty
   );
+
+  const sortedRecipes = useMemo(() => {
+    if (sortBy === 'none') return filteredRecipes;
+    
+    return [...filteredRecipes].sort((a, b) => {
+      if (sortBy === 'rating_high') {
+        return b.rating - a.rating;
+      } else {
+        return a.rating - b.rating;
+      }
+    });
+  }, [filteredRecipes, sortBy]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -63,13 +77,15 @@ export default function DiscoverScreen() {
     if (selectedCategory) count++;
     if (selectedCuisine) count++;
     if (selectedDifficulty) count++;
+    if (sortBy !== 'none') count++;
     return count;
-  }, [selectedCategory, selectedCuisine, selectedDifficulty]);
+  }, [selectedCategory, selectedCuisine, selectedDifficulty, sortBy]);
 
   const clearFilters = () => {
     setSelectedCategory(undefined);
     setSelectedCuisine(undefined);
     setSelectedDifficulty(undefined);
+    setSortBy('none');
   };
 
   const renderUserItem = useCallback(
@@ -188,7 +204,8 @@ export default function DiscoverScreen() {
           </ScrollView>
 
           <Text style={styles.resultsCount}>
-            {filteredRecipes.length} recipe{filteredRecipes.length !== 1 ? 's' : ''} found
+            {sortedRecipes.length} recipe{sortedRecipes.length !== 1 ? 's' : ''} found
+            {sortBy !== 'none' && ` · Sorted by ${sortBy === 'rating_high' ? 'highest' : 'lowest'} rating`}
           </Text>
         </>
       )}
@@ -205,7 +222,7 @@ export default function DiscoverScreen() {
         </Text>
       )}
     </Animated.View>
-  ), [searchMode, fadeAnim, selectedCategory, filteredRecipes.length, searchedUsers.length, search]);
+  ), [searchMode, fadeAnim, selectedCategory, sortedRecipes.length, searchedUsers.length, search, sortBy]);
 
   const displayedUsers = search ? searchedUsers : getSuggestedUsers;
 
@@ -233,7 +250,7 @@ export default function DiscoverScreen() {
 
         {searchMode === 'recipes' ? (
           <FlatList
-            data={filteredRecipes}
+            data={sortedRecipes}
             keyExtractor={(item) => item.id}
             ListHeaderComponent={renderHeader}
             renderItem={({ item }) => (
@@ -295,6 +312,50 @@ export default function DiscoverScreen() {
             </View>
 
             <ScrollView style={styles.modalContent}>
+              <Text style={styles.filterSectionTitle}>Sort by Rating</Text>
+              <View style={styles.filterOptions}>
+                <Pressable
+                  style={[
+                    styles.filterOption,
+                    sortBy === 'rating_high' && styles.filterOptionSelected,
+                  ]}
+                  onPress={() => setSortBy(sortBy === 'rating_high' ? 'none' : 'rating_high')}
+                >
+                  <ArrowUp size={14} color={sortBy === 'rating_high' ? Colors.textOnPrimary : Colors.text} />
+                  <Text
+                    style={[
+                      styles.filterOptionText,
+                      sortBy === 'rating_high' && styles.filterOptionTextSelected,
+                    ]}
+                  >
+                    Highest First
+                  </Text>
+                  {sortBy === 'rating_high' && (
+                    <Check size={16} color={Colors.textOnPrimary} />
+                  )}
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.filterOption,
+                    sortBy === 'rating_low' && styles.filterOptionSelected,
+                  ]}
+                  onPress={() => setSortBy(sortBy === 'rating_low' ? 'none' : 'rating_low')}
+                >
+                  <ArrowDown size={14} color={sortBy === 'rating_low' ? Colors.textOnPrimary : Colors.text} />
+                  <Text
+                    style={[
+                      styles.filterOptionText,
+                      sortBy === 'rating_low' && styles.filterOptionTextSelected,
+                    ]}
+                  >
+                    Lowest First
+                  </Text>
+                  {sortBy === 'rating_low' && (
+                    <Check size={16} color={Colors.textOnPrimary} />
+                  )}
+                </Pressable>
+              </View>
+
               <Text style={styles.filterSectionTitle}>Cuisine</Text>
               <View style={styles.filterOptions}>
                 {cuisines.map((cuisine) => (
