@@ -15,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ShoppingCart, Check, X, Truck, ExternalLink, Copy, FileDown } from 'lucide-react-native';
 import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
 
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -369,6 +368,7 @@ export default function ShoppingListScreen() {
 
       console.log('PDF generated at:', uri);
 
+      const Sharing = await import('expo-sharing');
       const isSharingAvailable = await Sharing.isAvailableAsync();
       if (isSharingAvailable) {
         await Sharing.shareAsync(uri, {
