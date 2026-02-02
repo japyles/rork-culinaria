@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ShoppingCart, Check, Trash2, X, Truck, ExternalLink, Copy } from 'lucide-react-native';
+import { ShoppingCart, Check, X, Truck, ExternalLink, Copy, FileDown } from 'lucide-react-native';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -61,10 +63,6 @@ export default function ShoppingListScreen() {
     shoppingList.filter((item) => !item.isChecked), 
     [shoppingList]
   );
-
-  const formatItemsForSearch = (items: typeof shoppingList) => {
-    return items.map((item) => `${item.amount} ${item.unit} ${item.name}`.trim()).join(', ');
-  };
 
   const formatItemsForClipboard = (items: typeof shoppingList) => {
     return items.map((item) => `• ${item.amount} ${item.unit} ${item.name}`.trim()).join('\n');
@@ -179,6 +177,211 @@ export default function ShoppingListScreen() {
     } catch (error) {
       console.log('Error copying to clipboard:', error);
       Alert.alert('Error', 'Could not copy to clipboard. Please try again.');
+    }
+  };
+
+  const generatePdfHtml = () => {
+    const currentDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    const itemsToExport = uncheckedItems.length > 0 ? uncheckedItems : shoppingList;
+    
+    const groupedForPdf: Record<string, typeof shoppingList> = {};
+    itemsToExport.forEach((item) => {
+      const key = item.recipeName || 'Other Items';
+      if (!groupedForPdf[key]) {
+        groupedForPdf[key] = [];
+      }
+      groupedForPdf[key].push(item);
+    });
+
+    const groupsHtml = Object.entries(groupedForPdf)
+      .map(
+        ([recipeName, items]) => `
+        <div class="group">
+          <h3>${recipeName}</h3>
+          <ul>
+            ${items
+              .map(
+                (item) => `
+              <li>
+                <span class="checkbox">☐</span>
+                <span class="item-name">${item.name}</span>
+                <span class="item-amount">${item.amount} ${item.unit}</span>
+              </li>
+            `
+              )
+              .join('')}
+          </ul>
+        </div>
+      `
+      )
+      .join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Shopping List</title>
+          <style>
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              padding: 40px;
+              color: #1a1a2e;
+              background: #fff;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 32px;
+              padding-bottom: 24px;
+              border-bottom: 2px solid #e8e8e8;
+            }
+            .header h1 {
+              font-size: 28px;
+              font-weight: 700;
+              color: #E07A5F;
+              margin-bottom: 8px;
+            }
+            .header p {
+              font-size: 14px;
+              color: #666;
+            }
+            .summary {
+              background: #f8f9fa;
+              padding: 16px;
+              border-radius: 8px;
+              margin-bottom: 24px;
+              text-align: center;
+            }
+            .summary span {
+              font-size: 18px;
+              font-weight: 600;
+              color: #1a1a2e;
+            }
+            .group {
+              margin-bottom: 24px;
+            }
+            .group h3 {
+              font-size: 16px;
+              font-weight: 600;
+              color: #E07A5F;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 12px;
+              padding-bottom: 8px;
+              border-bottom: 1px solid #e8e8e8;
+            }
+            ul {
+              list-style: none;
+            }
+            li {
+              display: flex;
+              align-items: center;
+              padding: 12px 0;
+              border-bottom: 1px solid #f0f0f0;
+              gap: 12px;
+            }
+            li:last-child {
+              border-bottom: none;
+            }
+            .checkbox {
+              font-size: 18px;
+              color: #ccc;
+            }
+            .item-name {
+              flex: 1;
+              font-size: 16px;
+              color: #1a1a2e;
+            }
+            .item-amount {
+              font-size: 14px;
+              color: #666;
+              min-width: 100px;
+              text-align: right;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 24px;
+              border-top: 2px solid #e8e8e8;
+              text-align: center;
+              font-size: 12px;
+              color: #999;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>🛒 Shopping List</h1>
+            <p>${currentDate}</p>
+          </div>
+          <div class="summary">
+            <span>${itemsToExport.length} item${itemsToExport.length !== 1 ? 's' : ''} to buy</span>
+          </div>
+          ${groupsHtml}
+          <div class="footer">
+            Generated by RecipeApp
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const handleSaveAsPdf = async () => {
+    setShowDeliveryModal(false);
+    const items = uncheckedItems.length > 0 ? uncheckedItems : shoppingList;
+    if (items.length === 0) {
+      Alert.alert('Empty List', 'Add some items to your shopping list first.');
+      return;
+    }
+
+    try {
+      const html = generatePdfHtml();
+
+      if (Platform.OS === 'web') {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+          }, 250);
+        } else {
+          Alert.alert('Error', 'Please allow popups to print the shopping list.');
+        }
+        return;
+      }
+
+      const { uri } = await Print.printToFileAsync({
+        html,
+        base64: false,
+      });
+
+      console.log('PDF generated at:', uri);
+
+      const isSharingAvailable = await Sharing.isAvailableAsync();
+      if (isSharingAvailable) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Save or Share Shopping List',
+          UTI: 'com.adobe.pdf',
+        });
+      } else {
+        Alert.alert('PDF Created', 'Your shopping list PDF has been created but sharing is not available on this device.');
+      }
+    } catch (error) {
+      console.log('Error creating PDF:', error);
+      Alert.alert('Error', 'Could not create PDF. Please try again.');
     }
   };
 
@@ -337,6 +540,16 @@ export default function ShoppingListScreen() {
                   <View style={styles.deliveryOptionInfo}>
                     <Text style={styles.deliveryOptionTitle}>Copy List</Text>
                     <Text style={styles.deliveryOptionDesc}>Copy to clipboard for any app</Text>
+                  </View>
+                </Pressable>
+
+                <Pressable style={styles.deliveryOption} onPress={handleSaveAsPdf}>
+                  <View style={[styles.deliveryIconContainer, { backgroundColor: '#4A90A4' }]}>
+                    <FileDown size={20} color={Colors.textOnPrimary} />
+                  </View>
+                  <View style={styles.deliveryOptionInfo}>
+                    <Text style={styles.deliveryOptionTitle}>Save as PDF</Text>
+                    <Text style={styles.deliveryOptionDesc}>Download or print your list</Text>
                   </View>
                 </Pressable>
               </View>
