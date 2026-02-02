@@ -993,7 +993,8 @@ export function useFilteredRecipes(
   search: string,
   category?: string,
   cuisine?: string,
-  difficulty?: string
+  difficulty?: string,
+  dietaryRestrictions?: string[]
 ) {
   const { allRecipes } = useRecipes();
 
@@ -1008,10 +1009,16 @@ export function useFilteredRecipes(
       const matchesCategory = !category || recipe.category === category;
       const matchesCuisine = !cuisine || recipe.cuisine === cuisine;
       const matchesDifficulty = !difficulty || recipe.difficulty === difficulty;
+      
+      const matchesDietary = !dietaryRestrictions || dietaryRestrictions.length === 0 || 
+        dietaryRestrictions.every(restriction => 
+          recipe.dietaryRestrictions?.includes(restriction as any) ||
+          recipe.tags.some(tag => tag.toLowerCase().includes(restriction.toLowerCase()))
+        );
 
-      return matchesSearch && matchesCategory && matchesCuisine && matchesDifficulty;
+      return matchesSearch && matchesCategory && matchesCuisine && matchesDifficulty && matchesDietary;
     });
-  }, [allRecipes, search, category, cuisine, difficulty]);
+  }, [allRecipes, search, category, cuisine, difficulty, dietaryRestrictions]);
 }
 
 export function useRecipesByCategory(category: string) {

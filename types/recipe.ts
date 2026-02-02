@@ -21,6 +21,16 @@ export interface NutritionInfo {
   fiber?: number;
 }
 
+export type DietaryRestrictionType = 
+  | 'vegetarian'
+  | 'vegan'
+  | 'gluten-free'
+  | 'dairy-free'
+  | 'keto'
+  | 'paleo'
+  | 'low-carb'
+  | 'nut-free';
+
 export interface Recipe {
   id: string;
   title: string;
@@ -36,6 +46,7 @@ export interface Recipe {
   steps: Step[];
   nutrition?: NutritionInfo;
   tags: string[];
+  dietaryRestrictions?: DietaryRestrictionType[];
   rating: number;
   reviewCount: number;
   isFavorite?: boolean;

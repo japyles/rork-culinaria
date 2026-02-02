@@ -13,10 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { X, Check, Users, BadgeCheck, ChefHat, ArrowUp, ArrowDown } from 'lucide-react-native';
-import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useFilteredRecipes } from '@/contexts/RecipeContext';
 import { useSocial, useUserSearch } from '@/contexts/SocialContext';
-import { categories, cuisines } from '@/mocks/recipes';
+import { categories, cuisines, dietaryPreferences } from '@/mocks/recipes';
 import { User } from '@/types/recipe';
 import RecipeCard from '@/components/RecipeCard';
 import SearchBar from '@/components/SearchBar';
@@ -37,6 +37,7 @@ export default function DiscoverScreen() {
   );
   const [selectedCuisine, setSelectedCuisine] = useState<string | undefined>();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | undefined>();
+  const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('none');
 
@@ -47,7 +48,8 @@ export default function DiscoverScreen() {
     search,
     selectedCategory,
     selectedCuisine,
-    selectedDifficulty
+    selectedDifficulty,
+    selectedDietary
   );
 
   const sortedRecipes = useMemo(() => {
@@ -77,15 +79,23 @@ export default function DiscoverScreen() {
     if (selectedCategory) count++;
     if (selectedCuisine) count++;
     if (selectedDifficulty) count++;
+    if (selectedDietary.length > 0) count += selectedDietary.length;
     if (sortBy !== 'none') count++;
     return count;
-  }, [selectedCategory, selectedCuisine, selectedDifficulty, sortBy]);
+  }, [selectedCategory, selectedCuisine, selectedDifficulty, selectedDietary, sortBy]);
 
   const clearFilters = () => {
     setSelectedCategory(undefined);
     setSelectedCuisine(undefined);
     setSelectedDifficulty(undefined);
+    setSelectedDietary([]);
     setSortBy('none');
+  };
+
+  const toggleDietaryRestriction = (id: string) => {
+    setSelectedDietary(prev => 
+      prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]
+    );
   };
 
   const renderUserItem = useCallback(
@@ -415,6 +425,33 @@ export default function DiscoverScreen() {
                   </Pressable>
                 ))}
               </View>
+
+              <Text style={styles.filterSectionTitle}>Dietary Restrictions</Text>
+              <View style={styles.filterOptions}>
+                {dietaryPreferences.map((diet) => (
+                  <Pressable
+                    key={diet.id}
+                    style={[
+                      styles.filterOption,
+                      selectedDietary.includes(diet.id) && styles.filterOptionSelected,
+                    ]}
+                    onPress={() => toggleDietaryRestriction(diet.id)}
+                  >
+                    <Text style={styles.dietaryIcon}>{diet.icon}</Text>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        selectedDietary.includes(diet.id) && styles.filterOptionTextSelected,
+                      ]}
+                    >
+                      {diet.name}
+                    </Text>
+                    {selectedDietary.includes(diet.id) && (
+                      <Check size={16} color={Colors.textOnPrimary} />
+                    )}
+                  </Pressable>
+                ))}
+              </View>
             </ScrollView>
 
             <View style={styles.modalFooter}>
@@ -667,6 +704,9 @@ const styles = StyleSheet.create({
   filterOptionTextSelected: {
     color: Colors.textOnPrimary,
     fontWeight: '600' as const,
+  },
+  dietaryIcon: {
+    fontSize: 16,
   },
   modalFooter: {
     flexDirection: 'row',

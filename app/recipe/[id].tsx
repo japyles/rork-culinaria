@@ -36,15 +36,19 @@ import {
   X,
   Play,
   Pause,
-
   Plus,
   Minus,
   Sparkles,
   Star,
   MessageSquare,
   User as UserIcon,
+  Leaf,
+  Loader,
+  Save,
 } from 'lucide-react-native';
-import { Ingredient } from '@/types/recipe';
+import { Ingredient, DietaryRestrictionType } from '@/types/recipe';
+import { generateObject } from '@rork-ai/toolkit-sdk';
+import { z } from 'zod';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes, } from '@/contexts/RecipeContext';
 import * as Haptics from 'expo-haptics';
@@ -56,10 +60,21 @@ import { BlurView } from 'expo-blur';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
+const DIETARY_OPTIONS: { id: DietaryRestrictionType; name: string; icon: string }[] = [
+  { id: 'vegetarian', name: 'Vegetarian', icon: '🥬' },
+  { id: 'vegan', name: 'Vegan', icon: '🌱' },
+  { id: 'gluten-free', name: 'Gluten Free', icon: '🌾' },
+  { id: 'dairy-free', name: 'Dairy Free', icon: '🥛' },
+  { id: 'keto', name: 'Keto', icon: '🥑' },
+  { id: 'paleo', name: 'Paleo', icon: '🍖' },
+  { id: 'low-carb', name: 'Low Carb', icon: '📉' },
+  { id: 'nut-free', name: 'Nut Free', icon: '🥜' },
+];
+
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe, addReview, getReviewsForRecipe, getAverageRating, addToShoppingList } = useRecipes();
+  const { getRecipeById, toggleFavorite, addRecentlyViewed, isCustomRecipe, deleteRecipe, addReview, getReviewsForRecipe, getAverageRating, addToShoppingList, addRecipe } = useRecipes();
   const { getFollowingUsers, getFollowersUsers, shareRecipe } = useSocial();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [activeTab, setActiveTab] = useState<'ingredients' | 'instructions'>('ingredients');
@@ -78,6 +93,16 @@ export default function RecipeDetailScreen() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedShareUsers, setSelectedShareUsers] = useState<string[]>([]);
   const [shareMessage, setShareMessage] = useState('');
+  const [showDietaryModal, setShowDietaryModal] = useState(false);
+  const [selectedDietaryRestriction, setSelectedDietaryRestriction] = useState<DietaryRestrictionType | null>(null);
+  const [isConverting, setIsConverting] = useState(false);
+  const [convertedRecipe, setConvertedRecipe] = useState<{
+    ingredients: Ingredient[];
+    steps: { instruction: string; tip?: string }[];
+    description: string;
+    substitutions: string[];
+  } | null>(null);
+  const [isSavingConverted, setIsSavingConverted] = useState(false);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const soundRef = useRef<ExpoAv.Audio.Sound | null>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -555,6 +580,132 @@ export default function RecipeDetailScreen() {
 
   const allConnectedUsers = [...new Map([...getFollowingUsers, ...getFollowersUsers].map(u => [u.id, u])).values()];
 
+  const convertRecipeForDietary = async () => {
+    if (!recipe || !selectedDietaryRestriction) return;
+    
+    setIsConverting(true);
+    setConvertedRecipe(null);
+    
+    try {
+      console.log('[Recipe] Converting recipe for:', selectedDietaryRestriction);
+      
+      const dietaryName = DIETARY_OPTIONS.find(d => d.id === selectedDietaryRestriction)?.name || selectedDietaryRestriction;
+      
+      const result = await generateObject({
+        messages: [
+          {
+            role: 'user',
+            content: `Convert this recipe to be ${dietaryName} friendly.
+
+Original Recipe: ${recipe.title}
+Description: ${recipe.description}
+
+Original Ingredients:
+${recipe.ingredients.map(i => `- ${i.amount} ${i.unit} ${i.name}`).join('\n')}
+
+Original Steps:
+${recipe.steps.map(s => `${s.order}. ${s.instruction}`).join('\n')}
+
+Provide:
+1. Modified ingredients list with ${dietaryName}-friendly substitutions
+2. Updated cooking instructions if needed
+3. A brief updated description mentioning it's ${dietaryName}
+4. List of key substitutions made`,
+          },
+        ],
+        schema: z.object({
+          ingredients: z.array(z.object({
+            name: z.string(),
+            amount: z.string(),
+            unit: z.string(),
+          })),
+          steps: z.array(z.object({
+            instruction: z.string(),
+            tip: z.string().optional(),
+          })),
+          description: z.string(),
+          substitutions: z.array(z.string()),
+        }),
+      });
+      
+      console.log('[Recipe] Conversion successful');
+      setConvertedRecipe({
+        ingredients: result.ingredients.map((ing, idx) => ({
+          id: `conv-${idx}`,
+          ...ing,
+        })),
+        steps: result.steps,
+        description: result.description,
+        substitutions: result.substitutions,
+      });
+    } catch (error) {
+      console.error('[Recipe] Conversion error:', error);
+      Alert.alert('Conversion Failed', 'Unable to convert the recipe. Please try again.');
+    } finally {
+      setIsConverting(false);
+    }
+  };
+
+  const saveConvertedRecipe = async () => {
+    if (!recipe || !convertedRecipe || !selectedDietaryRestriction) return;
+    
+    setIsSavingConverted(true);
+    
+    try {
+      const dietaryName = DIETARY_OPTIONS.find(d => d.id === selectedDietaryRestriction)?.name || selectedDietaryRestriction;
+      
+      const newRecipe = {
+        title: `${recipe.title} (${dietaryName})`,
+        description: convertedRecipe.description,
+        imageUrl: recipe.imageUrl,
+        category: recipe.category,
+        cuisine: recipe.cuisine,
+        difficulty: recipe.difficulty,
+        prepTime: recipe.prepTime,
+        cookTime: recipe.cookTime,
+        servings: recipe.servings,
+        ingredients: convertedRecipe.ingredients,
+        steps: convertedRecipe.steps.map((step, idx) => ({
+          id: `step-${idx}`,
+          order: idx + 1,
+          instruction: step.instruction,
+          tip: step.tip,
+        })),
+        nutrition: recipe.nutrition,
+        tags: [...recipe.tags, selectedDietaryRestriction, dietaryName.toLowerCase()],
+        dietaryRestrictions: [selectedDietaryRestriction] as DietaryRestrictionType[],
+        sourceUrl: recipe.sourceUrl,
+      };
+      
+      const savedRecipe = await addRecipe(newRecipe);
+      console.log('[Recipe] Converted recipe saved:', savedRecipe);
+      
+      setShowDietaryModal(false);
+      setConvertedRecipe(null);
+      setSelectedDietaryRestriction(null);
+      
+      Alert.alert(
+        'Recipe Saved!',
+        `"${newRecipe.title}" has been saved to your recipes.`,
+        [
+          { text: 'Stay Here', style: 'cancel' },
+          { text: 'View Recipe', onPress: () => router.push(`/recipe/${(savedRecipe as any).id}`) },
+        ]
+      );
+    } catch (error) {
+      console.error('[Recipe] Save error:', error);
+      Alert.alert('Save Failed', 'Unable to save the converted recipe. Please try again.');
+    } finally {
+      setIsSavingConverted(false);
+    }
+  };
+
+  const closeDietaryModal = () => {
+    setShowDietaryModal(false);
+    setConvertedRecipe(null);
+    setSelectedDietaryRestriction(null);
+  };
+
   const handleOpenMenu = () => {
     console.log('handleOpenMenu called');
     setShowMenu(true);
@@ -916,6 +1067,12 @@ export default function RecipeDetailScreen() {
               })}
             </View>
           )}
+
+          <Pressable style={styles.dietaryConvertButton} onPress={() => setShowDietaryModal(true)}>
+            <Leaf size={18} color={Colors.primary} />
+            <Text style={styles.dietaryConvertButtonText}>Make Diet-Friendly</Text>
+            <Sparkles size={14} color={Colors.primary} />
+          </Pressable>
 
           <View style={styles.tagsContainer}>
             {recipe.tags.map((tag, index) => (
@@ -1361,6 +1518,145 @@ export default function RecipeDetailScreen() {
             </View>
           </View>
         </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showDietaryModal}
+        transparent
+        animationType="slide"
+        onRequestClose={closeDietaryModal}
+      >
+        <View style={styles.dietaryModalOverlay}>
+          <View style={styles.dietaryModalContainer}>
+            <View style={styles.dietaryModalHeader}>
+              <View style={styles.dietaryTitleRow}>
+                <Leaf size={22} color={Colors.primary} />
+                <Text style={styles.dietaryModalTitle}>Make Diet-Friendly</Text>
+              </View>
+              <Pressable onPress={closeDietaryModal} style={styles.dietaryCloseButton}>
+                <X size={24} color={Colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.dietaryContent} showsVerticalScrollIndicator={false}>
+              {!convertedRecipe ? (
+                <>
+                  <Text style={styles.dietarySubtitle}>
+                    Select a dietary restriction to convert this recipe
+                  </Text>
+                  
+                  <View style={styles.dietaryOptionsGrid}>
+                    {DIETARY_OPTIONS.map((option) => (
+                      <Pressable
+                        key={option.id}
+                        style={[
+                          styles.dietaryOption,
+                          selectedDietaryRestriction === option.id && styles.dietaryOptionSelected,
+                        ]}
+                        onPress={() => setSelectedDietaryRestriction(option.id)}
+                      >
+                        <Text style={styles.dietaryOptionIcon}>{option.icon}</Text>
+                        <Text
+                          style={[
+                            styles.dietaryOptionText,
+                            selectedDietaryRestriction === option.id && styles.dietaryOptionTextSelected,
+                          ]}
+                        >
+                          {option.name}
+                        </Text>
+                        {selectedDietaryRestriction === option.id && (
+                          <Check size={16} color={Colors.textOnPrimary} />
+                        )}
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  <Pressable
+                    style={[
+                      styles.convertButton,
+                      (!selectedDietaryRestriction || isConverting) && styles.convertButtonDisabled,
+                    ]}
+                    onPress={convertRecipeForDietary}
+                    disabled={!selectedDietaryRestriction || isConverting}
+                  >
+                    {isConverting ? (
+                      <>
+                        <Loader size={20} color={Colors.textOnPrimary} />
+                        <Text style={styles.convertButtonText}>Converting with AI...</Text>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={20} color={Colors.textOnPrimary} />
+                        <Text style={styles.convertButtonText}>Convert Recipe</Text>
+                      </>
+                    )}
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <View style={styles.conversionSuccessBanner}>
+                    <Check size={18} color={Colors.success} />
+                    <Text style={styles.conversionSuccessText}>
+                      Recipe converted to {DIETARY_OPTIONS.find(d => d.id === selectedDietaryRestriction)?.name}
+                    </Text>
+                  </View>
+
+                  <Text style={styles.convertedSectionTitle}>Substitutions Made</Text>
+                  <View style={styles.substitutionsList}>
+                    {convertedRecipe.substitutions.map((sub, idx) => (
+                      <View key={idx} style={styles.substitutionItem}>
+                        <View style={styles.substitutionBullet} />
+                        <Text style={styles.substitutionText}>{sub}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <Text style={styles.convertedSectionTitle}>Updated Ingredients</Text>
+                  <View style={styles.convertedIngredientsList}>
+                    {convertedRecipe.ingredients.map((ing, idx) => (
+                      <View key={idx} style={styles.convertedIngredientItem}>
+                        <Text style={styles.convertedIngredientAmount}>
+                          {ing.amount} {ing.unit}
+                        </Text>
+                        <Text style={styles.convertedIngredientName}>{ing.name}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <View style={styles.convertedActionsRow}>
+                    <Pressable
+                      style={styles.tryAnotherButton}
+                      onPress={() => {
+                        setConvertedRecipe(null);
+                        setSelectedDietaryRestriction(null);
+                      }}
+                    >
+                      <Text style={styles.tryAnotherButtonText}>Try Another</Text>
+                    </Pressable>
+                    
+                    <Pressable
+                      style={[
+                        styles.saveConvertedButton,
+                        isSavingConverted && styles.saveConvertedButtonDisabled,
+                      ]}
+                      onPress={saveConvertedRecipe}
+                      disabled={isSavingConverted}
+                    >
+                      {isSavingConverted ? (
+                        <Loader size={18} color={Colors.textOnPrimary} />
+                      ) : (
+                        <Save size={18} color={Colors.textOnPrimary} />
+                      )}
+                      <Text style={styles.saveConvertedButtonText}>
+                        {isSavingConverted ? 'Saving...' : 'Save to My Recipes'}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              )}
+            </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>
@@ -2427,5 +2723,212 @@ const styles = StyleSheet.create({
     ...Typography.label,
     color: Colors.textOnPrimary,
     fontSize: 16,
+  },
+  dietaryConvertButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary + '12',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  dietaryConvertButtonText: {
+    ...Typography.label,
+    color: Colors.primary,
+    fontSize: 14,
+  },
+  dietaryModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  dietaryModalContainer: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    maxHeight: '85%',
+    ...Shadow.lg,
+  },
+  dietaryModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  dietaryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  dietaryModalTitle: {
+    ...Typography.h3,
+    color: Colors.text,
+  },
+  dietaryCloseButton: {
+    padding: Spacing.xs,
+  },
+  dietaryContent: {
+    padding: Spacing.lg,
+  },
+  dietarySubtitle: {
+    ...Typography.body,
+    color: Colors.textSecondary,
+    textAlign: 'center' as const,
+    marginBottom: Spacing.xl,
+  },
+  dietaryOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  dietaryOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.borderLight,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.full,
+    gap: Spacing.xs,
+  },
+  dietaryOptionSelected: {
+    backgroundColor: Colors.primary,
+  },
+  dietaryOptionIcon: {
+    fontSize: 16,
+  },
+  dietaryOptionText: {
+    ...Typography.bodySmall,
+    color: Colors.text,
+  },
+  dietaryOptionTextSelected: {
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
+  },
+  convertButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  convertButtonDisabled: {
+    opacity: 0.6,
+  },
+  convertButtonText: {
+    ...Typography.label,
+    color: Colors.textOnPrimary,
+    fontSize: 16,
+  },
+  conversionSuccessBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.success + '15',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  conversionSuccessText: {
+    ...Typography.body,
+    color: Colors.success,
+    fontWeight: '500' as const,
+  },
+  convertedSectionTitle: {
+    ...Typography.label,
+    color: Colors.text,
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  substitutionsList: {
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+  },
+  substitutionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.sm,
+  },
+  substitutionBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.primary,
+    marginTop: 7,
+    marginRight: Spacing.sm,
+  },
+  substitutionText: {
+    ...Typography.bodySmall,
+    color: Colors.text,
+    flex: 1,
+  },
+  convertedIngredientsList: {
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+  },
+  convertedIngredientItem: {
+    flexDirection: 'row',
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  convertedIngredientAmount: {
+    ...Typography.bodySmall,
+    color: Colors.textSecondary,
+    width: 80,
+  },
+  convertedIngredientName: {
+    ...Typography.bodySmall,
+    color: Colors.text,
+    flex: 1,
+    fontWeight: '500' as const,
+  },
+  convertedActionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.xl,
+  },
+  tryAnotherButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    alignItems: 'center',
+  },
+  tryAnotherButtonText: {
+    ...Typography.label,
+    color: Colors.textSecondary,
+  },
+  saveConvertedButton: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.success,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+  },
+  saveConvertedButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveConvertedButtonText: {
+    ...Typography.label,
+    color: Colors.textOnPrimary,
   },
 });
