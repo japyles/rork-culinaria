@@ -36,19 +36,22 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   const { user, profile } = useAuth();
   const [localFollowing, setLocalFollowing] = useState<string[]>([]);
 
-  // Load local following from AsyncStorage
+  // Load local following from AsyncStorage or server
   useEffect(() => {
-    const loadLocalFollowing = async () => {
+    const loadFollowing = async () => {
       try {
+        // First load from local storage for immediate state
         const stored = await AsyncStorage.getItem(LOCAL_FOLLOWING_KEY);
         if (stored) {
-          setLocalFollowing(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          console.log('[Social] Loaded following from storage:', parsed);
+          setLocalFollowing(parsed);
         }
       } catch (err) {
         console.error('[Social] Error loading local following:', err);
       }
     };
-    loadLocalFollowing();
+    loadFollowing();
   }, []);
 
   const saveLocalFollowing = async (following: string[]) => {
@@ -146,6 +149,15 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
     },
   });
 
+  // Sync localFollowing with server data when it loads
+  useEffect(() => {
+    if (followingQuery.data && isSupabaseConfigured && user?.id) {
+      console.log('[Social] Syncing localFollowing with server data:', followingQuery.data);
+      setLocalFollowing(followingQuery.data);
+      saveLocalFollowing(followingQuery.data);
+    }
+  }, [followingQuery.data, user?.id]);
+
   const followersQuery = useQuery({
     queryKey: ['followers', user?.id],
     queryFn: async () => {
@@ -236,15 +248,14 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   };
 
   const toggleFollowMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      const isCurrentlyFollowing = localFollowing.includes(userId);
-      console.log('[Social] toggleFollow called for:', userId, 'currently following:', isCurrentlyFollowing);
+    mutationFn: async ({ userId, wasFollowing }: { userId: string; wasFollowing: boolean }) => {
+      console.log('[Social] toggleFollow mutationFn for:', userId, 'wasFollowing:', wasFollowing);
 
       // Handle local-only mode (no Supabase or not authenticated)
       if (!isSupabaseConfigured || !user?.id) {
         console.log('[Social] Using local follow state for user:', userId);
         let newFollowing: string[];
-        if (isCurrentlyFollowing) {
+        if (wasFollowing) {
           console.log('[Social] Locally unfollowing user:', userId);
           newFollowing = localFollowing.filter(id => id !== userId);
         } else {
@@ -252,13 +263,13 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
           newFollowing = [...localFollowing, userId];
         }
         console.log('[Social] New following list:', newFollowing);
-        return { newFollowing, isLocal: true, userId, wasFollowing: isCurrentlyFollowing };
+        return { newFollowing, isLocal: true, userId, wasFollowing };
       }
 
       // Ensure current user exists in the users table before following
       await ensureUserExists(user.id, user.email);
 
-      if (isCurrentlyFollowing) {
+      if (wasFollowing) {
         console.log('[Social] Unfollowing user:', userId);
         const { error } = await supabase
           .from('follows')
@@ -275,31 +286,30 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
 
         if (error) throw error;
       }
-      return { isLocal: false, userId, wasFollowing: isCurrentlyFollowing };
+      return { isLocal: false, userId, wasFollowing };
     },
-    onMutate: async (userId: string) => {
+    onMutate: async ({ userId, wasFollowing }: { userId: string; wasFollowing: boolean }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['following', user?.id] });
       
       // Snapshot the previous value
-      const previousFollowing = localFollowing;
+      const previousFollowing = [...localFollowing];
       
       // Optimistically update local state immediately
-      const isCurrentlyFollowing = localFollowing.includes(userId);
-      const newFollowing = isCurrentlyFollowing
+      const newFollowing = wasFollowing
         ? localFollowing.filter(id => id !== userId)
         : [...localFollowing, userId];
       
       console.log('[Social] Optimistic update - setting localFollowing to:', newFollowing);
       setLocalFollowing(newFollowing);
       
-      return { previousFollowing };
+      return { previousFollowing, wasFollowing };
     },
-    onError: (err, userId, context) => {
+    onError: (err, variables, context) => {
       console.error('[Social] Follow mutation error:', err);
       // Rollback on error
       if (context?.previousFollowing) {
-        console.log('[Social] Rolling back to previous following state');
+        console.log('[Social] Rolling back to previous following state:', context.previousFollowing);
         setLocalFollowing(context.previousFollowing);
       }
     },
@@ -350,21 +360,18 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   const { mutate: shareRecipeMutate } = shareRecipeMutation;
 
   const toggleFollow = useCallback((userId: string) => {
-    toggleFollowMutate(userId);
-  }, [toggleFollowMutate]);
+    // Capture current state BEFORE mutation to pass to mutationFn
+    const wasFollowing = localFollowing.includes(userId);
+    console.log('[Social] toggleFollow called for:', userId, 'wasFollowing:', wasFollowing);
+    toggleFollowMutate({ userId, wasFollowing });
+  }, [toggleFollowMutate, localFollowing]);
 
   const isFollowing = useCallback((userId: string) => {
-    // Prioritize localFollowing for local mode to ensure immediate UI updates
-    if (!isSupabaseConfigured || !user?.id) {
-      const result = localFollowing.includes(userId);
-      console.log('[Social] isFollowing (local):', userId, result, 'localFollowing:', localFollowing);
-      return result;
-    }
-    const followingData = followingQuery.data || [];
-    const result = followingData.includes(userId);
-    console.log('[Social] isFollowing (remote):', userId, result);
+    // Always use localFollowing for immediate UI updates (it's kept in sync with server)
+    const result = localFollowing.includes(userId);
+    console.log('[Social] isFollowing:', userId, result);
     return result;
-  }, [followingQuery.data, localFollowing, user?.id]);
+  }, [localFollowing]);
 
   const shareRecipe = useCallback((recipeId: string, toUserIds: string[], message?: string) => {
     shareRecipeMutate({ recipeId, toUserIds, message });
