@@ -221,7 +221,9 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
         }
         setLocalFollowing(newFollowing);
         await saveLocalFollowing(newFollowing);
-        return;
+        // Update query cache directly for immediate UI update
+        queryClient.setQueryData(['following', user?.id], newFollowing);
+        return { newFollowing, isLocal: true };
       }
 
       if (isCurrentlyFollowing) {
@@ -241,8 +243,11 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
 
         if (error) throw error;
       }
+      return { isLocal: false };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      // Skip invalidation for local mode since we already set the data
+      if (result?.isLocal) return;
       queryClient.invalidateQueries({ queryKey: ['following', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['followers'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -286,9 +291,13 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   }, [toggleFollowMutate]);
 
   const isFollowing = useCallback((userId: string) => {
-    const following = followingQuery.data || localFollowing;
+    // Prioritize localFollowing for local mode to ensure immediate UI updates
+    if (!isSupabaseConfigured || !user?.id) {
+      return localFollowing.includes(userId);
+    }
+    const following = followingQuery.data || [];
     return following.includes(userId);
-  }, [followingQuery.data, localFollowing]);
+  }, [followingQuery.data, localFollowing, user?.id]);
 
   const shareRecipe = useCallback((recipeId: string, toUserIds: string[], message?: string) => {
     shareRecipeMutate({ recipeId, toUserIds, message });
