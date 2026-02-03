@@ -1,6 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { User, SharedRecipe } from '@/types/recipe';
@@ -28,9 +29,35 @@ interface DbSharedRecipe {
   shared_at: string;
 }
 
+const LOCAL_FOLLOWING_KEY = 'local_following';
+
 export const [SocialProvider, useSocial] = createContextHook(() => {
   const queryClient = useQueryClient();
   const { user, profile } = useAuth();
+  const [localFollowing, setLocalFollowing] = useState<string[]>([]);
+
+  // Load local following from AsyncStorage
+  useEffect(() => {
+    const loadLocalFollowing = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(LOCAL_FOLLOWING_KEY);
+        if (stored) {
+          setLocalFollowing(JSON.parse(stored));
+        }
+      } catch (err) {
+        console.error('[Social] Error loading local following:', err);
+      }
+    };
+    loadLocalFollowing();
+  }, []);
+
+  const saveLocalFollowing = async (following: string[]) => {
+    try {
+      await AsyncStorage.setItem(LOCAL_FOLLOWING_KEY, JSON.stringify(following));
+    } catch (err) {
+      console.error('[Social] Error saving local following:', err);
+    }
+  };
 
   const usersQuery = useQuery({
     queryKey: ['users'],
@@ -94,43 +121,57 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   const followingQuery = useQuery({
     queryKey: ['following', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!isSupabaseConfigured || !user?.id) {
+        console.log('[Social] Using local following state');
+        return localFollowing;
+      }
       
       console.log('[Social] Fetching following for user:', user.id);
-      const { data, error } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('follows')
+          .select('following_id')
+          .eq('follower_id', user.id);
 
-      if (error) {
-        console.error('[Social] Error fetching following:', error);
-        throw error;
+        if (error) {
+          console.error('[Social] Error fetching following:', error);
+          return localFollowing;
+        }
+
+        return (data || []).map((f: { following_id: string }) => f.following_id);
+      } catch (err) {
+        console.error('[Social] Network error fetching following:', err);
+        return localFollowing;
       }
-
-      return (data || []).map((f: { following_id: string }) => f.following_id);
     },
-    enabled: !!user?.id,
   });
 
   const followersQuery = useQuery({
     queryKey: ['followers', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!isSupabaseConfigured || !user?.id) {
+        console.log('[Social] Using empty followers (local mode)');
+        return [];
+      }
       
       console.log('[Social] Fetching followers for user:', user.id);
-      const { data, error } = await supabase
-        .from('follows')
-        .select('follower_id')
-        .eq('following_id', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('follows')
+          .select('follower_id')
+          .eq('following_id', user.id);
 
-      if (error) {
-        console.error('[Social] Error fetching followers:', error);
-        throw error;
+        if (error) {
+          console.error('[Social] Error fetching followers:', error);
+          return [];
+        }
+
+        return (data || []).map((f: { follower_id: string }) => f.follower_id);
+      } catch (err) {
+        console.error('[Social] Network error fetching followers:', err);
+        return [];
       }
-
-      return (data || []).map((f: { follower_id: string }) => f.follower_id);
     },
-    enabled: !!user?.id,
   });
 
   const sharedRecipesQuery = useQuery({
@@ -164,10 +205,24 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
 
   const toggleFollowMutation = useMutation({
     mutationFn: async (userId: string) => {
-      if (!user?.id) throw new Error('Not authenticated');
-
-      const currentFollowing = followingQuery.data || [];
+      const currentFollowing = followingQuery.data || localFollowing;
       const isCurrentlyFollowing = currentFollowing.includes(userId);
+
+      // Handle local-only mode (no Supabase or not authenticated)
+      if (!isSupabaseConfigured || !user?.id) {
+        console.log('[Social] Using local follow state');
+        let newFollowing: string[];
+        if (isCurrentlyFollowing) {
+          console.log('[Social] Locally unfollowing user:', userId);
+          newFollowing = localFollowing.filter(id => id !== userId);
+        } else {
+          console.log('[Social] Locally following user:', userId);
+          newFollowing = [...localFollowing, userId];
+        }
+        setLocalFollowing(newFollowing);
+        await saveLocalFollowing(newFollowing);
+        return;
+      }
 
       if (isCurrentlyFollowing) {
         console.log('[Social] Unfollowing user:', userId);
@@ -231,8 +286,9 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   }, [toggleFollowMutate]);
 
   const isFollowing = useCallback((userId: string) => {
-    return followingQuery.data?.includes(userId) || false;
-  }, [followingQuery.data]);
+    const following = followingQuery.data || localFollowing;
+    return following.includes(userId);
+  }, [followingQuery.data, localFollowing]);
 
   const shareRecipe = useCallback((recipeId: string, toUserIds: string[], message?: string) => {
     shareRecipeMutate({ recipeId, toUserIds, message });
@@ -272,9 +328,9 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   }, [usersQuery.data, user?.id]);
 
   const getFollowingUsers = useMemo(() => {
-    const followingIds = followingQuery.data || [];
+    const followingIds = followingQuery.data || localFollowing;
     return (usersQuery.data || []).filter((u) => followingIds.includes(u.id));
-  }, [usersQuery.data, followingQuery.data]);
+  }, [usersQuery.data, followingQuery.data, localFollowing]);
 
   const getFollowersUsers = useMemo(() => {
     const followerIds = followersQuery.data || [];
@@ -282,12 +338,12 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   }, [usersQuery.data, followersQuery.data]);
 
   const getSuggestedUsers = useMemo(() => {
-    const followingIds = followingQuery.data || [];
+    const followingIds = followingQuery.data || localFollowing;
     return allUsers
       .filter((u) => !followingIds.includes(u.id))
       .sort((a, b) => b.followersCount - a.followersCount)
       .slice(0, 5);
-  }, [allUsers, followingQuery.data]);
+  }, [allUsers, followingQuery.data, localFollowing]);
 
   const isLoading = usersQuery.isLoading;
   const isLoadingUserData = followingQuery.isLoading || 
