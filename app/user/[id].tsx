@@ -25,7 +25,7 @@ import RecipeCard from '@/components/RecipeCard';
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { getUserById, isFollowing, toggleFollow, isLoadingUsers } = useSocial();
+  const { getUserById, isFollowing, toggleFollow, isLoadingUsers, isFollowPending } = useSocial();
   const { allRecipes } = useRecipes();
 
   const user = useMemo(() => getUserById(id), [id, getUserById]);
@@ -129,8 +129,13 @@ export default function UserProfileScreen() {
               style={[
                 styles.followButton,
                 following && styles.followingButton,
+                isFollowPending && styles.followButtonDisabled,
               ]}
-              onPress={() => toggleFollow(user.id)}
+              onPress={() => {
+                console.log('[UserProfile] Follow button pressed for:', user.id);
+                toggleFollow(user.id);
+              }}
+              disabled={isFollowPending}
             >
               <Text
                 style={[
@@ -138,7 +143,7 @@ export default function UserProfileScreen() {
                   following && styles.followingButtonText,
                 ]}
               >
-                {following ? 'Following' : 'Follow'}
+                {isFollowPending ? 'Loading...' : following ? 'Following' : 'Follow'}
               </Text>
             </Pressable>
           </View>
@@ -282,6 +287,9 @@ const styles = StyleSheet.create({
   },
   followingButtonText: {
     color: Colors.primary,
+  },
+  followButtonDisabled: {
+    opacity: 0.6,
   },
   recipesSection: {
     paddingTop: Spacing.lg,

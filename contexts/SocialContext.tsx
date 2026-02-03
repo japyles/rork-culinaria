@@ -205,12 +205,12 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
 
   const toggleFollowMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const currentFollowing = followingQuery.data || localFollowing;
-      const isCurrentlyFollowing = currentFollowing.includes(userId);
+      const isCurrentlyFollowing = localFollowing.includes(userId);
+      console.log('[Social] toggleFollow called for:', userId, 'currently following:', isCurrentlyFollowing);
 
       // Handle local-only mode (no Supabase or not authenticated)
       if (!isSupabaseConfigured || !user?.id) {
-        console.log('[Social] Using local follow state');
+        console.log('[Social] Using local follow state for user:', userId);
         let newFollowing: string[];
         if (isCurrentlyFollowing) {
           console.log('[Social] Locally unfollowing user:', userId);
@@ -219,11 +219,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
           console.log('[Social] Locally following user:', userId);
           newFollowing = [...localFollowing, userId];
         }
-        setLocalFollowing(newFollowing);
-        await saveLocalFollowing(newFollowing);
-        // Update query cache directly for immediate UI update
-        queryClient.setQueryData(['following', user?.id], newFollowing);
-        return { newFollowing, isLocal: true };
+        console.log('[Social] New following list:', newFollowing);
+        return { newFollowing, isLocal: true, userId };
       }
 
       if (isCurrentlyFollowing) {
@@ -243,11 +240,15 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
 
         if (error) throw error;
       }
-      return { isLocal: false };
+      return { isLocal: false, userId };
     },
     onSuccess: (result) => {
-      // Skip invalidation for local mode since we already set the data
-      if (result?.isLocal) return;
+      if (result?.isLocal && result.newFollowing) {
+        console.log('[Social] Updating local following state:', result.newFollowing);
+        setLocalFollowing(result.newFollowing);
+        saveLocalFollowing(result.newFollowing);
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ['following', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['followers'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -293,10 +294,14 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
   const isFollowing = useCallback((userId: string) => {
     // Prioritize localFollowing for local mode to ensure immediate UI updates
     if (!isSupabaseConfigured || !user?.id) {
-      return localFollowing.includes(userId);
+      const result = localFollowing.includes(userId);
+      console.log('[Social] isFollowing (local):', userId, result, 'localFollowing:', localFollowing);
+      return result;
     }
-    const following = followingQuery.data || [];
-    return following.includes(userId);
+    const followingData = followingQuery.data || [];
+    const result = followingData.includes(userId);
+    console.log('[Social] isFollowing (remote):', userId, result);
+    return result;
   }, [followingQuery.data, localFollowing, user?.id]);
 
   const shareRecipe = useCallback((recipeId: string, toUserIds: string[], message?: string) => {
@@ -360,7 +365,8 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
 
   return {
     currentUser: profile,
-    following: followingQuery.data || [],
+    following: (!isSupabaseConfigured || !user?.id) ? localFollowing : (followingQuery.data || []),
+    isFollowPending: toggleFollowMutation.isPending,
     followers: followersQuery.data || [],
     sharedRecipes: sharedRecipesQuery.data || [],
     allUsers,
