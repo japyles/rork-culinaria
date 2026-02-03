@@ -203,6 +203,38 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
     enabled: !!user?.id,
   });
 
+  const ensureUserExists = async (userId: string, email?: string | null) => {
+    console.log('[Social] Checking if user exists in database:', userId);
+    const { error: checkError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', userId)
+      .single();
+
+    if (checkError && checkError.code === 'PGRST116') {
+      console.log('[Social] User not found, creating user record...');
+      const username = email?.split('@')[0] || 'user';
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          email: email || `${userId}@placeholder.com`,
+          username: username,
+          display_name: username,
+        } as any);
+
+      if (insertError) {
+        console.error('[Social] Error creating user:', insertError);
+        throw insertError;
+      }
+      console.log('[Social] User record created successfully');
+    } else if (checkError) {
+      console.error('[Social] Error checking user:', checkError);
+    } else {
+      console.log('[Social] User already exists in database');
+    }
+  };
+
   const toggleFollowMutation = useMutation({
     mutationFn: async (userId: string) => {
       const isCurrentlyFollowing = localFollowing.includes(userId);
@@ -222,6 +254,9 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
         console.log('[Social] New following list:', newFollowing);
         return { newFollowing, isLocal: true, userId, wasFollowing: isCurrentlyFollowing };
       }
+
+      // Ensure current user exists in the users table before following
+      await ensureUserExists(user.id, user.email);
 
       if (isCurrentlyFollowing) {
         console.log('[Social] Unfollowing user:', userId);
