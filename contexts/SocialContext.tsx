@@ -220,7 +220,7 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
           newFollowing = [...localFollowing, userId];
         }
         console.log('[Social] New following list:', newFollowing);
-        return { newFollowing, isLocal: true, userId };
+        return { newFollowing, isLocal: true, userId, wasFollowing: isCurrentlyFollowing };
       }
 
       if (isCurrentlyFollowing) {
@@ -240,15 +240,42 @@ export const [SocialProvider, useSocial] = createContextHook(() => {
 
         if (error) throw error;
       }
-      return { isLocal: false, userId };
+      return { isLocal: false, userId, wasFollowing: isCurrentlyFollowing };
+    },
+    onMutate: async (userId: string) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['following', user?.id] });
+      
+      // Snapshot the previous value
+      const previousFollowing = localFollowing;
+      
+      // Optimistically update local state immediately
+      const isCurrentlyFollowing = localFollowing.includes(userId);
+      const newFollowing = isCurrentlyFollowing
+        ? localFollowing.filter(id => id !== userId)
+        : [...localFollowing, userId];
+      
+      console.log('[Social] Optimistic update - setting localFollowing to:', newFollowing);
+      setLocalFollowing(newFollowing);
+      
+      return { previousFollowing };
+    },
+    onError: (err, userId, context) => {
+      console.error('[Social] Follow mutation error:', err);
+      // Rollback on error
+      if (context?.previousFollowing) {
+        console.log('[Social] Rolling back to previous following state');
+        setLocalFollowing(context.previousFollowing);
+      }
     },
     onSuccess: (result) => {
       if (result?.isLocal && result.newFollowing) {
-        console.log('[Social] Updating local following state:', result.newFollowing);
-        setLocalFollowing(result.newFollowing);
+        console.log('[Social] Saving local following state:', result.newFollowing);
         saveLocalFollowing(result.newFollowing);
         return;
       }
+      // For remote mode, also save to local storage as backup
+      saveLocalFollowing(localFollowing);
       queryClient.invalidateQueries({ queryKey: ['following', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['followers'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
