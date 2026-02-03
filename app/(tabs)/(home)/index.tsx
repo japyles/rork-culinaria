@@ -14,11 +14,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Sparkles, Video, TrendingUp, Camera, PenLine, User, LogOut } from 'lucide-react-native';
+import { Sparkles, Video, TrendingUp, Camera, PenLine, User, LogOut, Bell } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSocial } from '@/contexts/SocialContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { categories } from '@/mocks/recipes';
 import RecipeCard from '@/components/RecipeCard';
 import SectionHeader from '@/components/SectionHeader';
@@ -33,6 +34,7 @@ export default function HomeScreen() {
   const { allRecipes, recentRecipes } = useRecipes();
   const { currentUser } = useSocial();
   const { signOut } = useAuth();
+  const { unreadCount } = useNotifications();
   const [showDropdown, setShowDropdown] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -123,13 +125,25 @@ export default function HomeScreen() {
               style={styles.heroOverlay}
             >
               <View style={[styles.heroHeader, { paddingTop: insets.top + 8 }]}>
-                <View >
-                  <Text style={styles.heroTextTop} >
+                <View>
+                  <Text style={styles.heroTextTop}>
                     Good {timeOfDayGreeting},{"\n"}{currentUser?.displayName ?? 'Chef'}!
                   </Text>
-                	
                 </View>
-                <View>
+                <View style={styles.headerRightActions}>
+                  <Pressable
+                    style={styles.notificationButton}
+                    onPress={() => router.push('/notifications-modal')}
+                  >
+                    <Bell size={22} color="#fff" />
+                    {unreadCount > 0 && (
+                      <View style={styles.notificationBadge}>
+                        <Text style={styles.notificationBadgeText}>
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
                   <Pressable
                     style={styles.heroAvatarContainer}
                     onPress={handleAvatarPress}
@@ -321,13 +335,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.lg,
   },
-  menuButton: {
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  notificationButton: {
     width: 44,
     height: 44,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.3)',
+  },
+  notificationBadgeText: {
+    fontSize: 10,
+    fontWeight: '700' as const,
+    color: '#fff',
   },
   heroAvatarContainer: {
     borderRadius: BorderRadius.full,

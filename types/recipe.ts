@@ -150,3 +150,16 @@ export interface MealPlanEntry {
   mealType: 'breakfast' | 'lunch' | 'dinner';
   recipeId: string;
 }
+
+export interface Notification {
+  id: string;
+  type: 'new_recipe';
+  fromUserId: string;
+  fromUserName: string;
+  fromUserAvatar: string;
+  recipeId: string;
+  recipeTitle: string;
+  recipeImageUrl: string;
+  isRead: boolean;
+  createdAt: string;
+}

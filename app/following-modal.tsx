@@ -7,18 +7,21 @@ import {
   Pressable,
   Image,
   TextInput,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { UserPlus, X, Search, BadgeCheck } from 'lucide-react-native';
+import { UserPlus, X, Search, BadgeCheck, BellOff, Bell } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { User } from '@/types/recipe';
 import Button from '@/components/Button';
 
 export default function FollowingModalScreen() {
   const router = useRouter();
   const { getFollowingUsers, toggleFollow, isFollowing } = useSocial();
+  const { isUserMuted, toggleMuteUser } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
 
   const closeSheet = () => {
@@ -32,9 +35,31 @@ export default function FollowingModalScreen() {
       user.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleToggleMute = useCallback(
+    (user: User) => {
+      const isMuted = isUserMuted(user.id);
+      Alert.alert(
+        isMuted ? 'Unmute Notifications' : 'Mute Notifications',
+        isMuted
+          ? `You will receive notifications when ${user.displayName} posts new recipes.`
+          : `You will no longer receive notifications when ${user.displayName} posts new recipes.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: isMuted ? 'Unmute' : 'Mute',
+            onPress: () => toggleMuteUser(user.id),
+            style: isMuted ? 'default' : 'destructive',
+          },
+        ]
+      );
+    },
+    [isUserMuted, toggleMuteUser]
+  );
+
   const renderUserItem = useCallback(
     ({ item }: { item: User }) => {
       const isFollowingUser = isFollowing(item.id);
+      const isMuted = isUserMuted(item.id);
       return (
         <Pressable
           style={styles.userItem}
@@ -50,9 +75,23 @@ export default function FollowingModalScreen() {
               {item.isVerified && (
                 <BadgeCheck size={14} color={Colors.primary} />
               )}
+              {isMuted && (
+                <BellOff size={12} color={Colors.textSecondary} />
+              )}
             </View>
             <Text style={styles.userUsername}>@{item.username}</Text>
           </View>
+          <Pressable
+            style={[styles.muteButton, isMuted && styles.muteButtonActive]}
+            onPress={() => handleToggleMute(item)}
+            hitSlop={8}
+          >
+            {isMuted ? (
+              <BellOff size={18} color={Colors.textSecondary} />
+            ) : (
+              <Bell size={18} color={Colors.primary} />
+            )}
+          </Pressable>
           <Button
             title={isFollowingUser ? 'Following' : 'Follow'}
             variant={isFollowingUser ? 'outline' : 'primary'}
@@ -62,7 +101,7 @@ export default function FollowingModalScreen() {
         </Pressable>
       );
     },
-    [isFollowing, toggleFollow, router]
+    [isFollowing, isUserMuted, toggleFollow, router, handleToggleMute]
   );
 
   return (
@@ -110,7 +149,7 @@ export default function FollowingModalScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <UserPlus size={48} color={Colors.textSecondary} />
-            <Text style={styles.emptyTitle}>You're not following anyone</Text>
+            <Text style={styles.emptyTitle}>You&apos;re not following anyone</Text>
             <Text style={styles.emptySubtext}>
               Discover users to follow in the Discover tab
             </Text>
@@ -209,6 +248,15 @@ const styles = StyleSheet.create({
   userUsername: {
     ...Typography.caption,
     color: Colors.textSecondary,
+  },
+  muteButton: {
+    padding: Spacing.sm,
+    marginRight: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.background,
+  },
+  muteButtonActive: {
+    backgroundColor: Colors.error + '15',
   },
   emptyContainer: {
     alignItems: 'center',

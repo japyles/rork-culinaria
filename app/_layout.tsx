@@ -10,6 +10,7 @@ import { SocialProvider } from "@/contexts/SocialContext";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { AIUsageProvider } from "@/contexts/AIUsageContext";
 import { AICacheProvider } from "@/contexts/AICacheContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import Colors from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -297,6 +298,17 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="notifications-modal"
+        options={{
+          headerShown: false,
+          presentation: "formSheet",
+          sheetAllowedDetents: [0.5, 0.85],
+          sheetCornerRadius: 24,
+          sheetGrabberVisible: true,
+          sheetExpandsWhenScrolledToEdge: false,
+        }}
+      />
+      <Stack.Screen
         name="paywall"
         options={{
           headerShown: false,
@@ -340,14 +352,16 @@ export default function RootLayout() {
         <AuthProvider>
           <RecipeProvider>
             <SocialProvider>
-              <SubscriptionProvider>
-                <AIUsageProvider>
+              <NotificationProvider>
+                <SubscriptionProvider>
+                  <AIUsageProvider>
                     <AICacheProvider>
                       <RootLayoutNav />
-                  {showSplash && <AnimatedSplash onAnimationComplete={handleAnimationComplete} />}
+                      {showSplash && <AnimatedSplash onAnimationComplete={handleAnimationComplete} />}
                     </AICacheProvider>
                   </AIUsageProvider>
-              </SubscriptionProvider>
+                </SubscriptionProvider>
+              </NotificationProvider>
             </SocialProvider>
           </RecipeProvider>
         </AuthProvider>
