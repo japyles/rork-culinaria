@@ -45,6 +45,7 @@ import {
   Leaf,
   Loader,
   Save,
+  Video,
 } from 'lucide-react-native';
 import { Ingredient, DietaryRestrictionType } from '@/types/recipe';
 import { generateObject } from '@rork-ai/toolkit-sdk';
@@ -926,6 +927,26 @@ Provide:
           </View>
 
           <Text style={styles.description}>{recipe.description}</Text>
+
+          {recipe.sourceUrl && (
+            <Pressable
+              style={styles.videoSourceCard}
+              onPress={() => Linking.openURL(recipe.sourceUrl!)}
+            >
+              <View style={styles.videoSourceIcon}>
+                <Video size={20} color={Colors.secondary} />
+              </View>
+              <View style={styles.videoSourceContent}>
+                <Text style={styles.videoSourceLabel}>Original Video</Text>
+                <Text style={styles.videoSourceUrl} numberOfLines={1}>
+                  {recipe.sourceUrl}
+                </Text>
+              </View>
+              <View style={styles.videoSourceArrow}>
+                <Text style={styles.videoSourceArrowText}>Watch →</Text>
+              </View>
+            </Pressable>
+          )}
 
           {recipe.nutrition && (
             <GlassCard style={styles.nutritionCard}>
@@ -2723,6 +2744,49 @@ const styles = StyleSheet.create({
     ...Typography.label,
     color: Colors.textOnPrimary,
     fontSize: 16,
+  },
+  videoSourceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.secondary + '12',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.secondary + '25',
+  },
+  videoSourceIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.secondary + '20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  videoSourceContent: {
+    flex: 1,
+  },
+  videoSourceLabel: {
+    ...Typography.label,
+    color: Colors.text,
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  videoSourceUrl: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  videoSourceArrow: {
+    backgroundColor: Colors.secondary,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+  },
+  videoSourceArrowText: {
+    ...Typography.caption,
+    color: Colors.textOnPrimary,
+    fontWeight: '600' as const,
   },
   dietaryConvertButton: {
     flexDirection: 'row',
