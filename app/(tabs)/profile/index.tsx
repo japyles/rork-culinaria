@@ -579,35 +579,7 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
 
-            <Pressable
-              style={styles.subscriptionCard}
-              onPress={() => router.push('/paywall')}
-            >
-              <View style={styles.subscriptionContent}>
-                <View style={styles.subscriptionIconContainer}>
-                  <Crown size={24} color={Colors.primary} />
-                </View>
-                <View style={styles.subscriptionInfo}>
-                  <Text style={styles.subscriptionTitle}>
-                    {isPremium
-                      ? hasProAccess
-                        ? 'Pro Member'
-                        : 'Basic Member'
-                      : 'Upgrade to Premium'}
-                  </Text>
-                  <Text style={styles.subscriptionDesc}>
-                    {isPremium
-                      ? 'Manage your subscription'
-                      : 'Unlock all features and recipes'}
-                  </Text>
-                </View>
-              </View>
-              {!isPremium && (
-                <View style={styles.upgradeBadge}>
-                  <Text style={styles.upgradeBadgeText}>Upgrade</Text>
-                </View>
-              )}
-            </Pressable>
+            
           </View>
         </ScrollView>
 
