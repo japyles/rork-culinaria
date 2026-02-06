@@ -593,33 +593,7 @@ export default function ProfileScreen() {
                 style={styles.saveButton}
               />
 
-              <Pressable
-                style={styles.logoutButton}
-                onPress={() => {
-                  Alert.alert(
-                    'Log Out',
-                    'Are you sure you want to log out?',
-                    [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Log Out',
-                        style: 'destructive',
-                        onPress: async () => {
-                          setShowEditModal(false);
-                          await signOut();
-                          router.replace('/login');
-                        },
-                      },
-                    ]
-                  );
-                }}
-                disabled={isSigningOut}
-              >
-                <LogOut size={20} color={Colors.error} />
-                <Text style={styles.logoutText}>
-                  {isSigningOut ? 'Logging out...' : 'Log Out'}
-                </Text>
-              </Pressable>
+              
             </ScrollView>
           </SafeAreaView>
         </Modal>
