@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { X, Check, Users, BadgeCheck, ChefHat, ArrowUp, ArrowDown } from 'lucide-react-native';
-import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 import { useFilteredRecipes } from '@/contexts/RecipeContext';
 import { useSocial, useUserSearch } from '@/contexts/SocialContext';
 import { categories, cuisines, dietaryPreferences } from '@/mocks/recipes';
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   listContent: {
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: FLOATING_BAR_HEIGHT,
   },
   cardContainer: {
     paddingHorizontal: Spacing.lg,

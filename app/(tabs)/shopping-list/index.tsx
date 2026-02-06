@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ShoppingCart, Check, X, Truck, ExternalLink, Copy, FileDown } from 'lucide-react-native';
 import * as Print from 'expo-print';
 
-import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius, Shadow, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import GlassCard from '@/components/GlassCard';
 import Button from '@/components/Button';
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   bottomPadding: {
-    height: Spacing.xxxl,
+    height: FLOATING_BAR_HEIGHT,
   },
   actionButtonsRow: {
     flexDirection: 'row',

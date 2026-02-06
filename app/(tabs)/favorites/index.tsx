@@ -11,7 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Heart, Settings, BookOpen, Clock, TrendingUp } from 'lucide-react-native';
-import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius, Shadow, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import RecipeCard from '@/components/RecipeCard';
 import GlassCard from '@/components/GlassCard';
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: FLOATING_BAR_HEIGHT,
   },
   profileSection: {
     paddingHorizontal: Spacing.lg,

@@ -60,6 +60,8 @@ export const Spacing = {
   xxxl: 32,
 };
 
+export const FLOATING_BAR_HEIGHT = 100;
+
 export const BorderRadius = {
   sm: 8,
   md: 12,

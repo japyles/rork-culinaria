@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Sparkles, Video, TrendingUp, Camera, PenLine, User, LogOut, Bell } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius, Shadow, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSocial } from '@/contexts/SocialContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -488,6 +488,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   bottomPadding: {
-    height: Spacing.xxxl,
+    height: FLOATING_BAR_HEIGHT,
   },
 });

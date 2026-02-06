@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CalendarDays, Plus, ChevronLeft, ChevronRight, X, Clock, Users, Trash2, ShoppingCart, Check, ChefHat } from 'lucide-react-native';
-import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius, Shadow, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Recipe, MealPlanEntry, Ingredient } from '@/types/recipe';
 import GlassCard from '@/components/GlassCard';
@@ -865,6 +865,6 @@ const styles = StyleSheet.create({
     color: Colors.textOnPrimary,
   },
   bottomPadding: {
-    height: Spacing.xxxl,
+    height: FLOATING_BAR_HEIGHT,
   },
 });

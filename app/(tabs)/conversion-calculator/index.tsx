@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Scale, Thermometer, Droplets, ArrowLeftRight, ChevronDown } from 'lucide-react-native';
-import Colors, { Spacing, BorderRadius, Shadow, Typography } from '@/constants/colors';
+import Colors, { Spacing, BorderRadius, Shadow, Typography, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 
 type ConversionCategory = 'volume' | 'weight' | 'temperature';
 
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: FLOATING_BAR_HEIGHT,
   },
   categorySelector: {
     flexDirection: 'row',

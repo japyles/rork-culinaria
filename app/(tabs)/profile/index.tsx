@@ -35,7 +35,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-react-native';
-import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { User } from '@/types/recipe';
@@ -579,7 +579,7 @@ export default function ProfileScreen() {
               </Pressable>
             </View>
 
-            
+            <View style={styles.bottomPadding} />
           </View>
         </ScrollView>
 
@@ -1120,5 +1120,8 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.primary,
     fontWeight: '600' as const,
+  },
+  bottomPadding: {
+    height: FLOATING_BAR_HEIGHT,
   },
 });

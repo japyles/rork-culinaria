@@ -18,7 +18,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Sparkles, ChefHat, Utensils, Clock, Users, Flame, BookmarkPlus, Check, X, Plus, Hash } from 'lucide-react-native';
 import { z } from 'zod';
 import { generateObject } from '@rork-ai/toolkit-sdk';
-import Colors, { Spacing, Typography, BorderRadius, Shadow } from '@/constants/colors';
+import Colors, { Spacing, Typography, BorderRadius, Shadow, FLOATING_BAR_HEIGHT } from '@/constants/colors';
 import { dietaryPreferences } from '@/mocks/recipes';
 import IngredientInput from '@/components/IngredientInput';
 import CategoryChip from '@/components/CategoryChip';
@@ -851,7 +851,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bottomPadding: {
-    height: Spacing.xxxl,
+    height: FLOATING_BAR_HEIGHT,
   },
   usageCard: {
     marginBottom: Spacing.md,
