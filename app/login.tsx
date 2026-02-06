@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   modalInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.cardBackground,
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
