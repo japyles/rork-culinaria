@@ -32,6 +32,8 @@ import {
   Crown,
   LogOut,
   Scale,
+  Sparkles,
+  Zap,
 } from 'lucide-react-native';
 import Colors, { Spacing, Typography, BorderRadius } from '@/constants/colors';
 import { useSocial } from '@/contexts/SocialContext';
@@ -40,6 +42,7 @@ import { User } from '@/types/recipe';
 import Button from '@/components/Button';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAIUsage } from '@/contexts/AIUsageContext';
 
 
 
@@ -53,6 +56,15 @@ export default function ProfileScreen() {
   } = useSocial();
   const { customRecipes, favorites } = useRecipes();
   const { isPremium, hasProAccess } = useSubscription();
+  const {
+    currentUsage,
+    usageLimit,
+    remainingBudget,
+    usagePercentage,
+    generationsRemaining,
+    generationsUsed,
+    subscriptionTier,
+    } = useAIUsage();
   const { isLoading: isAuthLoading, isProfileLoading, updateProfile, profile: currentUser, isAuthenticated, profileError, signOut, isSigningOut } = useAuth();
 
   const [showEditModal, setShowEditModal] = useState(false);
@@ -428,6 +440,76 @@ export default function ProfileScreen() {
                 </Text>
               }
             />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>AI Usage</Text>
+            <View style={styles.aiUsageCard}>
+              <View style={styles.aiUsageHeader}>
+                <View style={styles.aiUsageIconContainer}>
+                  <Sparkles size={20} color={Colors.primary} />
+                </View>
+                <View style={styles.aiUsageTierBadge}>
+                  <Text style={styles.aiUsageTierText}>
+                    {subscriptionTier === 'pro' ? 'Pro' : subscriptionTier === 'basic' ? 'Basic' : 'Free'}
+                  </Text>
+                </View>
+              </View>
+              
+              <View style={styles.aiUsageStats}>
+                <View style={styles.aiUsageStat}>
+                  <Text style={styles.aiUsageStatValue}>${currentUsage.toFixed(2)}</Text>
+                  <Text style={styles.aiUsageStatLabel}>Used</Text>
+                </View>
+                <View style={styles.aiUsageStatDivider} />
+                <View style={styles.aiUsageStat}>
+                  <Text style={styles.aiUsageStatValue}>${remainingBudget.toFixed(2)}</Text>
+                  <Text style={styles.aiUsageStatLabel}>Remaining</Text>
+                </View>
+                <View style={styles.aiUsageStatDivider} />
+                <View style={styles.aiUsageStat}>
+                  <Text style={styles.aiUsageStatValue}>${usageLimit.toFixed(2)}</Text>
+                  <Text style={styles.aiUsageStatLabel}>Limit</Text>
+                </View>
+              </View>
+
+              <View style={styles.aiUsageProgressContainer}>
+                <View style={styles.aiUsageProgressBg}>
+                  <View 
+                    style={[
+                      styles.aiUsageProgressFill, 
+                      { width: `${Math.min(usagePercentage, 100)}%` },
+                      usagePercentage >= 90 && styles.aiUsageProgressWarning,
+                    ]} 
+                  />
+                </View>
+                <Text style={styles.aiUsageProgressText}>{usagePercentage.toFixed(0)}% used</Text>
+              </View>
+
+              <View style={styles.aiUsageGenerations}>
+                <View style={styles.aiUsageGenerationItem}>
+                  <Zap size={14} color={Colors.textSecondary} />
+                  <Text style={styles.aiUsageGenerationText}>
+                    {generationsUsed} generations used
+                  </Text>
+                </View>
+                <View style={styles.aiUsageGenerationItem}>
+                  <Sparkles size={14} color={Colors.primary} />
+                  <Text style={[styles.aiUsageGenerationText, { color: Colors.primary }]}>
+                    {generationsRemaining} remaining
+                  </Text>
+                </View>
+              </View>
+
+              {subscriptionTier === 'free' && (
+                <Pressable 
+                  style={styles.aiUsageUpgradeButton}
+                  onPress={() => router.push('/paywall')}
+                >
+                  <Text style={styles.aiUsageUpgradeText}>Upgrade for more AI generations</Text>
+                </Pressable>
+              )}
+            </View>
           </View>
 
           <View style={styles.section}>
@@ -961,6 +1043,110 @@ const styles = StyleSheet.create({
   logoutText: {
     ...Typography.body,
     color: Colors.error,
+    fontWeight: '600' as const,
+  },
+  aiUsageCard: {
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+  },
+  aiUsageHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  aiUsageIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  aiUsageTierBadge: {
+    backgroundColor: Colors.primary + '20',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+  },
+  aiUsageTierText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '600' as const,
+  },
+  aiUsageStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  aiUsageStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  aiUsageStatValue: {
+    ...Typography.h3,
+    color: Colors.text,
+  },
+  aiUsageStatLabel: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  aiUsageStatDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: Colors.borderLight,
+  },
+  aiUsageProgressContainer: {
+    marginBottom: Spacing.md,
+  },
+  aiUsageProgressBg: {
+    height: 8,
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  aiUsageProgressFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
+  },
+  aiUsageProgressWarning: {
+    backgroundColor: Colors.warning,
+  },
+  aiUsageProgressText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+    marginTop: 4,
+    textAlign: 'right' as const,
+  },
+  aiUsageGenerations: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  aiUsageGenerationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  aiUsageGenerationText: {
+    ...Typography.caption,
+    color: Colors.textSecondary,
+  },
+  aiUsageUpgradeButton: {
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.sm,
+    backgroundColor: Colors.primary + '10',
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  aiUsageUpgradeText: {
+    ...Typography.caption,
+    color: Colors.primary,
     fontWeight: '600' as const,
   },
 });
