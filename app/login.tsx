@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import Colors from '@/constants/colors';
 
 export default function LoginScreen() {
-  const { signIn, signUp, isSigningIn, isSigningUp } = useAuth();
+  const { signIn, signUp, resetPassword, isSigningIn, isSigningUp } = useAuth();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,6 +60,32 @@ export default function LoginScreen() {
   };
 
   const isLoading = isSigningIn || isSigningUp;
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail.trim()) {
+      Alert.alert('Error', 'Please enter your email address');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await resetPassword(resetEmail.trim());
+      Alert.alert(
+        'Email Sent',
+        'If an account exists with this email, you will receive a password reset link.',
+        [{ text: 'OK', onPress: () => {
+          setShowForgotPassword(false);
+          setResetEmail('');
+        }}]
+      );
+    } catch (error: unknown) {
+      console.error('[Login] Reset password error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send reset email';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   return (
     <ImageBackground
@@ -158,6 +187,15 @@ export default function LoginScreen() {
                   </TouchableOpacity>
                 </View>
 
+                {isLoginMode && (
+                  <TouchableOpacity
+                    style={styles.forgotPasswordButton}
+                    onPress={() => setShowForgotPassword(true)}
+                  >
+                    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity
                   style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
                   onPress={handleSubmit}
@@ -193,6 +231,54 @@ export default function LoginScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
+
+        {showForgotPassword && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Reset Password</Text>
+              <Text style={styles.modalSubtitle}>
+                Enter your email address and we'll send you a link to reset your password.
+              </Text>
+
+              <View style={styles.modalInputContainer}>
+                <Mail size={20} color={Colors.textSecondary} />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Email"
+                  placeholderTextColor={Colors.textSecondary}
+                  value={resetEmail}
+                  onChangeText={setResetEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoFocus
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.modalButton, isResetting && styles.submitButtonDisabled]}
+                onPress={handleForgotPassword}
+                disabled={isResetting}
+              >
+                {isResetting ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.modalButtonText}>Send Reset Link</Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  setShowForgotPassword(false);
+                  setResetEmail('');
+                }}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </ImageBackground>
   );
@@ -328,5 +414,89 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.7)',
     textAlign: 'center',
+  },
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+    marginTop: -8,
+  },
+  forgotPasswordText: {
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 14,
+    fontWeight: '500' as const,
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  modalInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.cardBackground,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalInput: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: Colors.text,
+    height: 46,
+  },
+  modalButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600' as const,
+  },
+  modalCancelButton: {
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: Colors.textSecondary,
+    fontSize: 15,
+    fontWeight: '500' as const,
   },
 });
